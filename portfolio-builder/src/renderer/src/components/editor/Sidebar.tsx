@@ -1,0 +1,149 @@
+import { useState } from 'react'
+import { DndContext, closestCenter, DragEndEvent } from '@dnd-kit/core'
+import { SortableContext, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable'
+import { usePortfolio } from '../../store/PortfolioContext'
+import { SidebarItem } from './SidebarItem'
+import { SnapshotPanel } from '../shared/SnapshotPanel'
+import type { Section, SectionType, AboutSection, GallerySection, VideosSection, ModelsSection, GamesSection, CodeSection, CustomSection, ProjectSection } from '../../types/portfolio'
+
+const SECTION_DEFAULTS: {
+  about: Omit<AboutSection, 'id'>
+  gallery: Omit<GallerySection, 'id'>
+  videos: Omit<VideosSection, 'id'>
+  models: Omit<ModelsSection, 'id'>
+  games: Omit<GamesSection, 'id'>
+  code: Omit<CodeSection, 'id'>
+  custom: Omit<CustomSection, 'id'>
+  project: Omit<ProjectSection, 'id'>
+} = {
+  about:   { type: 'about',   title: 'About Me',      visible: true, bio: '' },
+  gallery: { type: 'gallery', title: 'Gallery',        visible: true, items: [] },
+  videos:  { type: 'videos',  title: 'Videos',         visible: true, items: [] },
+  models:  { type: 'models',  title: '3D Models',      visible: true, items: [] },
+  games:   { type: 'games',   title: 'Games',          visible: true, items: [] },
+  code:    { type: 'code',    title: 'Code',           visible: true, items: [] },
+  custom:  { type: 'custom',  title: 'Custom Section', visible: true, html: '' },
+  project: { type: 'project', title: 'Project',        visible: true, description: '', items: [] },
+}
+
+const SECTION_LABELS: Record<SectionType, string> = {
+  about: '👤 About Me', gallery: '🖼 Gallery', videos: '🎬 Videos',
+  models: '📦 3D Models', games: '🎮 Games', code: '💻 Code', custom: '📝 Custom',
+  project: '📋 Project',
+}
+
+interface Props {
+  activeSectionId: string | null
+  onSelectSection: (id: string) => void
+}
+
+export function Sidebar({ activeSectionId, onSelectSection }: Props) {
+  const { state, updatePortfolio } = usePortfolio()
+  const [adding, setAdding] = useState(false)
+  const [showSnapshots, setShowSnapshots] = useState(false)
+  const portfolio = state.portfolio!
+
+  function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event
+    if (!over || active.id === over.id) return
+    const oldIndex = portfolio.sections.findIndex(s => s.id === active.id)
+    const newIndex = portfolio.sections.findIndex(s => s.id === over.id)
+    updatePortfolio({ ...portfolio, sections: arrayMove(portfolio.sections, oldIndex, newIndex) })
+  }
+
+  function handleToggleVisible(id: string) {
+    updatePortfolio({
+      ...portfolio,
+      sections: portfolio.sections.map(s => s.id === id ? { ...s, visible: !s.visible } : s),
+    })
+  }
+
+  function handleAddSection(type: SectionType) {
+    const id = `${type}-${Date.now()}`
+    const newSection = { ...SECTION_DEFAULTS[type], id } as Section
+    updatePortfolio({ ...portfolio, sections: [...portfolio.sections, newSection] })
+    onSelectSection(id)
+    setAdding(false)
+  }
+
+  return (
+    <div style={{ width: 220, borderRight: '1px solid #e0e0e0', display: 'flex', flexDirection: 'column', background: 'white', flexShrink: 0 }}>
+      <div style={{ flex: 1, overflowY: 'auto', padding: 8 }}>
+        <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+          <SortableContext items={portfolio.sections.map(s => s.id)} strategy={verticalListSortingStrategy}>
+            {portfolio.sections.map(section => (
+              <SidebarItem
+                key={section.id}
+                section={section}
+                active={section.id === activeSectionId}
+                onClick={() => onSelectSection(section.id)}
+                onToggleVisible={() => handleToggleVisible(section.id)}
+              />
+            ))}
+          </SortableContext>
+        </DndContext>
+
+        {adding ? (
+          <div style={{ padding: '8px 4px' }}>
+            <div style={{ fontSize: 11, color: '#aaa', marginBottom: 6, paddingLeft: 4 }}>Add section type:</div>
+            {(Object.keys(SECTION_DEFAULTS) as SectionType[]).map(type => (
+              <div
+                key={type}
+                onClick={() => handleAddSection(type)}
+                style={{ padding: '7px 10px', cursor: 'pointer', borderRadius: 4, fontSize: 13 }}
+                onMouseEnter={e => (e.currentTarget.style.background = '#f5f5f5')}
+                onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+              >
+                {SECTION_LABELS[type]}
+              </div>
+            ))}
+            <button
+              onClick={() => setAdding(false)}
+              style={{ marginTop: 4, fontSize: 11, color: '#aaa', background: 'none', border: 'none', cursor: 'pointer', paddingLeft: 10 }}
+            >
+              Cancel
+            </button>
+          </div>
+        ) : (
+          <button
+            onClick={() => setAdding(true)}
+            style={{ width: '100%', marginTop: 8, padding: '8px 10px', background: 'none', border: '1px dashed #ddd', borderRadius: 6, cursor: 'pointer', color: '#aaa', fontSize: 12, textAlign: 'left' }}
+          >
+            + Add section
+          </button>
+        )}
+      </div>
+
+      <div style={{ padding: 12, borderTop: '1px solid #e0e0e0', display: 'flex', flexDirection: 'column', gap: 6 }}>
+        <button
+          onClick={() => setShowSnapshots(true)}
+          style={{ padding: '7px', border: '1px solid #e0e0e0', borderRadius: 6, cursor: 'pointer', fontSize: 12, background: 'white' }}
+        >
+          History
+        </button>
+        <button
+          onClick={() => state.portfolioDir && window.api.previewSite(state.portfolioDir, portfolio)}
+          style={{ padding: '7px', border: '1px solid #e0e0e0', borderRadius: 6, cursor: 'pointer', fontSize: 12, background: 'white' }}
+        >
+          Preview
+        </button>
+        <button
+          onClick={() => state.portfolioDir && window.api.exportSite(state.portfolioDir, portfolio)}
+          style={{ padding: '7px', border: '1px solid #e0e0e0', borderRadius: 6, cursor: 'pointer', fontSize: 12, background: 'white' }}
+        >
+          Export
+        </button>
+        <button
+          onClick={() => {
+            if (!state.portfolioDir || !portfolio.publish.ftp) return
+            window.api.publishFtp(state.portfolioDir, portfolio.publish.ftp)
+          }}
+          style={{ padding: '7px', background: '#222', color: 'white', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 12 }}
+        >
+          Publish
+        </button>
+      </div>
+      {showSnapshots && <SnapshotPanel onClose={() => setShowSnapshots(false)} />}
+    </div>
+  )
+}

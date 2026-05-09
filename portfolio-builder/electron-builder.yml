@@ -1,0 +1,28 @@
+appId: com.playerready.cyp-portfolio-builder
+productName: CYP Portfolio Builder
+copyright: Player Ready
+
+directories:
+  output: dist-installer
+  buildResources: resources
+
+win:
+  target:
+    - target: nsis
+      arch:
+        - x64
+  icon: resources/icon.ico
+
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: CYP Portfolio Builder
+
+files:
+  - "!**/.git/**"
+  - "!**/node_modules/.cache/**"
+  - "!tests/**"
+  - "!docs/**"
+  - "!.worktrees/**"
