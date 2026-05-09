@@ -31,6 +31,7 @@ export function Picker() {
   const [error, setError] = useState<string | null>(null)
   const [newName, setNewName] = useState('')
   const [creating, setCreating] = useState(false)
+  const [confirmingDelete, setConfirmingDelete] = useState<string | null>(null)
 
   useEffect(() => {
     async function load() {
@@ -69,6 +70,14 @@ export function Picker() {
     if (folder) await setRoot(folder)
   }
 
+  async function handleDelete(slug: string) {
+    if (!state.portfoliosRoot) return
+    await window.api.deletePortfolio(state.portfoliosRoot, slug)
+    setConfirmingDelete(null)
+    const updated = await window.api.listCyps(state.portfoliosRoot)
+    setCyps(updated)
+  }
+
   return (
     <div style={{ padding: 32, maxWidth: 480, margin: '48px auto' }}>
       <h1 style={{ fontSize: 22, fontWeight: 700, marginBottom: 4 }}>CYP Portfolios</h1>
@@ -87,31 +96,87 @@ export function Picker() {
             <div style={{ color: '#e94560', fontSize: 13, marginBottom: 12 }}>{error}</div>
           )}
           {cyps.map(cyp => (
-            <button
-              key={cyp.slug}
-              onClick={() => openPortfolio(cyp.slug)}
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                padding: '10px 14px',
-                background: '#f8f9fa',
-                borderRadius: 6,
-                cursor: 'pointer',
-                userSelect: 'none',
-                border: 'none',
-                width: '100%',
-                textAlign: 'left',
-                fontSize: 14,
-              }}
-              onMouseEnter={e => (e.currentTarget.style.background = '#f0f0f0')}
-              onMouseLeave={e => (e.currentTarget.style.background = '#f8f9fa')}
-            >
-              <span style={{ fontWeight: 500 }}>{cyp.name}</span>
-              <span style={{ fontSize: 12, color: '#aaa' }}>
-                {new Date(cyp.lastModified).toLocaleDateString()}
-              </span>
-            </button>
+            confirmingDelete === cyp.slug ? (
+              <div
+                key={cyp.slug}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  padding: '10px 14px',
+                  background: '#fff5f5',
+                  border: '1px solid #fbd5d5',
+                  borderRadius: 6,
+                  fontSize: 13,
+                }}
+              >
+                <span style={{ flex: 1 }}>
+                  Delete <strong>{cyp.name}</strong>? This cannot be undone.
+                </span>
+                <button
+                  onClick={() => handleDelete(cyp.slug)}
+                  style={{ padding: '6px 12px', background: '#c53030', color: 'white', border: 'none', borderRadius: 4, cursor: 'pointer', fontSize: 12 }}
+                >
+                  Delete
+                </button>
+                <button
+                  onClick={() => setConfirmingDelete(null)}
+                  style={{ padding: '6px 10px', background: 'none', border: '1px solid #ddd', borderRadius: 4, cursor: 'pointer', fontSize: 12 }}
+                >
+                  Cancel
+                </button>
+              </div>
+            ) : (
+              <div
+                key={cyp.slug}
+                style={{ display: 'flex', alignItems: 'stretch', background: '#f8f9fa', borderRadius: 6, overflow: 'hidden' }}
+                onMouseEnter={e => (e.currentTarget.style.background = '#f0f0f0')}
+                onMouseLeave={e => (e.currentTarget.style.background = '#f8f9fa')}
+              >
+                <button
+                  onClick={() => openPortfolio(cyp.slug)}
+                  style={{
+                    flex: 1,
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    padding: '10px 14px',
+                    background: 'transparent',
+                    border: 'none',
+                    cursor: 'pointer',
+                    userSelect: 'none',
+                    textAlign: 'left',
+                    fontSize: 14,
+                  }}
+                >
+                  <span style={{ fontWeight: 500 }}>{cyp.name}</span>
+                  <span style={{ fontSize: 12, color: '#aaa' }}>
+                    {new Date(cyp.lastModified).toLocaleDateString()}
+                  </span>
+                </button>
+                <button
+                  onClick={() => setConfirmingDelete(cyp.slug)}
+                  aria-label={`Delete ${cyp.name}`}
+                  title={`Delete ${cyp.name}`}
+                  style={{
+                    padding: '0 12px',
+                    background: 'transparent',
+                    borderTop: 'none',
+                    borderRight: 'none',
+                    borderBottom: 'none',
+                    borderLeft: '1px solid transparent',
+                    cursor: 'pointer',
+                    color: '#aaa',
+                    fontSize: 18,
+                    lineHeight: 1,
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.color = '#c53030'; e.currentTarget.style.borderLeftColor = '#e0e0e0' }}
+                  onMouseLeave={e => { e.currentTarget.style.color = '#aaa'; e.currentTarget.style.borderLeftColor = 'transparent' }}
+                >
+                  ×
+                </button>
+              </div>
+            )
           ))}
 
           {creating ? (
