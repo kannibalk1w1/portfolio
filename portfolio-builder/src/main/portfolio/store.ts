@@ -21,12 +21,18 @@ export async function listCyps(root: string): Promise<CypMeta[]> {
       // not a valid portfolio folder — skip
     }
   }
-  return results.sort((a, b) => b.lastModified.localeCompare(a.lastModified))
+  return results.sort((a, b) =>
+    new Date(b.lastModified).getTime() - new Date(a.lastModified).getTime()
+  )
 }
 
 export async function readPortfolio(root: string, slug: string): Promise<Portfolio> {
   const raw = await readFile(join(root, slug, 'portfolio.json'), 'utf-8')
-  return JSON.parse(raw)
+  const p = JSON.parse(raw) as Portfolio
+  if (p.schemaVersion !== 1) {
+    throw new Error(`Unsupported portfolio schemaVersion: ${p.schemaVersion}`)
+  }
+  return p
 }
 
 export async function writePortfolio(root: string, portfolio: Portfolio): Promise<void> {

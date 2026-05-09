@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
-import { mkdirSync, rmSync, writeFileSync } from 'fs'
+import { existsSync, mkdirSync, rmSync, writeFileSync } from 'fs'
 import { join } from 'path'
 import { listCyps, readPortfolio, writePortfolio, deletePortfolio } from '../../../src/main/portfolio/store'
 import type { Portfolio } from '../../../src/renderer/src/types/portfolio'
@@ -32,6 +32,22 @@ describe('listCyps', () => {
     expect(result[0].slug).toBe('alice')
     expect(result[0].name).toBe('Alice')
   })
+
+  it('returns portfolios sorted newest-first', async () => {
+    // create two portfolios with different mtimes
+    const dirs = ['alice', 'bob']
+    for (const name of dirs) {
+      const dir = join(TMP, name)
+      mkdirSync(dir)
+      writeFileSync(join(dir, 'portfolio.json'), JSON.stringify(makePortfolio(name)))
+      // small delay so mtimes differ
+      await new Promise(r => setTimeout(r, 10))
+    }
+    const result = await listCyps(TMP)
+    // bob was written last, should appear first
+    expect(result[0].slug).toBe('bob')
+    expect(result[1].slug).toBe('alice')
+  })
 })
 
 describe('readPortfolio', () => {
@@ -55,7 +71,6 @@ describe('writePortfolio', () => {
   it('creates assets, snapshots, and output subdirectories', async () => {
     const p = makePortfolio('Charlie')
     await writePortfolio(TMP, p)
-    const { existsSync } = await import('fs')
     expect(existsSync(join(TMP, 'charlie', 'assets'))).toBe(true)
     expect(existsSync(join(TMP, 'charlie', 'snapshots'))).toBe(true)
     expect(existsSync(join(TMP, 'charlie', 'output'))).toBe(true)
