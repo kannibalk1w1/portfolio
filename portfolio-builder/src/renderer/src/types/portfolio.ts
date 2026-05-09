@@ -94,6 +94,12 @@ export interface FtpConfig {
   host: string
   port: number
   user: string
+  /**
+   * Runtime-only. Never written to portfolio.json — the persistence layer
+   * strips this field on read and write. Set/cleared via the
+   * `setFtpPassword` / `clearFtpPassword` API and stored encrypted via
+   * Electron `safeStorage` keyed on the portfolio slug.
+   */
   password?: string
   remotePath: string
   secure: boolean
