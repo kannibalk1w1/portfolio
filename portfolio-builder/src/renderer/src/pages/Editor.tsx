@@ -1,4 +1,4 @@
-import { useState, Suspense } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { TopBar } from '../components/editor/TopBar'
 import { Sidebar } from '../components/editor/Sidebar'
 import { usePortfolio } from '../store/PortfolioContext'
@@ -8,6 +8,13 @@ export function Editor() {
   const [activeSectionId, setActiveSectionId] = useState<string | null>(
     state.portfolio?.sections[0]?.id ?? null
   )
+
+  useEffect(() => {
+    const ids = state.portfolio?.sections.map(s => s.id) ?? []
+    if (activeSectionId !== null && !ids.includes(activeSectionId)) {
+      setActiveSectionId(ids[0] ?? null)
+    }
+  }, [state.portfolio?.sections])
 
   const activeSection = state.portfolio?.sections.find(s => s.id === activeSectionId)
 

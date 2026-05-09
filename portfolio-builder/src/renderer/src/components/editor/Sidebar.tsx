@@ -3,10 +3,17 @@ import { DndContext, closestCenter, DragEndEvent } from '@dnd-kit/core'
 import { SortableContext, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable'
 import { usePortfolio } from '../../store/PortfolioContext'
 import { SidebarItem } from './SidebarItem'
-import type { Section, SectionType } from '../../types/portfolio'
+import type { Section, SectionType, AboutSection, GallerySection, VideosSection, ModelsSection, GamesSection, CodeSection, CustomSection } from '../../types/portfolio'
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const SECTION_DEFAULTS: Record<SectionType, any> = {
+const SECTION_DEFAULTS: {
+  about: Omit<AboutSection, 'id'>
+  gallery: Omit<GallerySection, 'id'>
+  videos: Omit<VideosSection, 'id'>
+  models: Omit<ModelsSection, 'id'>
+  games: Omit<GamesSection, 'id'>
+  code: Omit<CodeSection, 'id'>
+  custom: Omit<CustomSection, 'id'>
+} = {
   about:   { type: 'about',   title: 'About Me',      visible: true, bio: '' },
   gallery: { type: 'gallery', title: 'Gallery',        visible: true, items: [] },
   videos:  { type: 'videos',  title: 'Videos',         visible: true, items: [] },
@@ -29,7 +36,6 @@ interface Props {
 export function Sidebar({ activeSectionId, onSelectSection }: Props) {
   const { state, updatePortfolio } = usePortfolio()
   const [adding, setAdding] = useState(false)
-  const [showSnapshots, setShowSnapshots] = useState(false)
   const portfolio = state.portfolio!
 
   function handleDragEnd(event: DragEndEvent) {
@@ -105,7 +111,7 @@ export function Sidebar({ activeSectionId, onSelectSection }: Props) {
 
       <div style={{ padding: 12, borderTop: '1px solid #e0e0e0', display: 'flex', flexDirection: 'column', gap: 6 }}>
         <button
-          onClick={() => setShowSnapshots(!showSnapshots)}
+          onClick={() => { /* SnapshotPanel added in Task 13 */ }}
           style={{ padding: '7px', border: '1px solid #e0e0e0', borderRadius: 6, cursor: 'pointer', fontSize: 12, background: 'white' }}
         >
           History
