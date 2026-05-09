@@ -142,4 +142,31 @@ describe('buildSite', () => {
     expect(html).not.toContain('twitter:image')
     expect(html).not.toContain('twitter:description')
   })
+
+  it('every <img> in the rendered output has loading="lazy" and decoding="async"', async () => {
+    const portfolio: Portfolio = {
+      schemaVersion: 1,
+      name: 'Alice',
+      slug: 'alice',
+      sections: [
+        { id: 'about', type: 'about', title: 'About', visible: true, bio: 'b', avatarFilename: 'avatar.jpg' },
+        { id: 'gallery-1', type: 'gallery', title: 'Gallery', visible: true, items: [
+          { id: 'g1', filename: 'one.jpg' },
+        ]},
+        { id: 'project-1', type: 'project', title: 'Project', visible: true, description: '', coverImageFilename: 'cover.jpg', items: [
+          { id: 'p1', filename: 'screenshot.jpg' },
+        ]},
+      ],
+      publish: {},
+    }
+    await buildSite(TMP, portfolio)
+    const html = readFileSync(join(TMP, 'output', 'index.html'), 'utf-8')
+
+    const imgs = html.match(/<img\b[^>]*>/g) ?? []
+    expect(imgs.length).toBeGreaterThanOrEqual(3) // avatar + gallery item + cover + project gallery item
+    for (const tag of imgs) {
+      expect(tag).toMatch(/\bloading="lazy"/)
+      expect(tag).toMatch(/\bdecoding="async"/)
+    }
+  })
 })
