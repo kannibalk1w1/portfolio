@@ -1,19 +1,47 @@
-import { cp, mkdir } from 'fs/promises'
-import { basename, extname, join } from 'path'
+import { cp, mkdir, readFile } from 'fs/promises'
+import { basename, dirname, extname, join } from 'path'
 import { randomUUID } from 'crypto'
 
 const HEIC_EXTS = new Set(['.heic', '.heif'])
 
 async function convertHeic(srcPath: string, destPath: string): Promise<void> {
   const heicConvert = (await import('heic-convert')).default
-  const { readFile, writeFile } = await import('fs/promises')
-  const input = await readFile(srcPath)
+  const { readFile: rf, writeFile } = await import('fs/promises')
+  const input = await rf(srcPath)
   const output = await heicConvert({
     buffer: input as unknown as ArrayBuffer,
     format: 'JPEG',
     quality: 0.92
   })
   await writeFile(destPath, Buffer.from(output as ArrayBuffer))
+}
+
+async function copyGltfCompanions(gltfSrcPath: string, assetsDir: string): Promise<void> {
+  try {
+    const raw = await readFile(gltfSrcPath, 'utf-8')
+    const gltf = JSON.parse(raw)
+    const srcDir = dirname(gltfSrcPath)
+    const refs = new Set<string>()
+
+    // Collect all external URI references
+    for (const buf of gltf.buffers ?? []) {
+      if (buf.uri && !buf.uri.startsWith('data:')) refs.add(buf.uri)
+    }
+    for (const img of gltf.images ?? []) {
+      if (img.uri && !img.uri.startsWith('data:')) refs.add(img.uri)
+    }
+
+    for (const ref of refs) {
+      const srcFile = join(srcDir, ref)
+      const destFile = join(assetsDir, basename(ref))
+      await cp(srcFile, destFile).catch(() => {
+        // Companion file not found — skip rather than crash
+        console.warn(`GLTF companion not found: ${srcFile}`)
+      })
+    }
+  } catch {
+    // Not valid JSON or unreadable — skip companion copy
+  }
 }
 
 export async function importMediaFiles(portfolioDir: string, filePaths: string[]): Promise<string[]> {
@@ -30,6 +58,10 @@ export async function importMediaFiles(portfolioDir: string, filePaths: string[]
       await convertHeic(src, dest)
     } else {
       await cp(src, dest)
+    }
+    // For GLTF files, copy companion .bin and texture files from the same source directory
+    if (ext === '.gltf') {
+      await copyGltfCompanions(src, assetsDir)
     }
     results.push(uniqueName)
   }

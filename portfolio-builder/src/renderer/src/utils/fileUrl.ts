@@ -1,12 +1,12 @@
 /**
- * Convert a filesystem path to an asset:// URL served by the main process.
- * This works in both dev mode (renderer on localhost) and production (file://).
- * The asset:// protocol is registered in src/main/index.ts.
+ * Convert a filesystem path to an asset://localhost/ URL.
+ * Using an explicit hostname makes relative URL resolution predictable —
+ * Chromium won't treat the Windows drive letter as a hostname.
+ * The main process protocol handler strips 'localhost' before resolving.
  */
 export function toFileUrl(fsPath: string): string {
-  // Normalise all backslashes to forward slashes
   const forward = fsPath.replace(/\\/g, '/')
-  // POSIX: /home/user/... → asset:///home/user/...
-  // Windows: C:/Users/... → asset:///C:/Users/...
-  return forward.startsWith('/') ? `asset://${forward}` : `asset:///${forward}`
+  // Remove any leading slash so the path becomes: C:/Users/... or /home/...
+  const clean = forward.startsWith('/') ? forward : `/${forward}`
+  return `asset://localhost${clean}`
 }

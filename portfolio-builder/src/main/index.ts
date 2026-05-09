@@ -64,9 +64,11 @@ app.whenReady().then(() => {
 
   // Serve local portfolio assets via asset:// protocol (works in both dev and prod)
   protocol.handle('asset', (request) => {
-    const urlPath = decodeURIComponent(new URL(request.url).pathname)
+    // URL format: asset://localhost/C:/Users/... (Windows) or asset://localhost/home/... (POSIX)
+    const url = new URL(request.url)
+    const rawPath = decodeURIComponent(url.pathname) // always starts with /
     // On Windows: /C:/Users/... → strip leading slash before drive letter
-    const fsPath = /^\/[A-Za-z]:[\\/]/.test(urlPath) ? urlPath.slice(1) : urlPath
+    const fsPath = /^\/[A-Za-z]:[\\/]/.test(rawPath) ? rawPath.slice(1) : rawPath
     return net.fetch(pathToFileURL(fsPath).toString())
   })
 
