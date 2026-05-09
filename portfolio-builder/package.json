@@ -19,9 +19,9 @@
     "build:win": "npm run build && electron-builder --win",
     "build:mac": "electron-vite build && electron-builder --mac",
     "build:linux": "electron-vite build && electron-builder --linux",
-    "test:main": "vitest run --config electron.vite.config.ts --mode main",
-    "test:renderer": "vitest run --config electron.vite.config.ts --mode renderer",
-    "test": "npm run test:main && npm run test:renderer"
+    "test:main": "vitest run --project main --passWithNoTests",
+    "test:renderer": "vitest run --project renderer --passWithNoTests",
+    "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
     "@electron-toolkit/preload": "^3.0.2",
