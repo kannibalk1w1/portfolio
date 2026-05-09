@@ -27,7 +27,11 @@ export function registerIpcHandlers(): void {
   ipcMain.handle('config:getRoot', getRoot)
 
   ipcMain.handle('config:setRoot', async (_event, p: string) => {
-    await writeFile(configPath, JSON.stringify({ portfoliosRoot: p }), 'utf-8')
+    let existing: Record<string, unknown> = {}
+    try {
+      existing = JSON.parse(await readFile(configPath, 'utf-8'))
+    } catch { /* first write or corrupt config */ }
+    await writeFile(configPath, JSON.stringify({ ...existing, portfoliosRoot: p }), 'utf-8')
   })
 
   ipcMain.handle('portfolio:list', (_event, root: string) => listCyps(root))

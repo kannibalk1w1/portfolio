@@ -1,5 +1,27 @@
 import type { Portfolio, CypMeta, SnapshotMeta, FtpConfig } from './portfolio'
 
+// Local mirror of Electron's OpenDialogOptions — the renderer tsconfig does not
+// include Electron types, so we cannot import from 'electron' directly here.
+interface OpenDialogOptions {
+  title?: string
+  defaultPath?: string
+  buttonLabel?: string
+  filters?: { name: string; extensions: string[] }[]
+  properties?: Array<
+    | 'openFile'
+    | 'openDirectory'
+    | 'multiSelections'
+    | 'showHiddenFiles'
+    | 'createDirectory'
+    | 'promptToCreate'
+    | 'noResolveAliases'
+    | 'treatPackageAsDirectory'
+    | 'dontAddToRecent'
+  >
+  message?: string
+  securityScopedBookmarks?: boolean
+}
+
 declare global {
   interface Window {
     api: {
@@ -12,7 +34,7 @@ declare global {
       restoreSnapshot(dir: string, id: string): Promise<void>
       importMedia(portfolioDir: string, filePaths: string[]): Promise<string[]>
       importGodotFolder(portfolioDir: string, folderPath: string, title: string): Promise<string>
-      openFilePicker(opts: { properties: string[]; filters?: { name: string; extensions: string[] }[] }): Promise<string[]>
+      openFilePicker(opts: OpenDialogOptions): Promise<string[]>
       openFolderPicker(): Promise<string | null>
       buildSite(portfolioDir: string, portfolio: Portfolio): Promise<void>
       previewSite(portfolioDir: string, portfolio: Portfolio): Promise<void>
