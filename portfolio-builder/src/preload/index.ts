@@ -1,22 +1,52 @@
-import { contextBridge } from 'electron'
-import { electronAPI } from '@electron-toolkit/preload'
+import { contextBridge, ipcRenderer } from 'electron'
+import type { Portfolio, CypMeta, SnapshotMeta, FtpConfig } from '../renderer/src/types/portfolio'
 
-// Custom APIs for renderer
-const api = {}
+contextBridge.exposeInMainWorld('api', {
+  // Portfolio
+  listCyps: (root: string): Promise<CypMeta[]> =>
+    ipcRenderer.invoke('portfolio:list', root),
+  readPortfolio: (root: string, slug: string): Promise<Portfolio> =>
+    ipcRenderer.invoke('portfolio:read', root, slug),
+  writePortfolio: (root: string, p: Portfolio): Promise<void> =>
+    ipcRenderer.invoke('portfolio:write', root, p),
+  deletePortfolio: (root: string, slug: string): Promise<void> =>
+    ipcRenderer.invoke('portfolio:delete', root, slug),
 
-// Use `contextBridge` APIs to expose Electron APIs to
-// renderer only if context isolation is enabled, otherwise
-// just add to the DOM global.
-if (process.contextIsolated) {
-  try {
-    contextBridge.exposeInMainWorld('electron', electronAPI)
-    contextBridge.exposeInMainWorld('api', api)
-  } catch (error) {
-    console.error(error)
-  }
-} else {
-  // @ts-ignore (define in dts)
-  window.electron = electronAPI
-  // @ts-ignore (define in dts)
-  window.api = api
-}
+  // Snapshots
+  createSnapshot: (dir: string): Promise<void> =>
+    ipcRenderer.invoke('snapshot:create', dir),
+  listSnapshots: (dir: string): Promise<SnapshotMeta[]> =>
+    ipcRenderer.invoke('snapshot:list', dir),
+  restoreSnapshot: (dir: string, id: string): Promise<void> =>
+    ipcRenderer.invoke('snapshot:restore', dir, id),
+
+  // Media
+  importMedia: (portfolioDir: string, filePaths: string[]): Promise<string[]> =>
+    ipcRenderer.invoke('media:import', portfolioDir, filePaths),
+  importGodotFolder: (portfolioDir: string, folderPath: string, title: string): Promise<string> =>
+    ipcRenderer.invoke('media:importGodot', portfolioDir, folderPath, title),
+
+  // Dialogs
+  openFilePicker: (opts: Electron.OpenDialogOptions): Promise<string[]> =>
+    ipcRenderer.invoke('dialog:openFile', opts),
+  openFolderPicker: (): Promise<string | null> =>
+    ipcRenderer.invoke('dialog:openFolder'),
+
+  // Site generation
+  buildSite: (portfolioDir: string, portfolio: Portfolio): Promise<void> =>
+    ipcRenderer.invoke('site:build', portfolioDir, portfolio),
+  previewSite: (portfolioDir: string, portfolio: Portfolio): Promise<void> =>
+    ipcRenderer.invoke('site:preview', portfolioDir, portfolio),
+  exportSite: (portfolioDir: string, portfolio: Portfolio): Promise<void> =>
+    ipcRenderer.invoke('site:export', portfolioDir, portfolio),
+
+  // Publish
+  publishFtp: (portfolioDir: string, config: FtpConfig): Promise<void> =>
+    ipcRenderer.invoke('publish:ftp', portfolioDir, config),
+
+  // Config
+  getPortfoliosRoot: (): Promise<string> =>
+    ipcRenderer.invoke('config:getRoot'),
+  setPortfoliosRoot: (p: string): Promise<void> =>
+    ipcRenderer.invoke('config:setRoot', p),
+})
