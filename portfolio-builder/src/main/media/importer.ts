@@ -44,6 +44,7 @@ export async function importGodotFolder(
   const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
   const folderName = `godot-${slug}`
   const dest = join(portfolioDir, 'assets', folderName)
+  await mkdir(join(portfolioDir, 'assets'), { recursive: true })
   await cp(folderPath, dest, { recursive: true })
   return folderName
 }
