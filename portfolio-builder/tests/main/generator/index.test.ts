@@ -163,7 +163,8 @@ describe('buildSite', () => {
     const html = readFileSync(join(TMP, 'output', 'index.html'), 'utf-8')
 
     const imgs = html.match(/<img\b[^>]*>/g) ?? []
-    expect(imgs.length).toBeGreaterThanOrEqual(3) // avatar + gallery item + cover + project gallery item
+    // Fixture renders exactly 4 imgs: avatar + gallery item + project cover + project gallery item.
+    expect(imgs.length).toBe(4)
     for (const tag of imgs) {
       expect(tag).toMatch(/\bloading="lazy"/)
       expect(tag).toMatch(/\bdecoding="async"/)
