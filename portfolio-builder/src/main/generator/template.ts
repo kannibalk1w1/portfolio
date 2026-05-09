@@ -40,9 +40,10 @@ export function wrapTemplate(portfolio: Portfolio, body: string): string {
     ? `<meta property="og:image" content="assets/${escHtml(avatarFilename)}">
   <meta name="twitter:image" content="assets/${escHtml(avatarFilename)}">`
     : ''
-  const ogDescription = bio.trim()
+  const trimmedBio = bio.trim()
+  const ogDescription = trimmedBio
     ? (() => {
-        const desc = escHtml(truncate(bio, 200))
+        const desc = escHtml(truncate(trimmedBio, 200))
         return `<meta property="og:description" content="${desc}">
   <meta name="twitter:description" content="${desc}">`
       })()
