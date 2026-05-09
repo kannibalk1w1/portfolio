@@ -30,8 +30,13 @@ function renderSection(section: Section): string {
 // We resolve relative to this file's location at runtime.
 function getVendorSourceDir(): string | null {
   const candidates = [
+    // Dev mode: __dirname = out/main/, source files are at src/renderer/
+    join(__dirname, '..', '..', 'src', 'renderer', 'assets', 'vendor'),
+    join(__dirname, '..', '..', 'src', 'renderer', 'public', 'vendor'),
+    // Production: compiled renderer assets
     join(__dirname, '..', '..', 'renderer', 'assets', 'vendor'),
     join(__dirname, '..', 'renderer', 'assets', 'vendor'),
+    // Packaged app
     join(process.resourcesPath ?? '', 'app', 'renderer', 'assets', 'vendor'),
   ]
   for (const dir of candidates) {
