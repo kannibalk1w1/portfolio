@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { Picker } from '../../src/renderer/src/pages/Picker'
 
@@ -62,5 +62,36 @@ describe('Picker', () => {
   it('shows "Add new CYP" button', async () => {
     render(<Picker />)
     expect(await screen.findByText(/add new cyp/i)).toBeInTheDocument()
+  })
+
+  it('creates a new CYP and refreshes the list', async () => {
+    mockApi.writePortfolio.mockResolvedValue(undefined)
+    mockApi.listCyps
+      .mockResolvedValueOnce([
+        { slug: 'alice', name: 'Alice', lastModified: '2026-05-01T10:00:00.000Z' },
+      ])
+      .mockResolvedValueOnce([
+        { slug: 'alice', name: 'Alice', lastModified: '2026-05-01T10:00:00.000Z' },
+        { slug: 'new-cyp', name: 'New CYP', lastModified: '2026-05-09T10:00:00.000Z' },
+      ])
+
+    render(<Picker />)
+
+    // Click "Add new CYP"
+    const addBtn = await screen.findByText(/add new cyp/i)
+    fireEvent.click(addBtn)
+
+    // Type a name
+    const input = screen.getByPlaceholderText('CYP name')
+    fireEvent.change(input, { target: { value: 'New CYP' } })
+
+    // Click Create
+    await act(async () => {
+      fireEvent.click(screen.getByText('Create'))
+    })
+
+    // List should refresh and show the new CYP
+    expect(mockApi.writePortfolio).toHaveBeenCalledOnce()
+    expect(mockApi.listCyps).toHaveBeenCalledTimes(2)
   })
 })

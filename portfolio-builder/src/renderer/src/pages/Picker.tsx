@@ -28,27 +28,34 @@ export function Picker() {
   const { state, openPortfolio, setRoot } = usePortfolio()
   const [cyps, setCyps] = useState<CypMeta[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [newName, setNewName] = useState('')
   const [creating, setCreating] = useState(false)
 
   useEffect(() => {
     async function load() {
       setLoading(true)
-      let root = state.portfoliosRoot
-      if (!root) {
-        root = await window.api.getPortfoliosRoot()
-        await setRoot(root)
+      setError(null)
+      try {
+        let root = state.portfoliosRoot
+        if (!root) {
+          root = await window.api.getPortfoliosRoot()
+          await setRoot(root)
+        }
+        const list = await window.api.listCyps(root)
+        setCyps(list)
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to load portfolios')
+      } finally {
+        setLoading(false)
       }
-      const list = await window.api.listCyps(root)
-      setCyps(list)
-      setLoading(false)
     }
     load()
   }, [state.portfoliosRoot])
 
   async function handleCreate() {
     const trimmed = newName.trim()
-    if (!trimmed) return
+    if (!trimmed || !state.portfoliosRoot) return
     const portfolio = makeDefaultPortfolio(trimmed)
     await window.api.writePortfolio(state.portfoliosRoot, portfolio)
     setNewName('')
@@ -76,8 +83,11 @@ export function Picker() {
         <div style={{ color: '#aaa', fontSize: 14 }}>Loading…</div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          {error && (
+            <div style={{ color: '#e94560', fontSize: 13, marginBottom: 12 }}>{error}</div>
+          )}
           {cyps.map(cyp => (
-            <div
+            <button
               key={cyp.slug}
               onClick={() => openPortfolio(cyp.slug)}
               style={{
@@ -89,6 +99,10 @@ export function Picker() {
                 borderRadius: 6,
                 cursor: 'pointer',
                 userSelect: 'none',
+                border: 'none',
+                width: '100%',
+                textAlign: 'left',
+                fontSize: 14,
               }}
               onMouseEnter={e => (e.currentTarget.style.background = '#f0f0f0')}
               onMouseLeave={e => (e.currentTarget.style.background = '#f8f9fa')}
@@ -97,7 +111,7 @@ export function Picker() {
               <span style={{ fontSize: 12, color: '#aaa' }}>
                 {new Date(cyp.lastModified).toLocaleDateString()}
               </span>
-            </div>
+            </button>
           ))}
 
           {creating ? (
