@@ -1,6 +1,13 @@
 import { createContext, useContext, useReducer, useCallback, ReactNode } from 'react'
 import type { Portfolio } from '../types/portfolio'
 
+function joinPaths(root: string, slug: string): string {
+  // Detect Windows path separator from root; both / and \ work on Windows
+  // in Node.js fs APIs, but we use the native separator for consistency
+  const sep = root.includes('\\') ? '\\' : '/'
+  return `${root}${sep}${slug}`
+}
+
 interface AppState {
   portfoliosRoot: string
   openPortfolioSlug: string | null
@@ -25,7 +32,7 @@ function reducer(state: AppState, action: Action): AppState {
         ...state,
         openPortfolioSlug: action.slug,
         portfolio: action.portfolio,
-        portfolioDir: `${action.root}/${action.slug}`,
+        portfolioDir: joinPaths(action.root, action.slug),
         dirty: false
       }
     case 'CLOSE_PORTFOLIO':
@@ -78,6 +85,7 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
     const portfolio = p ?? state.portfolio
     if (!portfolio || !state.portfolioDir || !state.openPortfolioSlug) return
     await window.api.createSnapshot(state.portfolioDir)
+    // writePortfolio takes root + portfolio.slug; it writes to root/portfolio.slug/portfolio.json
     await window.api.writePortfolio(state.portfoliosRoot, portfolio)
     dispatch({ type: 'MARK_CLEAN' })
   }, [state.portfolio, state.portfolioDir, state.portfoliosRoot, state.openPortfolioSlug])
