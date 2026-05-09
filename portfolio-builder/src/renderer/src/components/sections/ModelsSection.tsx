@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { usePortfolio } from '../../store/PortfolioContext'
 import type { ModelsSection as ModelsSectionType, ModelItem, Section } from '../../types/portfolio'
 import { MediaDropzone } from '../shared/MediaDropzone'
+import { toFileUrl } from '../../utils/fileUrl'
 
 export function ModelsSection({ section }: { section: ModelsSectionType }) {
   const { state, updatePortfolio } = usePortfolio()
@@ -43,24 +44,33 @@ export function ModelsSection({ section }: { section: ModelsSectionType }) {
       <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 24 }}>{section.title}</h2>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 16 }}>
         {section.items.map(item => (
-          <div key={item.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', background: '#f8f8f8', borderRadius: 8 }}>
-            <span style={{ fontSize: 28 }}>📦</span>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 12, color: '#aaa', marginBottom: 4 }}>{item.filename}</div>
-              <input
-                value={item.label ?? ''}
-                onChange={e => updateLabel(item.id, e.target.value)}
-                placeholder="Label (optional)"
-                style={{ width: '100%', padding: '5px 8px', border: '1px solid #e0e0e0', borderRadius: 4, fontSize: 13, boxSizing: 'border-box' }}
-              />
+          <div key={item.id} style={{ background: '#f5f5f5', borderRadius: 8, overflow: 'hidden' }}>
+            {/* @ts-ignore — model-viewer is a custom element registered via @google/model-viewer */}
+            <model-viewer
+              src={toFileUrl(`${state.portfolioDir}/assets/${item.filename}`)}
+              alt={item.label ?? item.filename}
+              auto-rotate
+              camera-controls
+              style={{ width: '100%', height: '260px', display: 'block' }}
+            />
+            <div style={{ padding: '8px 12px', display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 12, color: '#aaa', marginBottom: 4 }}>{item.filename}</div>
+                <input
+                  value={item.label ?? ''}
+                  onChange={e => updateLabel(item.id, e.target.value)}
+                  placeholder="Label (optional)"
+                  style={{ width: '100%', padding: '5px 8px', border: '1px solid #e0e0e0', borderRadius: 4, fontSize: 13, boxSizing: 'border-box' }}
+                />
+              </div>
+              <button
+                onClick={() => removeItem(item.id)}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ccc', fontSize: 18 }}
+                aria-label={`Remove ${item.filename}`}
+              >
+                ×
+              </button>
             </div>
-            <button
-              onClick={() => removeItem(item.id)}
-              style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ccc', fontSize: 18 }}
-              aria-label={`Remove ${item.filename}`}
-            >
-              ×
-            </button>
           </div>
         ))}
       </div>

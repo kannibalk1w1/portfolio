@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { usePortfolio } from '../../store/PortfolioContext'
 import type { GallerySection as GallerySectionType, MediaItem, Section } from '../../types/portfolio'
 import { MediaDropzone } from '../shared/MediaDropzone'
+import { toFileUrl } from '../../utils/fileUrl'
 
 export function GallerySection({ section }: { section: GallerySectionType }) {
   const { state, updatePortfolio } = usePortfolio()
@@ -41,7 +42,7 @@ export function GallerySection({ section }: { section: GallerySectionType }) {
         {section.items.map(item => (
           <div key={item.id} style={{ position: 'relative', borderRadius: 8, overflow: 'hidden', background: '#f0f0f0', aspectRatio: '1' }}>
             <img
-              src={`file://${state.portfolioDir}/assets/${item.filename}`}
+              src={toFileUrl(`${state.portfolioDir}/assets/${item.filename}`)}
               style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
               alt={item.caption ?? item.filename}
             />

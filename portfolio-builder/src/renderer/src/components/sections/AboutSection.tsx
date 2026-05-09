@@ -1,6 +1,7 @@
 import { usePortfolio } from '../../store/PortfolioContext'
 import type { AboutSection as AboutSectionType, Section } from '../../types/portfolio'
 import { MediaDropzone } from '../shared/MediaDropzone'
+import { toFileUrl } from '../../utils/fileUrl'
 
 export function AboutSection({ section }: { section: AboutSectionType }) {
   const { state, updatePortfolio } = usePortfolio()
@@ -46,7 +47,7 @@ export function AboutSection({ section }: { section: AboutSectionType }) {
         <span style={{ fontSize: 13, color: '#666', display: 'block', marginBottom: 8 }}>Avatar photo</span>
         {section.avatarFilename && (
           <img
-            src={`file://${state.portfolioDir}/assets/${section.avatarFilename}`}
+            src={toFileUrl(`${state.portfolioDir}/assets/${section.avatarFilename}`)}
             style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: '50%', display: 'block', marginBottom: 8 }}
             alt="Avatar"
           />

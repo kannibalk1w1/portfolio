@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { usePortfolio } from '../../store/PortfolioContext'
 import type { VideosSection as VideosSectionType, VideoItem, Section } from '../../types/portfolio'
 import { MediaDropzone } from '../shared/MediaDropzone'
+import { toFileUrl } from '../../utils/fileUrl'
 
 async function captureThumbnail(src: string): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -45,7 +46,7 @@ export function VideosSection({ section }: { section: VideosSectionType }) {
       for (const item of newItems) {
         try {
           await captureThumbnail(
-            `file://${state.portfolioDir}/assets/${item.filename}`
+            toFileUrl(`${state.portfolioDir}/assets/${item.filename}`)
           )
           // Thumbnail data URL available — future enhancement: save to assets via IPC
           // For now we skip saving to keep this task scoped
@@ -70,7 +71,7 @@ export function VideosSection({ section }: { section: VideosSectionType }) {
         {section.items.map(item => (
           <div key={item.id} style={{ position: 'relative', borderRadius: 8, overflow: 'hidden', background: '#000', aspectRatio: '16/9' }}>
             <video
-              src={`file://${state.portfolioDir}/assets/${item.filename}`}
+              src={toFileUrl(`${state.portfolioDir}/assets/${item.filename}`)}
               style={{ width: '100%', height: '100%', objectFit: 'cover' }}
               controls
             />
