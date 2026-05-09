@@ -12,6 +12,7 @@ const SECTION_COMPONENTS: Record<SectionType, React.LazyExoticComponent<React.Co
   games:   lazy(() => import('../components/sections/GamesSection').then(m => ({ default: m.GamesSection }))),
   code:    lazy(() => import('../components/sections/CodeSection').then(m => ({ default: m.CodeSection }))),
   custom:  lazy(() => import('../components/sections/CustomSection').then(m => ({ default: m.CustomSection }))),
+  project: lazy(() => import('../components/sections/ProjectSection').then(m => ({ default: m.ProjectSection }))),
 }
 
 export function Editor() {

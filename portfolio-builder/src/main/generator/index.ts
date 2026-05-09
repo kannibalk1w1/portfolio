@@ -10,6 +10,7 @@ import { renderModels } from './sections/models'
 import { renderGames } from './sections/games'
 import { renderCode } from './sections/code'
 import { renderCustom } from './sections/custom'
+import { renderProject } from './sections/project'
 
 function renderSection(section: Section): string {
   switch (section.type) {
@@ -20,6 +21,7 @@ function renderSection(section: Section): string {
     case 'games':   return renderGames(section)
     case 'code':    return renderCode(section)
     case 'custom':  return renderCustom(section)
+    case 'project': return renderProject(section)
   }
 }
 

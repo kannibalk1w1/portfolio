@@ -4,7 +4,7 @@ import { SortableContext, verticalListSortingStrategy, arrayMove } from '@dnd-ki
 import { usePortfolio } from '../../store/PortfolioContext'
 import { SidebarItem } from './SidebarItem'
 import { SnapshotPanel } from '../shared/SnapshotPanel'
-import type { Section, SectionType, AboutSection, GallerySection, VideosSection, ModelsSection, GamesSection, CodeSection, CustomSection } from '../../types/portfolio'
+import type { Section, SectionType, AboutSection, GallerySection, VideosSection, ModelsSection, GamesSection, CodeSection, CustomSection, ProjectSection } from '../../types/portfolio'
 
 const SECTION_DEFAULTS: {
   about: Omit<AboutSection, 'id'>
@@ -14,6 +14,7 @@ const SECTION_DEFAULTS: {
   games: Omit<GamesSection, 'id'>
   code: Omit<CodeSection, 'id'>
   custom: Omit<CustomSection, 'id'>
+  project: Omit<ProjectSection, 'id'>
 } = {
   about:   { type: 'about',   title: 'About Me',      visible: true, bio: '' },
   gallery: { type: 'gallery', title: 'Gallery',        visible: true, items: [] },
@@ -22,11 +23,13 @@ const SECTION_DEFAULTS: {
   games:   { type: 'games',   title: 'Games',          visible: true, items: [] },
   code:    { type: 'code',    title: 'Code',           visible: true, items: [] },
   custom:  { type: 'custom',  title: 'Custom Section', visible: true, html: '' },
+  project: { type: 'project', title: 'Project',        visible: true, description: '', items: [] },
 }
 
 const SECTION_LABELS: Record<SectionType, string> = {
   about: '👤 About Me', gallery: '🖼 Gallery', videos: '🎬 Videos',
   models: '📦 3D Models', games: '🎮 Games', code: '💻 Code', custom: '📝 Custom',
+  project: '📋 Project',
 }
 
 interface Props {

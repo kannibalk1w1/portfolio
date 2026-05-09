@@ -70,6 +70,8 @@ export function wrapTemplate(portfolio: Portfolio, body: string): string {
     .custom-content p { margin-bottom: 10px; }
     .custom-content ul, .custom-content ol { padding-left: 20px; margin-bottom: 10px; }
     .empty { color: #aaa; font-size: 14px; font-style: italic; }
+    .project-cover { width: 100%; max-height: 360px; object-fit: cover; border-radius: 10px; margin-bottom: 20px; }
+    .project-description { margin-bottom: 20px; }
     @media (max-width: 600px) {
       .about-block { flex-direction: column; }
       .section { padding: 24px 16px; }

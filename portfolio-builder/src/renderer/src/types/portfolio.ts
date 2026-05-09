@@ -1,4 +1,4 @@
-export type SectionType = 'about' | 'gallery' | 'videos' | 'models' | 'games' | 'code' | 'custom'
+export type SectionType = 'about' | 'gallery' | 'videos' | 'models' | 'games' | 'code' | 'custom' | 'project'
 
 export interface MediaItem {
   id: string
@@ -73,6 +73,13 @@ export interface CustomSection extends BaseSection {
   html: string           // TipTap outputs HTML
 }
 
+export interface ProjectSection extends BaseSection {
+  type: 'project'
+  description: string   // TipTap HTML
+  coverImageFilename?: string
+  items: MediaItem[]    // project screenshots/images
+}
+
 export type Section =
   | AboutSection
   | GallerySection
@@ -81,6 +88,7 @@ export type Section =
   | GamesSection
   | CodeSection
   | CustomSection
+  | ProjectSection
 
 export interface FtpConfig {
   host: string
