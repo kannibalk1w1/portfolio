@@ -1,9 +1,11 @@
+import { useState } from 'react'
 import { usePortfolio } from '../../store/PortfolioContext'
 import type { GallerySection as GallerySectionType, MediaItem, Section } from '../../types/portfolio'
 import { MediaDropzone } from '../shared/MediaDropzone'
 
 export function GallerySection({ section }: { section: GallerySectionType }) {
   const { state, updatePortfolio } = usePortfolio()
+  const [importError, setImportError] = useState<string | null>(null)
 
   function updateSection(patch: Partial<GallerySectionType>) {
     updatePortfolio({
@@ -15,12 +17,17 @@ export function GallerySection({ section }: { section: GallerySectionType }) {
   }
 
   async function handleImport(paths: string[]) {
-    const filenames = await window.api.importMedia(state.portfolioDir!, paths)
-    const newItems: MediaItem[] = filenames.map(filename => ({
-      id: `item-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-      filename,
-    }))
-    updateSection({ items: [...section.items, ...newItems] })
+    setImportError(null)
+    try {
+      const filenames = await window.api.importMedia(state.portfolioDir!, paths)
+      const newItems: MediaItem[] = filenames.map(filename => ({
+        id: `item-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        filename,
+      }))
+      updateSection({ items: [...section.items, ...newItems] })
+    } catch (err) {
+      setImportError(err instanceof Error ? err.message : 'Import failed')
+    }
   }
 
   function removeItem(id: string) {
@@ -48,6 +55,7 @@ export function GallerySection({ section }: { section: GallerySectionType }) {
           </div>
         ))}
       </div>
+      {importError && <div style={{ color: '#e94560', fontSize: 12, marginBottom: 8 }}>{importError}</div>}
       <MediaDropzone
         label="Click to add images or GIFs"
         filters={[{ name: 'Images', extensions: ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'heic'] }]}

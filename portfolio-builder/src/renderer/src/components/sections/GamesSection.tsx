@@ -1,8 +1,12 @@
+import { useState, useRef } from 'react'
 import { usePortfolio } from '../../store/PortfolioContext'
 import type { GamesSection as GamesSectionType, GameItem, Section } from '../../types/portfolio'
 
 export function GamesSection({ section }: { section: GamesSectionType }) {
   const { state, updatePortfolio } = usePortfolio()
+  const [pendingTitle, setPendingTitle] = useState('')
+  const [importing, setImporting] = useState(false)
+  const pendingFolderRef = useRef<string | null>(null)
 
   function updateSection(patch: Partial<GamesSectionType>) {
     updatePortfolio({
@@ -14,17 +18,33 @@ export function GamesSection({ section }: { section: GamesSectionType }) {
   }
 
   async function handleImportGodot() {
-    const folder = await window.api.openFolderPicker()
+    const folder = await window.api.openFolderPicker().catch(() => null)
     if (!folder) return
-    const title = prompt('Game title?') ?? 'Game'
-    const folderName = await window.api.importGodotFolder(state.portfolioDir!, folder, title)
-    const newItem: GameItem = {
-      id: `game-${Date.now()}`,
-      folderName,
-      title,
-      entryFile: 'index.html',
+    pendingFolderRef.current = folder
+    setImporting(true)
+    setPendingTitle('')
+  }
+
+  async function confirmImport() {
+    const folder = pendingFolderRef.current
+    if (!folder) return
+    const title = pendingTitle.trim() || 'Game'
+    try {
+      const folderName = await window.api.importGodotFolder(state.portfolioDir!, folder, title)
+      const newItem: GameItem = {
+        id: `game-${Date.now()}`,
+        folderName,
+        title,
+        entryFile: 'index.html',
+      }
+      updateSection({ items: [...section.items, newItem] })
+    } catch (err) {
+      console.error('Failed to import Godot folder:', err)
+    } finally {
+      setImporting(false)
+      setPendingTitle('')
+      pendingFolderRef.current = null
     }
-    updateSection({ items: [...section.items, newItem] })
   }
 
   function removeItem(id: string) {
@@ -66,12 +86,38 @@ export function GamesSection({ section }: { section: GamesSectionType }) {
           </div>
         ))}
       </div>
-      <button
-        onClick={handleImportGodot}
-        style={{ padding: '10px 20px', border: '1px dashed #ddd', borderRadius: 8, cursor: 'pointer', background: 'none', color: '#888', fontSize: 13 }}
-      >
-        + Import Godot HTML5 export folder
-      </button>
+
+      {importing ? (
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <input
+            autoFocus
+            value={pendingTitle}
+            onChange={e => setPendingTitle(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter') confirmImport(); if (e.key === 'Escape') setImporting(false) }}
+            placeholder="Game title"
+            style={{ flex: 1, padding: '8px 12px', border: '1px solid #ddd', borderRadius: 6, fontSize: 13 }}
+          />
+          <button
+            onClick={confirmImport}
+            style={{ padding: '8px 16px', background: '#222', color: 'white', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 13 }}
+          >
+            Import
+          </button>
+          <button
+            onClick={() => setImporting(false)}
+            style={{ padding: '8px 12px', background: 'none', border: '1px solid #ddd', borderRadius: 6, cursor: 'pointer', fontSize: 13 }}
+          >
+            Cancel
+          </button>
+        </div>
+      ) : (
+        <button
+          onClick={handleImportGodot}
+          style={{ padding: '10px 20px', border: '1px dashed #ddd', borderRadius: 8, cursor: 'pointer', background: 'none', color: '#888', fontSize: 13 }}
+        >
+          + Import Godot HTML5 export folder
+        </button>
+      )}
     </div>
   )
 }

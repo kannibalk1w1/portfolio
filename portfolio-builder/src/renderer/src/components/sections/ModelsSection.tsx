@@ -1,9 +1,11 @@
+import { useState } from 'react'
 import { usePortfolio } from '../../store/PortfolioContext'
 import type { ModelsSection as ModelsSectionType, ModelItem, Section } from '../../types/portfolio'
 import { MediaDropzone } from '../shared/MediaDropzone'
 
 export function ModelsSection({ section }: { section: ModelsSectionType }) {
   const { state, updatePortfolio } = usePortfolio()
+  const [importError, setImportError] = useState<string | null>(null)
 
   function updateSection(patch: Partial<ModelsSectionType>) {
     updatePortfolio({
@@ -15,12 +17,17 @@ export function ModelsSection({ section }: { section: ModelsSectionType }) {
   }
 
   async function handleImport(paths: string[]) {
-    const filenames = await window.api.importMedia(state.portfolioDir!, paths)
-    const newItems: ModelItem[] = filenames.map(filename => ({
-      id: `item-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-      filename,
-    }))
-    updateSection({ items: [...section.items, ...newItems] })
+    setImportError(null)
+    try {
+      const filenames = await window.api.importMedia(state.portfolioDir!, paths)
+      const newItems: ModelItem[] = filenames.map(filename => ({
+        id: `item-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        filename,
+      }))
+      updateSection({ items: [...section.items, ...newItems] })
+    } catch (err) {
+      setImportError(err instanceof Error ? err.message : 'Import failed')
+    }
   }
 
   function removeItem(id: string) {
@@ -57,6 +64,7 @@ export function ModelsSection({ section }: { section: ModelsSectionType }) {
           </div>
         ))}
       </div>
+      {importError && <div style={{ color: '#e94560', fontSize: 12, marginBottom: 8 }}>{importError}</div>}
       <MediaDropzone
         label="Click to add 3D models (GLB, GLTF)"
         filters={[{ name: '3D Models', extensions: ['glb', 'gltf'] }]}

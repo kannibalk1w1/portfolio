@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { usePortfolio } from '../../store/PortfolioContext'
 import type { VideosSection as VideosSectionType, VideoItem, Section } from '../../types/portfolio'
 import { MediaDropzone } from '../shared/MediaDropzone'
@@ -21,6 +22,7 @@ async function captureThumbnail(src: string): Promise<string> {
 
 export function VideosSection({ section }: { section: VideosSectionType }) {
   const { state, updatePortfolio } = usePortfolio()
+  const [importError, setImportError] = useState<string | null>(null)
 
   function updateSection(patch: Partial<VideosSectionType>) {
     updatePortfolio({
@@ -32,24 +34,29 @@ export function VideosSection({ section }: { section: VideosSectionType }) {
   }
 
   async function handleImport(paths: string[]) {
-    const filenames = await window.api.importMedia(state.portfolioDir!, paths)
-    const newItems: VideoItem[] = filenames.map(filename => ({
-      id: `item-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-      filename,
-    }))
-    // Attempt thumbnail capture for each video (best-effort, non-blocking)
-    for (const item of newItems) {
-      try {
-        await captureThumbnail(
-          `file://${state.portfolioDir}/assets/${item.filename}`
-        )
-        // Thumbnail data URL available — future enhancement: save to assets via IPC
-        // For now we skip saving to keep this task scoped
-      } catch {
-        // thumbnail optional — continue without it
+    setImportError(null)
+    try {
+      const filenames = await window.api.importMedia(state.portfolioDir!, paths)
+      const newItems: VideoItem[] = filenames.map(filename => ({
+        id: `item-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        filename,
+      }))
+      // Attempt thumbnail capture for each video (best-effort, non-blocking)
+      for (const item of newItems) {
+        try {
+          await captureThumbnail(
+            `file://${state.portfolioDir}/assets/${item.filename}`
+          )
+          // Thumbnail data URL available — future enhancement: save to assets via IPC
+          // For now we skip saving to keep this task scoped
+        } catch {
+          // thumbnail optional — continue without it
+        }
       }
+      updateSection({ items: [...section.items, ...newItems] })
+    } catch (err) {
+      setImportError(err instanceof Error ? err.message : 'Import failed')
     }
-    updateSection({ items: [...section.items, ...newItems] })
   }
 
   function removeItem(id: string) {
@@ -77,6 +84,7 @@ export function VideosSection({ section }: { section: VideosSectionType }) {
           </div>
         ))}
       </div>
+      {importError && <div style={{ color: '#e94560', fontSize: 12, marginBottom: 8 }}>{importError}</div>}
       <MediaDropzone
         label="Click to add videos (MP4, WebM)"
         filters={[{ name: 'Videos', extensions: ['mp4', 'webm'] }]}

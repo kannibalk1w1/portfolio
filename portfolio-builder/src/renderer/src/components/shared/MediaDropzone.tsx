@@ -3,15 +3,22 @@ interface Props {
   filters: { name: string; extensions: string[] }[]
   multiple?: boolean
   onFiles: (paths: string[]) => void
+  onError?: (err: Error) => void
 }
 
-export function MediaDropzone({ label, filters, multiple = true, onFiles }: Props) {
+export function MediaDropzone({ label, filters, multiple = true, onFiles, onError }: Props) {
   async function handleClick() {
-    const paths = await window.api.openFilePicker({
-      properties: multiple ? ['openFile', 'multiSelections'] : ['openFile'],
-      filters,
-    })
-    if (paths.length) onFiles(paths)
+    try {
+      const paths = await window.api.openFilePicker({
+        properties: multiple ? ['openFile', 'multiSelections'] : ['openFile'],
+        filters,
+      })
+      if (paths.length) onFiles(paths)
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error(String(err))
+      if (onError) onError(error)
+      else console.error('File picker error:', error)
+    }
   }
 
   return (
