@@ -3,6 +3,7 @@ import { DndContext, closestCenter, DragEndEvent } from '@dnd-kit/core'
 import { SortableContext, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable'
 import { usePortfolio } from '../../store/PortfolioContext'
 import { SidebarItem } from './SidebarItem'
+import { SnapshotPanel } from '../shared/SnapshotPanel'
 import type { Section, SectionType, AboutSection, GallerySection, VideosSection, ModelsSection, GamesSection, CodeSection, CustomSection } from '../../types/portfolio'
 
 const SECTION_DEFAULTS: {
@@ -36,6 +37,7 @@ interface Props {
 export function Sidebar({ activeSectionId, onSelectSection }: Props) {
   const { state, updatePortfolio } = usePortfolio()
   const [adding, setAdding] = useState(false)
+  const [showSnapshots, setShowSnapshots] = useState(false)
   const portfolio = state.portfolio!
 
   function handleDragEnd(event: DragEndEvent) {
@@ -111,7 +113,7 @@ export function Sidebar({ activeSectionId, onSelectSection }: Props) {
 
       <div style={{ padding: 12, borderTop: '1px solid #e0e0e0', display: 'flex', flexDirection: 'column', gap: 6 }}>
         <button
-          onClick={() => { /* SnapshotPanel added in Task 13 */ }}
+          onClick={() => setShowSnapshots(true)}
           style={{ padding: '7px', border: '1px solid #e0e0e0', borderRadius: 6, cursor: 'pointer', fontSize: 12, background: 'white' }}
         >
           History
@@ -138,6 +140,7 @@ export function Sidebar({ activeSectionId, onSelectSection }: Props) {
           Publish
         </button>
       </div>
+      {showSnapshots && <SnapshotPanel onClose={() => setShowSnapshots(false)} />}
     </div>
   )
 }
