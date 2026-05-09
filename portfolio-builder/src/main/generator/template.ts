@@ -32,7 +32,8 @@ export function wrapTemplate(portfolio: Portfolio, body: string): string {
   <script>document.addEventListener('DOMContentLoaded', () => hljs.highlightAll())</script>`
     : ''
 
-  // Get CYP name from About section if available
+  // Extract About-section data used by the hero block and the conditional
+  // Open Graph / Twitter meta tags below.
   const aboutSection = portfolio.sections.find(s => s.type === 'about')
   const bio = aboutSection?.type === 'about' ? aboutSection.bio : ''
   const avatarFilename = aboutSection?.type === 'about' ? aboutSection.avatarFilename : undefined
