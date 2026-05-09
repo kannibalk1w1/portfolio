@@ -1,6 +1,12 @@
 import type { Portfolio, Section } from '../../renderer/src/types/portfolio'
 import { escHtml } from './utils'
 
+function truncate(text: string, max: number): string {
+  const t = text.trim()
+  if (t.length <= max) return t
+  return t.slice(0, max - 1).trimEnd() + '…'
+}
+
 function buildNavLinks(sections: Section[]): string {
   return sections
     .filter(s => s.visible)
@@ -34,6 +40,13 @@ export function wrapTemplate(portfolio: Portfolio, body: string): string {
     ? `<meta property="og:image" content="assets/${escHtml(avatarFilename)}">
   <meta name="twitter:image" content="assets/${escHtml(avatarFilename)}">`
     : ''
+  const ogDescription = bio.trim()
+    ? (() => {
+        const desc = escHtml(truncate(bio, 200))
+        return `<meta property="og:description" content="${desc}">
+  <meta name="twitter:description" content="${desc}">`
+      })()
+    : ''
 
   const siteTitle = `${portfolio.name}'s Portfolio`
   const escSiteTitle = escHtml(siteTitle)
@@ -50,6 +63,7 @@ export function wrapTemplate(portfolio: Portfolio, body: string): string {
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="${escSiteTitle}">
   ${ogImage}
+  ${ogDescription}
   ${modelViewerScript}
   ${highlightLinks}
   <style>
