@@ -56,4 +56,14 @@ describe('buildSite', () => {
     const html = readFileSync(join(TMP, 'output', 'index.html'), 'utf-8')
     expect(html.trimStart()).toMatch(/^<!DOCTYPE html>/i)
   })
+
+  it('emits the always-on Open Graph and Twitter meta tags', async () => {
+    await buildSite(TMP, basicPortfolio)
+    const html = readFileSync(join(TMP, 'output', 'index.html'), 'utf-8')
+    expect(html).toContain(`<meta property="og:title" content="Alice&#39;s Portfolio">`)
+    expect(html).toContain(`<meta property="og:type" content="profile">`)
+    expect(html).toContain(`<meta property="og:site_name" content="Alice&#39;s Portfolio">`)
+    expect(html).toContain(`<meta name="twitter:card" content="summary_large_image">`)
+    expect(html).toContain(`<meta name="twitter:title" content="Alice&#39;s Portfolio">`)
+  })
 })

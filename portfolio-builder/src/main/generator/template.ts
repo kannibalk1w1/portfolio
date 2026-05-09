@@ -30,12 +30,20 @@ export function wrapTemplate(portfolio: Portfolio, body: string): string {
   const aboutSection = portfolio.sections.find(s => s.type === 'about')
   const bio = aboutSection?.type === 'about' ? aboutSection.bio : ''
 
+  const siteTitle = `${portfolio.name}'s Portfolio`
+  const escSiteTitle = escHtml(siteTitle)
+
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>${escHtml(portfolio.name)}'s Portfolio</title>
+  <title>${escSiteTitle}</title>
+  <meta property="og:title" content="${escSiteTitle}">
+  <meta property="og:type" content="profile">
+  <meta property="og:site_name" content="${escSiteTitle}">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="${escSiteTitle}">
   ${modelViewerScript}
   ${highlightLinks}
   <style>
