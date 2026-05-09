@@ -1,8 +1,5 @@
 import type { ModelsSection } from '../../../renderer/src/types/portfolio'
-
-function escHtml(s: string): string {
-  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')
-}
+import { escHtml } from '../utils'
 
 export function renderModels(section: ModelsSection): string {
   const items = section.items

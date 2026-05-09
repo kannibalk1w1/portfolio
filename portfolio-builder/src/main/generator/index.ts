@@ -1,4 +1,5 @@
 import { cp, mkdir, writeFile } from 'fs/promises'
+import { existsSync } from 'fs'
 import { join } from 'path'
 import type { Portfolio, Section } from '../../renderer/src/types/portfolio'
 import { wrapTemplate } from './template'
@@ -25,17 +26,16 @@ function renderSection(section: Section): string {
 // Vendor scripts ship with the Electron app in the renderer assets.
 // At build time, electron-vite copies src/renderer/assets/ into the output bundle.
 // We resolve relative to this file's location at runtime.
-function getVendorSourceDir(): string {
-  // In development: <project>/src/renderer/assets/vendor
-  // In production (ASAR): resolved via app.getAppPath()
-  // Use __dirname which points to the compiled main bundle location
-  // and walk up to find the renderer assets
+function getVendorSourceDir(): string | null {
   const candidates = [
-    join(__dirname, '..', '..', 'renderer', 'assets', 'vendor'),           // dev
-    join(__dirname, '..', 'renderer', 'assets', 'vendor'),                  // alt dev
-    join(process.resourcesPath ?? '', 'app', 'renderer', 'assets', 'vendor'), // packaged
+    join(__dirname, '..', '..', 'renderer', 'assets', 'vendor'),
+    join(__dirname, '..', 'renderer', 'assets', 'vendor'),
+    join(process.resourcesPath ?? '', 'app', 'renderer', 'assets', 'vendor'),
   ]
-  return candidates[0] // buildSite tries to cp from here; failure is caught below
+  for (const dir of candidates) {
+    if (existsSync(dir)) return dir
+  }
+  return null
 }
 
 export async function buildSite(portfolioDir: string, portfolio: Portfolio): Promise<void> {
@@ -49,9 +49,14 @@ export async function buildSite(portfolioDir: string, portfolio: Portfolio): Pro
   // Copy vendor scripts if available
   const vendorDest = join(outputAssets, 'vendor')
   await mkdir(vendorDest, { recursive: true })
-  await cp(getVendorSourceDir(), vendorDest, { recursive: true }).catch(() => {
-    // vendor scripts not available (e.g. test environment) — skip silently
-  })
+  const vendorSrc = getVendorSourceDir()
+  if (vendorSrc) {
+    await cp(vendorSrc, vendorDest, { recursive: true }).catch(err => {
+      console.warn('Warning: failed to copy vendor scripts:', err.message)
+    })
+  } else {
+    console.warn('Warning: vendor scripts directory not found — model-viewer and highlight.js will not be available in the exported site')
+  }
 
   // Render sections
   const body = portfolio.sections

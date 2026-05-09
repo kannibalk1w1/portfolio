@@ -1,12 +1,5 @@
 import type { AboutSection } from '../../../renderer/src/types/portfolio'
-
-function escHtml(s: string): string {
-  return s
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-}
+import { escHtml } from '../utils'
 
 export function renderAbout(section: AboutSection): string {
   const avatar = section.avatarFilename
