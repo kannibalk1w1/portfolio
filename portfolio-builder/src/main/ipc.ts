@@ -78,7 +78,7 @@ export function registerIpcHandlers(): void {
         res.writeHead(404); res.end('Not found'); return
       }
       const mime = MIME[extname(filePath).toLowerCase()] ?? 'application/octet-stream'
-      res.writeHead(200, { 'Content-Type': mime, 'Cross-Origin-Embedder-Policy': 'require-corp', 'Cross-Origin-Opener-Policy': 'same-origin' })
+      res.writeHead(200, { 'Content-Type': mime })
       createReadStream(filePath).pipe(res)
     })
 

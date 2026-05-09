@@ -2,8 +2,6 @@ import './assets/main.css'
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App'
-// Register <model-viewer> custom element globally
-import '@google/model-viewer'
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
   <React.StrictMode>
