@@ -14,10 +14,13 @@ export function SnapshotPanel({ onClose }: Props) {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    if (!state.portfolioDir) return
+    if (!state.portfolioDir) {
+      setLoading(false)
+      return
+    }
     window.api.listSnapshots(state.portfolioDir)
       .then(snaps => { setSnapshots(snaps); setLoading(false) })
-      .catch(err => { setError(err.message); setLoading(false) })
+      .catch(err => { setError(err instanceof Error ? err.message : 'Failed to load history'); setLoading(false) })
   }, [state.portfolioDir])
 
   async function handleRestore(id: string) {
@@ -27,6 +30,7 @@ export function SnapshotPanel({ onClose }: Props) {
     try {
       await window.api.restoreSnapshot(state.portfolioDir!, id)
       await openPortfolio(state.openPortfolioSlug!)
+      setRestoring(null)
       onClose()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Restore failed')
@@ -60,7 +64,7 @@ export function SnapshotPanel({ onClose }: Props) {
               <button
                 onClick={() => handleRestore(snap.id)}
                 disabled={restoring === snap.id}
-                style={{ fontSize: 12, padding: '4px 10px', border: '1px solid #ddd', borderRadius: 4, cursor: restoring ? 'wait' : 'pointer', background: 'none' }}
+                style={{ fontSize: 12, padding: '4px 10px', border: '1px solid #ddd', borderRadius: 4, cursor: restoring === snap.id ? 'wait' : 'pointer', background: 'none' }}
               >
                 {restoring === snap.id ? 'Restoring…' : 'Restore'}
               </button>
