@@ -1,6 +1,9 @@
 import { app, dialog, ipcMain, shell } from 'electron'
-import { join } from 'path'
+import { extname, join, join as pathJoin } from 'path'
 import { mkdir, readFile, writeFile } from 'fs/promises'
+import { createReadStream, existsSync } from 'fs'
+import { createServer } from 'http'
+import type { AddressInfo } from 'net'
 import { listCyps, readPortfolio, writePortfolio, deletePortfolio } from './portfolio/store'
 import { createSnapshot, listSnapshots, restoreSnapshot } from './portfolio/snapshot'
 import { importMediaFiles, importGodotFolder } from './media/importer'
@@ -53,10 +56,38 @@ export function registerIpcHandlers(): void {
   ipcMain.handle('dialog:openFolder', () =>
     dialog.showOpenDialog({ properties: ['openDirectory'] }).then(r => r.filePaths[0] ?? null))
 
+  const MIME: Record<string, string> = {
+    '.html': 'text/html', '.css': 'text/css', '.js': 'application/javascript',
+    '.mjs': 'application/javascript', '.json': 'application/json',
+    '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.png': 'image/png',
+    '.gif': 'image/gif', '.webp': 'image/webp', '.svg': 'image/svg+xml',
+    '.mp4': 'video/mp4', '.webm': 'video/webm',
+    '.glb': 'model/gltf-binary', '.gltf': 'model/gltf+json',
+    '.wasm': 'application/wasm',
+  }
+
   ipcMain.handle('site:build', (_event, dir: string, p: Portfolio) => buildSite(dir, p))
   ipcMain.handle('site:preview', async (_event, dir: string, p: Portfolio) => {
     await buildSite(dir, p)
-    await shell.openPath(join(dir, 'output', 'index.html'))
+    const outputDir = pathJoin(dir, 'output')
+
+    const server = createServer((req, res) => {
+      const safePath = (req.url ?? '/').split('?')[0]
+      const filePath = pathJoin(outputDir, safePath === '/' ? 'index.html' : safePath)
+      if (!existsSync(filePath)) {
+        res.writeHead(404); res.end('Not found'); return
+      }
+      const mime = MIME[extname(filePath).toLowerCase()] ?? 'application/octet-stream'
+      res.writeHead(200, { 'Content-Type': mime, 'Cross-Origin-Embedder-Policy': 'require-corp', 'Cross-Origin-Opener-Policy': 'same-origin' })
+      createReadStream(filePath).pipe(res)
+    })
+
+    server.listen(0, '127.0.0.1', () => {
+      const port = (server.address() as AddressInfo).port
+      shell.openExternal(`http://127.0.0.1:${port}`)
+      // Auto-close server after 60 minutes
+      setTimeout(() => server.close(), 60 * 60 * 1000)
+    })
   })
   ipcMain.handle('site:export', async (_event, dir: string, p: Portfolio) => {
     await buildSite(dir, p)

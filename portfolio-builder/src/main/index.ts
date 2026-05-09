@@ -1,5 +1,6 @@
-import { app, shell, BrowserWindow } from 'electron'
+import { app, shell, BrowserWindow, protocol, net } from 'electron'
 import { join } from 'path'
+import { pathToFileURL } from 'url'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import { registerIpcHandlers } from './ipc'
 
@@ -38,6 +39,13 @@ function createWindow(): void {
   }
 }
 
+protocol.registerSchemesAsPrivileged([
+  {
+    scheme: 'asset',
+    privileges: { secure: true, standard: true, supportFetchAPI: true, corsEnabled: true }
+  }
+])
+
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
@@ -53,6 +61,15 @@ app.whenReady().then(() => {
   })
 
   registerIpcHandlers()
+
+  // Serve local portfolio assets via asset:// protocol (works in both dev and prod)
+  protocol.handle('asset', (request) => {
+    const urlPath = decodeURIComponent(new URL(request.url).pathname)
+    // On Windows: /C:/Users/... → strip leading slash before drive letter
+    const fsPath = /^\/[A-Za-z]:[\\/]/.test(urlPath) ? urlPath.slice(1) : urlPath
+    return net.fetch(pathToFileURL(fsPath).toString())
+  })
+
   createWindow()
 
   app.on('activate', function () {
