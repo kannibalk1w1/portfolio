@@ -1,10 +1,17 @@
-import { cp, mkdir, readdir, rm } from 'fs/promises'
+import { cp, mkdir, readdir, rm, access } from 'fs/promises'
 import { join } from 'path'
 import type { SnapshotMeta } from '../../renderer/src/types/portfolio'
 
 function timestampId(): string {
   // Format: YYYY-MM-DDTHH-MM-SS-mmm  (colons, dots replaced so it's a valid folder name on Windows)
   return new Date().toISOString().replace(/[:.]/g, '-').slice(0, 23)
+}
+
+function idToIso(id: string): string {
+  const [datePart, timePart] = id.split('T')
+  const parts = timePart.split('-')
+  // parts: [hh, mm, ss, mmm]
+  return `${datePart}T${parts[0]}:${parts[1]}:${parts[2]}.${parts[3] ?? '000'}Z`
 }
 
 export async function createSnapshot(portfolioDir: string): Promise<void> {
@@ -24,27 +31,30 @@ export async function listSnapshots(portfolioDir: string): Promise<SnapshotMeta[
     return []
   }
   return entries
-    .filter(e => /^\d{4}-\d{2}-\d{2}T/.test(e))
-    .map(id => ({ id, createdAt: id }))
+    .filter(e => /^\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}-\d{3}$/.test(e))
+    .map(id => ({ id, createdAt: idToIso(id) }))
     .sort((a, b) => b.id.localeCompare(a.id))
 }
 
 export async function restoreSnapshot(portfolioDir: string, snapshotId: string): Promise<void> {
   const src = join(portfolioDir, 'snapshots', snapshotId)
+  // Validate snapshot exists before touching portfolio.json
+  await access(src).catch(() => {
+    throw new Error(`Snapshot not found: ${snapshotId}`)
+  })
   await cp(join(src, 'portfolio.json'), join(portfolioDir, 'portfolio.json'))
   await cp(join(src, 'assets'), join(portfolioDir, 'assets'), { recursive: true }).catch(() => {})
 }
 
 export async function pruneSnapshots(portfolioDir: string, maxAgeDays: number): Promise<void> {
   const snaps = await listSnapshots(portfolioDir)
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  const cutoff = today.getTime() - maxAgeDays * 86_400_000
+  // Cutoff: snapshots whose age (in whole seconds) exceeds maxAgeDays are removed.
+  // Truncate to the nearest second so a snapshot created within the current second
+  // is never pruned even when maxAgeDays=0.
+  const cutoffSec = Math.floor(Date.now() / 1000) - maxAgeDays * 86_400
   for (const snap of snaps) {
-    // id format: 2026-05-08T14-32-00 — extract date part
-    const datePart = snap.id.slice(0, 10) // "2026-05-08"
-    const snapDate = new Date(datePart).getTime()
-    if (snapDate < cutoff) {
+    const snapSec = Math.floor(new Date(snap.createdAt).getTime() / 1000)
+    if (snapSec < cutoffSec) {
       await rm(join(portfolioDir, 'snapshots', snap.id), { recursive: true, force: true })
     }
   }
