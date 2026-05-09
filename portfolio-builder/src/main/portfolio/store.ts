@@ -47,3 +47,20 @@ export async function writePortfolio(root: string, portfolio: Portfolio): Promis
 export async function deletePortfolio(root: string, slug: string): Promise<void> {
   await rm(join(root, slug), { recursive: true, force: true })
 }
+
+export function stripLegacyFtpPassword(
+  portfolio: Portfolio,
+): { portfolio: Portfolio; password: string | null } {
+  const ftp = portfolio.publish?.ftp
+  const password = ftp?.password
+  if (!password) {
+    return { portfolio, password: null }
+  }
+  // Build a copy of the FTP config without the password field
+  const cleanFtp = { ...ftp }
+  delete cleanFtp.password
+  return {
+    portfolio: { ...portfolio, publish: { ...portfolio.publish, ftp: cleanFtp } },
+    password,
+  }
+}

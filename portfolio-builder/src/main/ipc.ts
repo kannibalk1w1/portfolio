@@ -4,11 +4,24 @@ import { mkdir, readFile, writeFile } from 'fs/promises'
 import { createReadStream, existsSync } from 'fs'
 import { createServer } from 'http'
 import type { AddressInfo } from 'net'
-import { listCyps, readPortfolio, writePortfolio, deletePortfolio } from './portfolio/store'
+import { basename } from 'path'
+import {
+  listCyps,
+  readPortfolio,
+  writePortfolio,
+  deletePortfolio,
+  stripLegacyFtpPassword,
+} from './portfolio/store'
 import { createSnapshot, listSnapshots, restoreSnapshot } from './portfolio/snapshot'
 import { importMediaFiles, importGodotFolder } from './media/importer'
 import { buildSite } from './generator/index'
 import { uploadFtp } from './publish/ftp'
+import {
+  setFtpPassword,
+  getFtpPassword,
+  hasFtpPassword,
+  deleteFtpPassword,
+} from './publish/credentials'
 import type { Portfolio, FtpConfig } from '../renderer/src/types/portfolio'
 
 const configPath = join(app.getPath('userData'), 'config.json')
@@ -38,9 +51,29 @@ export function registerIpcHandlers(): void {
   })
 
   ipcMain.handle('portfolio:list', (_event, root: string) => listCyps(root))
-  ipcMain.handle('portfolio:read', (_event, root: string, slug: string) => readPortfolio(root, slug))
-  ipcMain.handle('portfolio:write', (_event, root: string, p: Portfolio) => writePortfolio(root, p))
-  ipcMain.handle('portfolio:delete', (_event, root: string, slug: string) => deletePortfolio(root, slug))
+  ipcMain.handle('portfolio:read', async (_event, root: string, slug: string) => {
+    const p = await readPortfolio(root, slug)
+    // One-time migration: if the JSON contains a plaintext FTP password, move
+    // it into encrypted secure storage and persist the cleaned JSON back.
+    const { portfolio, password } = stripLegacyFtpPassword(p)
+    if (password !== null) {
+      await setFtpPassword(slug, password)
+      await writePortfolio(root, portfolio)
+    }
+    return portfolio
+  })
+  ipcMain.handle('portfolio:write', (_event, root: string, p: Portfolio) => {
+    // Defence in depth: never let a password slip into portfolio.json from any
+    // caller. If one is present, store it securely and strip before writing.
+    const { portfolio, password } = stripLegacyFtpPassword(p)
+    const tasks: Promise<unknown>[] = [writePortfolio(root, portfolio)]
+    if (password !== null) tasks.push(setFtpPassword(portfolio.slug, password))
+    return Promise.all(tasks).then(() => undefined)
+  })
+  ipcMain.handle('portfolio:delete', async (_event, root: string, slug: string) => {
+    await deletePortfolio(root, slug)
+    await deleteFtpPassword(slug)
+  })
 
   ipcMain.handle('snapshot:create', (_event, dir: string) => createSnapshot(dir))
   ipcMain.handle('snapshot:list', (_event, dir: string) => listSnapshots(dir))
@@ -94,5 +127,24 @@ export function registerIpcHandlers(): void {
     await shell.openPath(join(dir, 'output'))
   })
 
-  ipcMain.handle('publish:ftp', (_event, dir: string, config: FtpConfig) => uploadFtp(dir, config))
+  ipcMain.handle('publish:ftp', async (_event, dir: string, config: FtpConfig) => {
+    const slug = basename(dir)
+    const password = await getFtpPassword(slug)
+    if (!password) {
+      throw new Error(
+        'No FTP password is stored for this portfolio. Set one before publishing.',
+      )
+    }
+    // Strip any password the renderer may have sent and use the secure one.
+    const { password: _drop, ...rest } = config
+    void _drop
+    await uploadFtp(dir, { ...rest, password })
+  })
+
+  // Per-portfolio FTP credential management
+  ipcMain.handle('credentials:setFtpPassword', (_event, slug: string, password: string) =>
+    setFtpPassword(slug, password))
+  ipcMain.handle('credentials:hasFtpPassword', (_event, slug: string) => hasFtpPassword(slug))
+  ipcMain.handle('credentials:clearFtpPassword', (_event, slug: string) =>
+    deleteFtpPassword(slug))
 }

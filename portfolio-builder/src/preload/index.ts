@@ -44,6 +44,15 @@ contextBridge.exposeInMainWorld('api', {
   publishFtp: (portfolioDir: string, config: FtpConfig): Promise<void> =>
     ipcRenderer.invoke('publish:ftp', portfolioDir, config),
 
+  // FTP credential storage (encrypted via Electron safeStorage; never written
+  // to portfolio.json)
+  setFtpPassword: (slug: string, password: string): Promise<void> =>
+    ipcRenderer.invoke('credentials:setFtpPassword', slug, password),
+  hasFtpPassword: (slug: string): Promise<boolean> =>
+    ipcRenderer.invoke('credentials:hasFtpPassword', slug),
+  clearFtpPassword: (slug: string): Promise<void> =>
+    ipcRenderer.invoke('credentials:clearFtpPassword', slug),
+
   // Config
   getPortfoliosRoot: (): Promise<string> =>
     ipcRenderer.invoke('config:getRoot'),
