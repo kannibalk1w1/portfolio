@@ -66,4 +66,25 @@ describe('buildSite', () => {
     expect(html).toContain(`<meta name="twitter:card" content="summary_large_image">`)
     expect(html).toContain(`<meta name="twitter:title" content="Alice&#39;s Portfolio">`)
   })
+
+  it('emits og:image and twitter:image when the About section has an avatar', async () => {
+    const portfolio: Portfolio = {
+      ...basicPortfolio,
+      sections: [
+        { id: 'about', type: 'about', title: 'About Me', visible: true, bio: 'Hello world', avatarFilename: 'avatar.jpg' },
+        { id: 'gallery-1', type: 'gallery', title: 'Gallery', visible: true, items: [] },
+      ],
+    }
+    await buildSite(TMP, portfolio)
+    const html = readFileSync(join(TMP, 'output', 'index.html'), 'utf-8')
+    expect(html).toContain(`<meta property="og:image" content="assets/avatar.jpg">`)
+    expect(html).toContain(`<meta name="twitter:image" content="assets/avatar.jpg">`)
+  })
+
+  it('omits og:image and twitter:image when no avatar is set', async () => {
+    await buildSite(TMP, basicPortfolio)
+    const html = readFileSync(join(TMP, 'output', 'index.html'), 'utf-8')
+    expect(html).not.toContain('og:image')
+    expect(html).not.toContain('twitter:image')
+  })
 })

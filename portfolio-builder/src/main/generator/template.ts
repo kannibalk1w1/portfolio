@@ -29,6 +29,11 @@ export function wrapTemplate(portfolio: Portfolio, body: string): string {
   // Get CYP name from About section if available
   const aboutSection = portfolio.sections.find(s => s.type === 'about')
   const bio = aboutSection?.type === 'about' ? aboutSection.bio : ''
+  const avatarFilename = aboutSection?.type === 'about' ? aboutSection.avatarFilename : undefined
+  const ogImage = avatarFilename
+    ? `<meta property="og:image" content="assets/${escHtml(avatarFilename)}">
+  <meta name="twitter:image" content="assets/${escHtml(avatarFilename)}">`
+    : ''
 
   const siteTitle = `${portfolio.name}'s Portfolio`
   const escSiteTitle = escHtml(siteTitle)
@@ -44,6 +49,7 @@ export function wrapTemplate(portfolio: Portfolio, body: string): string {
   <meta property="og:site_name" content="${escSiteTitle}">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="${escSiteTitle}">
+  ${ogImage}
   ${modelViewerScript}
   ${highlightLinks}
   <style>
