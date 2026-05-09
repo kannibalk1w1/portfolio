@@ -21,9 +21,11 @@ export interface GameItem {
   entryFile: string      // e.g. "index.html" inside the folder
 }
 
+export type CodeLanguage = 'javascript' | 'typescript' | 'python' | 'gdscript' | 'html' | 'css' | 'rust' | 'c' | 'cpp' | 'json' | 'bash' | 'other'
+
 export interface CodeItem {
   id: string
-  language: string
+  language: CodeLanguage
   label?: string
   code: string
 }
@@ -91,9 +93,7 @@ export interface FtpConfig {
 export interface Portfolio {
   schemaVersion: 1
   name: string
-  slug: string           // sanitised folder name
-  bio: string
-  avatarFilename?: string
+  slug: string
   sections: Section[]
   publish: {
     ftp?: FtpConfig
