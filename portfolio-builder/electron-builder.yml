@@ -1,24 +1,28 @@
-appId: com.cyp.portfolio-builder
+appId: com.playerready.cyp-portfolio-builder
 productName: CYP Portfolio Builder
+copyright: Player Ready
+
 directories:
-  buildResources: build
-files:
-  - '!**/.vscode/*'
-  - '!src/*'
-  - '!electron.vite.config.{js,ts,mjs,cjs}'
-  - '!{.eslintcache,eslint.config.mjs,.prettierignore,.prettierrc.yaml,dev-app-update.yml,CHANGELOG.md,README.md}'
-  - '!{.env,.env.*,.npmrc,pnpm-lock.yaml}'
-  - '!{tsconfig.json,tsconfig.node.json,tsconfig.web.json}'
-asarUnpack:
-  - 'resources/**'
+  output: dist-installer
+  buildResources: resources
+
 win:
-  executableName: portfolio-builder
+  target:
+    - target: nsis
+      arch:
+        - x64
+  icon: resources/icon.ico
+
 nsis:
-  artifactName: ${name}-${version}-setup.${ext}
-  shortcutName: ${productName}
-  uninstallDisplayName: ${productName}
-  createDesktopShortcut: always
-npmRebuild: false
-publish:
-  provider: generic
-  url: https://example.com/auto-updates
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: CYP Portfolio Builder
+
+files:
+  - "!**/.git/**"
+  - "!**/node_modules/.cache/**"
+  - "!tests/**"
+  - "!docs/**"
+  - "!.worktrees/**"
