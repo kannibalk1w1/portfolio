@@ -1,6 +1,7 @@
 import { useState, useEffect, lazy, Suspense } from 'react'
 import { TopBar } from '../components/editor/TopBar'
 import { Sidebar } from '../components/editor/Sidebar'
+import { Toaster, useToaster } from '../components/shared/Toaster'
 import { usePortfolio } from '../store/PortfolioContext'
 import type { SectionType } from '../types/portfolio'
 
@@ -17,6 +18,7 @@ const SECTION_COMPONENTS: Record<SectionType, React.LazyExoticComponent<React.Co
 
 export function Editor() {
   const { state } = usePortfolio()
+  const { toasts, notify } = useToaster()
   const [activeSectionId, setActiveSectionId] = useState<string | null>(
     state.portfolio?.sections[0]?.id ?? null
   )
@@ -33,9 +35,9 @@ export function Editor() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden' }}>
-      <TopBar />
+      <TopBar notify={notify} />
       <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
-        <Sidebar activeSectionId={activeSectionId} onSelectSection={setActiveSectionId} />
+        <Sidebar activeSectionId={activeSectionId} onSelectSection={setActiveSectionId} notify={notify} />
         <div style={{ flex: 1, overflowY: 'auto', padding: 32 }}>
           <Suspense fallback={<div style={{ color: '#aaa' }}>Loading…</div>}>
             {SectionComponent && activeSection
@@ -45,6 +47,7 @@ export function Editor() {
           </Suspense>
         </div>
       </div>
+      <Toaster toasts={toasts} />
     </div>
   )
 }

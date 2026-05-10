@@ -1,7 +1,27 @@
+import { useState } from 'react'
 import { usePortfolio } from '../../store/PortfolioContext'
+import type { NotifyFn } from '../shared/Toaster'
 
-export function TopBar() {
+interface Props {
+  notify: NotifyFn
+}
+
+export function TopBar({ notify }: Props) {
   const { state, closePortfolio, savePortfolio } = usePortfolio()
+  const [saving, setSaving] = useState(false)
+
+  async function handleSave() {
+    if (saving) return
+    setSaving(true)
+    try {
+      await savePortfolio()
+    } catch (err) {
+      notify(err instanceof Error ? err.message : 'Save failed', 'error')
+    } finally {
+      setSaving(false)
+    }
+  }
+
   return (
     <div style={{
       display: 'flex',
@@ -25,10 +45,11 @@ export function TopBar() {
         )}
       </div>
       <button
-        onClick={() => savePortfolio()}
-        style={{ padding: '6px 16px', background: '#222', color: 'white', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 13 }}
+        onClick={handleSave}
+        disabled={saving}
+        style={{ padding: '6px 16px', background: '#222', color: 'white', border: 'none', borderRadius: 6, cursor: saving ? 'wait' : 'pointer', fontSize: 13, opacity: saving ? 0.7 : 1 }}
       >
-        Save
+        {saving ? 'Saving…' : 'Save'}
       </button>
     </div>
   )

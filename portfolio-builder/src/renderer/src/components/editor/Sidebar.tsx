@@ -5,6 +5,7 @@ import { usePortfolio } from '../../store/PortfolioContext'
 import { SidebarItem } from './SidebarItem'
 import { SnapshotPanel } from '../shared/SnapshotPanel'
 import { FtpModal } from '../shared/FtpModal'
+import type { NotifyFn } from '../shared/Toaster'
 import type { Section, SectionType, AboutSection, GallerySection, VideosSection, ModelsSection, GamesSection, CodeSection, CustomSection, ProjectSection } from '../../types/portfolio'
 
 const SECTION_DEFAULTS: {
@@ -36,13 +37,27 @@ const SECTION_LABELS: Record<SectionType, string> = {
 interface Props {
   activeSectionId: string | null
   onSelectSection: (id: string) => void
+  notify: NotifyFn
 }
 
-export function Sidebar({ activeSectionId, onSelectSection }: Props) {
+export function Sidebar({ activeSectionId, onSelectSection, notify }: Props) {
   const { state, updatePortfolio } = usePortfolio()
   const [adding, setAdding] = useState(false)
   const [showSnapshots, setShowSnapshots] = useState(false)
   const [showFtp, setShowFtp] = useState(false)
+  const [busy, setBusy] = useState<string | null>(null)  // tracks which button is in-flight
+
+  async function run(label: string, fn: () => Promise<void>) {
+    if (busy) return
+    setBusy(label)
+    try {
+      await fn()
+    } catch (err) {
+      notify(err instanceof Error ? err.message : `${label} failed`, 'error')
+    } finally {
+      setBusy(null)
+    }
+  }
   const portfolio = state.portfolio!
 
   function handleDragEnd(event: DragEndEvent) {
@@ -134,22 +149,25 @@ export function Sidebar({ activeSectionId, onSelectSection }: Props) {
           History
         </button>
         <button
-          onClick={() => state.portfolioDir && window.api.previewSite(state.portfolioDir, portfolio)}
-          style={{ padding: '7px', border: '1px solid #e0e0e0', borderRadius: 6, cursor: 'pointer', fontSize: 12, background: 'white' }}
+          onClick={() => run('Preview', () => window.api.previewSite(state.portfolioDir!, portfolio))}
+          disabled={!state.portfolioDir || busy !== null}
+          style={{ padding: '7px', border: '1px solid #e0e0e0', borderRadius: 6, cursor: busy ? 'wait' : 'pointer', fontSize: 12, background: 'white', opacity: busy === 'Preview' ? 0.6 : 1 }}
         >
-          Preview
+          {busy === 'Preview' ? 'Opening…' : 'Preview'}
         </button>
         <button
-          onClick={() => state.portfolioDir && window.api.exportSite(state.portfolioDir, portfolio)}
-          style={{ padding: '7px', border: '1px solid #e0e0e0', borderRadius: 6, cursor: 'pointer', fontSize: 12, background: 'white' }}
+          onClick={() => run('Export', () => window.api.exportSite(state.portfolioDir!, portfolio))}
+          disabled={!state.portfolioDir || busy !== null}
+          style={{ padding: '7px', border: '1px solid #e0e0e0', borderRadius: 6, cursor: busy ? 'wait' : 'pointer', fontSize: 12, background: 'white', opacity: busy === 'Export' ? 0.6 : 1 }}
         >
-          Export
+          {busy === 'Export' ? 'Exporting…' : 'Export'}
         </button>
         <button
-          onClick={() => state.portfolioDir && window.api.offlineExport(state.portfolioDir, portfolio)}
-          style={{ padding: '7px', border: '1px solid #e0e0e0', borderRadius: 6, cursor: 'pointer', fontSize: 12, background: 'white' }}
+          onClick={() => run('Offline', () => window.api.offlineExport(state.portfolioDir!, portfolio))}
+          disabled={!state.portfolioDir || busy !== null}
+          style={{ padding: '7px', border: '1px solid #e0e0e0', borderRadius: 6, cursor: busy ? 'wait' : 'pointer', fontSize: 12, background: 'white', opacity: busy === 'Offline' ? 0.6 : 1 }}
         >
-          Offline
+          {busy === 'Offline' ? 'Exporting…' : 'Offline'}
         </button>
         <button
           onClick={() => setShowFtp(true)}
