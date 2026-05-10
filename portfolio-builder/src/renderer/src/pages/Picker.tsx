@@ -47,9 +47,12 @@ function friendlyDate(iso: string): string {
 // Sub-components
 // ---------------------------------------------------------------------------
 
-function CypCard({ cyp, onOpen, onDelete }: { cyp: CypMeta; onOpen: () => void; onDelete: () => void }) {
+function CypCard({ cyp, portfoliosRoot, onOpen, onDelete }: { cyp: CypMeta; portfoliosRoot: string; onOpen: () => void; onDelete: () => void }) {
   const [hovered, setHovered] = useState(false)
   const colour = avatarColour(cyp.name)
+  const thumbSrc = cyp.thumbnailFilename
+    ? `asset://localhost/${portfoliosRoot.replace(/\\/g, '/')}/${cyp.slug}/assets/${cyp.thumbnailFilename}`
+    : null
 
   return (
     <div
@@ -68,16 +71,25 @@ function CypCard({ cyp, onOpen, onDelete }: { cyp: CypMeta; onOpen: () => void; 
       }}
       onClick={onOpen}
     >
-      {/* Initials avatar */}
-      <div style={{
-        width: 42, height: 42, borderRadius: '50%',
-        background: colour, color: 'white',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        fontWeight: 700, fontSize: 15, flexShrink: 0,
-        letterSpacing: '0.03em',
-      }}>
-        {getInitials(cyp.name)}
-      </div>
+      {/* Thumbnail or initials avatar */}
+      {thumbSrc ? (
+        <img
+          src={thumbSrc}
+          alt={cyp.name}
+          style={{ width: 42, height: 42, borderRadius: 8, objectFit: 'cover', flexShrink: 0, border: '1px solid #e8eaf0' }}
+          onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
+        />
+      ) : (
+        <div style={{
+          width: 42, height: 42, borderRadius: '50%',
+          background: colour, color: 'white',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontWeight: 700, fontSize: 15, flexShrink: 0,
+          letterSpacing: '0.03em',
+        }}>
+          {getInitials(cyp.name)}
+        </div>
+      )}
 
       {/* Name + date */}
       <div style={{ flex: 1, minWidth: 0 }}>
@@ -267,6 +279,7 @@ export function Picker() {
                 <CypCard
                   key={cyp.slug}
                   cyp={cyp}
+                  portfoliosRoot={state.portfoliosRoot}
                   onOpen={() => openPortfolio(cyp.slug)}
                   onDelete={() => handleDelete(cyp.slug, cyp.name)}
                 />

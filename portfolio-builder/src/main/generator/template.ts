@@ -283,6 +283,23 @@ export function wrapTemplate(
     .tl-title { font-size: 16px; font-weight: 600; color: var(--dark-2); margin-bottom: 4px; }
     .tl-desc { font-size: 14px; color: var(--muted); line-height: 1.6; }
 
+    /* ── Stats ── */
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 16px; }
+    .stat-card  { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px 16px; text-align: center; }
+    .stat-value { font-size: 36px; font-weight: 800; color: var(--accent); line-height: 1; margin-bottom: 8px; }
+    .stat-label { font-size: 13px; color: var(--muted); font-weight: 500; }
+
+    /* ── Buttons / CTA ── */
+    .cta-row { display: flex; flex-wrap: wrap; gap: 12px; }
+    .cta-btn  { display: inline-block; padding: 12px 24px; border-radius: 10px; text-decoration: none; font-size: 15px; font-weight: 600; transition: opacity .15s, transform .1s; }
+    .cta-btn:hover { opacity: .88; transform: translateY(-1px); }
+    .cta-primary   { background: var(--accent); color: #fff; }
+    .cta-secondary { background: #e0e7ff; color: var(--accent-d); }
+    .cta-outline   { background: transparent; color: var(--accent); border: 2px solid var(--accent); }
+
+    /* ── Two-column block (inside Content section) ── */
+    .cb-two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+
     /* ── Quote section ── */
     .quotes-list { display: flex; flex-direction: column; gap: 20px; }
     .quote-block { border-left: 4px solid var(--accent); padding: 12px 20px; background: var(--bg); border-radius: 0 8px 8px 0; margin: 0; }
@@ -331,6 +348,8 @@ export function wrapTemplate(
       .section { padding: 24px 20px; }
       nav { padding: 0 16px; gap: 12px; }
       .about-block { flex-direction: column; }
+      .cb-two-col { grid-template-columns: 1fr; }
+      .stats-grid { grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); }
     }
   </style>
 </head>

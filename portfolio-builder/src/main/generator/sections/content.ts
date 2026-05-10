@@ -42,6 +42,12 @@ function renderBlock(block: ContentBlock): string {
     case 'divider':
       return `<hr class="divider-${block.style ?? 'line'}">`
 
+    case 'two-column':
+      return `<div class="cb cb-two-col">
+        <div class="two-col-left">${sanitizeContent(block.leftHtml)}</div>
+        <div class="two-col-right">${sanitizeContent(block.rightHtml)}</div>
+      </div>`
+
     default:
       return ''
   }

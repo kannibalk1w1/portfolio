@@ -17,6 +17,8 @@ import { renderTimeline } from './sections/timeline'
 import { renderQuote } from './sections/quote'
 import { renderEmbed } from './sections/embed'
 import { renderContent } from './sections/content'
+import { renderStats } from './sections/stats'
+import { renderButtons } from './sections/buttons'
 
 function renderSection(section: Section): string {
   switch (section.type) {
@@ -34,6 +36,8 @@ function renderSection(section: Section): string {
     case 'quote':    return renderQuote(section)
     case 'embed':    return renderEmbed(section)
     case 'content':  return renderContent(section)
+    case 'stats':    return renderStats(section)
+    case 'buttons':  return renderButtons(section)
   }
 }
 

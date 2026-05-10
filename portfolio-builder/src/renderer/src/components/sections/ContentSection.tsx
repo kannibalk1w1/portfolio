@@ -13,7 +13,7 @@ import { usePortfolio } from '../../store/PortfolioContext'
 import type {
   ContentSection as ContentSectionType, ContentBlock, ContentTextBlock,
   ContentImageBlock, ContentVideoBlock, ContentQuoteBlock, ContentDividerBlock,
-  Section,
+  ContentTwoColumnBlock, Section,
 } from '../../types/portfolio'
 import { RichTextEditor } from '../shared/RichTextEditor'
 import { SectionTitle } from '../shared/SectionTitle'
@@ -27,21 +27,23 @@ import { parseVideoUrl } from '../../utils/parseVideoUrl'
 // ---------------------------------------------------------------------------
 
 const BLOCK_TYPES: { type: ContentBlock['type']; label: string; icon: string }[] = [
-  { type: 'text',    label: 'Text',    icon: '📝' },
-  { type: 'image',   label: 'Image',   icon: '🖼' },
-  { type: 'video',   label: 'Video',   icon: '🎬' },
-  { type: 'quote',   label: 'Quote',   icon: '❝' },
-  { type: 'divider', label: 'Divider', icon: '─' },
+  { type: 'text',       label: 'Text',       icon: '📝' },
+  { type: 'image',      label: 'Image',      icon: '🖼' },
+  { type: 'video',      label: 'Video',      icon: '🎬' },
+  { type: 'quote',      label: 'Quote',      icon: '❝' },
+  { type: 'two-column', label: 'Two columns', icon: '▣' },
+  { type: 'divider',    label: 'Divider',    icon: '─' },
 ]
 
 function newBlock(type: ContentBlock['type']): ContentBlock {
   const id = `cb-${Date.now()}-${Math.random().toString(36).slice(2, 5)}`
   switch (type) {
-    case 'text':    return { id, type, html: '' } as ContentTextBlock
-    case 'image':   return { id, type, filename: '' } as ContentImageBlock
-    case 'video':   return { id, type } as ContentVideoBlock
-    case 'quote':   return { id, type, quote: '' } as ContentQuoteBlock
-    case 'divider': return { id, type, style: 'line' } as ContentDividerBlock
+    case 'text':       return { id, type, html: '' } as ContentTextBlock
+    case 'image':      return { id, type, filename: '' } as ContentImageBlock
+    case 'video':      return { id, type } as ContentVideoBlock
+    case 'quote':      return { id, type, quote: '' } as ContentQuoteBlock
+    case 'divider':    return { id, type, style: 'line' } as ContentDividerBlock
+    case 'two-column': return { id, type, leftHtml: '', rightHtml: '' } as ContentTwoColumnBlock
   }
 }
 
@@ -154,6 +156,35 @@ function QuoteBlockEditor({ block, onChange }: { block: ContentQuoteBlock; onCha
   )
 }
 
+function TwoColumnBlockEditor({ block, onChange, onInsertImage }: { block: ContentTwoColumnBlock; onChange: (b: Partial<ContentTwoColumnBlock>) => void; onInsertImage?: () => Promise<string | null> }) {
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+      <div>
+        <div style={{ fontSize: 11, color: '#94a3b8', marginBottom: 4, fontWeight: 600 }}>LEFT COLUMN</div>
+        <RichTextEditor
+          key={`${block.id}-left`}
+          content={block.leftHtml}
+          onChange={leftHtml => onChange({ leftHtml })}
+          minHeight={120}
+          placeholder="Left column…"
+          onInsertImage={onInsertImage}
+        />
+      </div>
+      <div>
+        <div style={{ fontSize: 11, color: '#94a3b8', marginBottom: 4, fontWeight: 600 }}>RIGHT COLUMN</div>
+        <RichTextEditor
+          key={`${block.id}-right`}
+          content={block.rightHtml}
+          onChange={rightHtml => onChange({ rightHtml })}
+          minHeight={120}
+          placeholder="Right column…"
+          onInsertImage={onInsertImage}
+        />
+      </div>
+    </div>
+  )
+}
+
 function DividerBlockEditor({ block, onChange }: { block: ContentDividerBlock; onChange: (b: Partial<ContentDividerBlock>) => void }) {
   const styles: ContentDividerBlock['style'][] = ['line', 'dots', 'stars', 'thick']
   const previews: Record<string, string> = { line: '─────', dots: '· · ·', stars: '★  ★  ★', thick: '▬▬▬' }
@@ -174,7 +205,8 @@ function DividerBlockEditor({ block, onChange }: { block: ContentDividerBlock; o
 // ---------------------------------------------------------------------------
 
 const BLOCK_LABELS: Record<ContentBlock['type'], string> = {
-  text: '📝 Text', image: '🖼 Image', video: '🎬 Video', quote: '❝ Quote', divider: '─ Divider',
+  text: '📝 Text', image: '🖼 Image', video: '🎬 Video', quote: '❝ Quote',
+  divider: '─ Divider', 'two-column': '▣ Two columns',
 }
 
 function BlockCard({ block, onUpdate, onRemove, portfolioDir, onInsertImage }: {
@@ -203,11 +235,12 @@ function BlockCard({ block, onUpdate, onRemove, portfolioDir, onInsertImage }: {
       {/* Block editor */}
       {!collapsed && (
         <div style={{ padding: 14 }}>
-          {block.type === 'text'    && <TextBlockEditor    block={block} onChange={p => onUpdate(p)} onInsertImage={onInsertImage} />}
-          {block.type === 'image'   && <ImageBlockEditor   block={block} onChange={p => onUpdate(p)} portfolioDir={portfolioDir} />}
-          {block.type === 'video'   && <VideoBlockEditor   block={block} onChange={p => onUpdate(p)} portfolioDir={portfolioDir} />}
-          {block.type === 'quote'   && <QuoteBlockEditor   block={block} onChange={p => onUpdate(p)} />}
-          {block.type === 'divider' && <DividerBlockEditor block={block} onChange={p => onUpdate(p)} />}
+          {block.type === 'text'       && <TextBlockEditor       block={block} onChange={p => onUpdate(p)} onInsertImage={onInsertImage} />}
+          {block.type === 'image'      && <ImageBlockEditor      block={block} onChange={p => onUpdate(p)} portfolioDir={portfolioDir} />}
+          {block.type === 'video'      && <VideoBlockEditor      block={block} onChange={p => onUpdate(p)} portfolioDir={portfolioDir} />}
+          {block.type === 'quote'      && <QuoteBlockEditor      block={block} onChange={p => onUpdate(p)} />}
+          {block.type === 'two-column' && <TwoColumnBlockEditor  block={block} onChange={p => onUpdate(p)} onInsertImage={onInsertImage} />}
+          {block.type === 'divider'    && <DividerBlockEditor    block={block} onChange={p => onUpdate(p)} />}
         </div>
       )}
     </div>

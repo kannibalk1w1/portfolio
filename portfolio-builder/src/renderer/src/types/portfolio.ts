@@ -1,4 +1,4 @@
-export type SectionType = 'about' | 'gallery' | 'videos' | 'models' | 'games' | 'code' | 'custom' | 'project' | 'links' | 'skills' | 'timeline' | 'quote' | 'embed' | 'content'
+export type SectionType = 'about' | 'gallery' | 'videos' | 'models' | 'games' | 'code' | 'custom' | 'project' | 'links' | 'skills' | 'timeline' | 'quote' | 'embed' | 'content' | 'stats' | 'buttons'
 
 export type ThemeName = 'launchpad' | 'midnight' | 'warm' | 'minimal'
 
@@ -157,19 +157,55 @@ export interface EmbedSection extends BaseSection {
 // Content section (block editor)
 // ---------------------------------------------------------------------------
 
-export interface ContentTextBlock   { id: string; type: 'text';    html: string }
-export interface ContentImageBlock  { id: string; type: 'image';   filename: string; caption?: string; alt?: string }
-export interface ContentVideoBlock  { id: string; type: 'video';   filename?: string; embedUrl?: string; caption?: string }
-export interface ContentQuoteBlock  { id: string; type: 'quote';   quote: string; attribution?: string }
-export interface ContentDividerBlock { id: string; type: 'divider'; style?: 'line' | 'dots' | 'stars' | 'thick' }
+export interface ContentTextBlock      { id: string; type: 'text';       html: string }
+export interface ContentImageBlock     { id: string; type: 'image';      filename: string; caption?: string; alt?: string }
+export interface ContentVideoBlock     { id: string; type: 'video';      filename?: string; embedUrl?: string; caption?: string }
+export interface ContentQuoteBlock     { id: string; type: 'quote';      quote: string; attribution?: string }
+export interface ContentDividerBlock   { id: string; type: 'divider';    style?: 'line' | 'dots' | 'stars' | 'thick' }
+export interface ContentTwoColumnBlock { id: string; type: 'two-column'; leftHtml: string; rightHtml: string }
 
 export type ContentBlock =
   | ContentTextBlock | ContentImageBlock | ContentVideoBlock
-  | ContentQuoteBlock | ContentDividerBlock
+  | ContentQuoteBlock | ContentDividerBlock | ContentTwoColumnBlock
 
 export interface ContentSection extends BaseSection {
   type: 'content'
   blocks: ContentBlock[]
+}
+
+// ---------------------------------------------------------------------------
+// Stats section
+// ---------------------------------------------------------------------------
+
+export interface StatItem {
+  id: string
+  value: string   // e.g. "200+", "3"
+  label: string   // e.g. "Hours", "Projects completed"
+}
+
+export interface StatsSection extends BaseSection {
+  type: 'stats'
+  description?: string
+  items: StatItem[]
+}
+
+// ---------------------------------------------------------------------------
+// Buttons / CTA section
+// ---------------------------------------------------------------------------
+
+export type ButtonStyle = 'primary' | 'secondary' | 'outline'
+
+export interface ButtonItem {
+  id: string
+  label: string
+  url: string
+  style: ButtonStyle
+}
+
+export interface ButtonsSection extends BaseSection {
+  type: 'buttons'
+  description?: string
+  items: ButtonItem[]
 }
 
 // ---------------------------------------------------------------------------
@@ -191,6 +227,8 @@ export type Section =
   | QuoteSection
   | EmbedSection
   | ContentSection
+  | StatsSection
+  | ButtonsSection
 
 export interface FtpConfig {
   host: string
@@ -230,6 +268,7 @@ export interface CypMeta {
   slug: string
   name: string
   lastModified: string   // ISO timestamp
+  thumbnailFilename?: string  // relative to the portfolio's assets/ folder
 }
 
 export interface SnapshotMeta {

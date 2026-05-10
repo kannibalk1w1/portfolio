@@ -20,6 +20,8 @@ const SECTION_COMPONENTS: Record<SectionType, React.LazyExoticComponent<React.Co
   quote:    lazy(() => import('../components/sections/QuoteSection').then(m => ({ default: m.QuoteSection }))),
   embed:    lazy(() => import('../components/sections/EmbedSection').then(m => ({ default: m.EmbedSection }))),
   content:  lazy(() => import('../components/sections/ContentSection').then(m => ({ default: m.ContentSection }))),
+  stats:    lazy(() => import('../components/sections/StatsSection').then(m => ({ default: m.StatsSection }))),
+  buttons:  lazy(() => import('../components/sections/ButtonsSection').then(m => ({ default: m.ButtonsSection }))),
 }
 
 const AUTO_SAVE_DELAY = 10_000  // 10 seconds after last change
