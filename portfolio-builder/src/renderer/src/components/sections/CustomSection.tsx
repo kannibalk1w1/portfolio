@@ -1,9 +1,11 @@
 import { usePortfolio } from '../../store/PortfolioContext'
 import type { CustomSection as CustomSectionType, Section } from '../../types/portfolio'
 import { RichTextEditor } from '../shared/RichTextEditor'
+import { useImageInserter } from '../../hooks/useImageInserter'
 
 export function CustomSection({ section }: { section: CustomSectionType }) {
   const { state, updatePortfolio } = usePortfolio()
+  const onInsertImage = useImageInserter()
 
   return (
     <div>
@@ -19,6 +21,7 @@ export function CustomSection({ section }: { section: CustomSectionType }) {
         })}
         minHeight={300}
         placeholder="Start writing…"
+        onInsertImage={onInsertImage}
       />
     </div>
   )

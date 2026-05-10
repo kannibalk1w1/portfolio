@@ -2,10 +2,12 @@ import { usePortfolio } from '../../store/PortfolioContext'
 import type { ProjectSection as ProjectSectionType, MediaItem } from '../../types/portfolio'
 import { MediaDropzone } from '../shared/MediaDropzone'
 import { RichTextEditor } from '../shared/RichTextEditor'
+import { useImageInserter } from '../../hooks/useImageInserter'
 import { toFileUrl } from '../../utils/fileUrl'
 
 export function ProjectSection({ section }: { section: ProjectSectionType }) {
   const { state, updatePortfolio } = usePortfolio()
+  const onInsertImage = useImageInserter()
 
   function updateSection(patch: Partial<ProjectSectionType>) {
     updatePortfolio({
@@ -71,6 +73,7 @@ export function ProjectSection({ section }: { section: ProjectSectionType }) {
           onChange={description => updateSection({ description })}
           minHeight={160}
           placeholder="Describe this project…"
+          onInsertImage={onInsertImage}
         />
       </div>
 

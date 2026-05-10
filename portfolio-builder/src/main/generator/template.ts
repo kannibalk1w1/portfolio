@@ -91,6 +91,10 @@ export function wrapTemplate(
     .section-description code { background: #f1f1f1; padding: 1px 4px; border-radius: 3px; font-size: 0.9em; font-family: monospace; }
     .section-description pre { background: #f8f8f8; border-radius: 8px; padding: 16px; overflow-x: auto; }
     .section-description pre code { background: none; padding: 0; }
+    .section-description img { max-width: 100%; border-radius: 6px; margin: 8px 0; display: block; }
+    .section-description table { border-collapse: collapse; width: 100%; margin: 12px 0; }
+    .section-description td, .section-description th { border: 1px solid #ddd; padding: 8px 12px; text-align: left; }
+    .section-description th { background: #f8f8f8; font-weight: 600; }
     .empty { color: #aaa; font-size: 14px; font-style: italic; }
     .project-cover { width: 100%; max-height: 360px; object-fit: cover; border-radius: 10px; margin-bottom: 20px; }
     .project-description { margin-bottom: 20px; }

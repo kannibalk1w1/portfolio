@@ -2,9 +2,11 @@ import { useState, useRef } from 'react'
 import { usePortfolio } from '../../store/PortfolioContext'
 import type { GamesSection as GamesSectionType, GameItem, Section } from '../../types/portfolio'
 import { RichTextEditor } from '../shared/RichTextEditor'
+import { useImageInserter } from '../../hooks/useImageInserter'
 
 export function GamesSection({ section }: { section: GamesSectionType }) {
   const { state, updatePortfolio } = usePortfolio()
+  const onInsertImage = useImageInserter()
   const [pendingTitle, setPendingTitle] = useState('')
   const [importing, setImporting] = useState(false)
   const pendingFolderRef = useRef<string | null>(null)
@@ -68,6 +70,7 @@ export function GamesSection({ section }: { section: GamesSectionType }) {
           onChange={description => updateSection({ description })}
           minHeight={80}
           placeholder="Add a description for this section…"
+          onInsertImage={onInsertImage}
         />
       </div>
 

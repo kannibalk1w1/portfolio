@@ -1,18 +1,25 @@
 /**
  * RichTextEditor — shared rich-text editing component built on TipTap.
  *
- * Used by every section that needs formatted content: bio, custom text blocks,
- * project descriptions, and the optional description field on structured sections
- * (Gallery, Videos, Models, Games, Code).
+ * Features:
+ *   - Inline formatting: Bold, Italic, Underline, Strikethrough, Text colour
+ *   - Block style dropdown: Paragraph / H1–H4
+ *   - Text alignment: Left, Centre, Right
+ *   - Lists: Bullet and Numbered
+ *   - Blockquote, Horizontal rule, Code block
+ *   - Links (inline URL bar — no window.prompt, which is blocked in Electron)
+ *   - Image insertion (optional — only shown when onInsertImage prop is provided)
+ *   - Table (insert + contextual row/column controls)
+ *   - Clear formatting
+ *   - Undo / Redo
  *
- * Key patterns used here:
- *  - onChangeRef: keeps the onChange prop current inside the editor's onUpdate
- *    callback without triggering a full editor re-initialisation on every render.
- *  - key={section.id} on the parent call site causes React to remount the
- *    component when the user switches to a different section, giving us a clean
- *    editor state with no stale content.
- *  - ensureEditorStyles: injects global CSS once at first mount so that TipTap's
- *    generated HTML renders with sensible defaults and placeholder text works.
+ * Key patterns:
+ *   - onChangeRef: keeps onChange current inside TipTap's onUpdate closure
+ *     without recreating the editor on every parent render.
+ *   - Colour swatches use onMouseDown + preventDefault so the editor never
+ *     loses focus/selection before the colour is applied.
+ *   - key={section.id} on the call site remounts the component on section
+ *     switch, giving a clean editor state.
  */
 
 import { useEffect, useRef, useState } from 'react'
@@ -22,9 +29,16 @@ import Underline from '@tiptap/extension-underline'
 import TextAlign from '@tiptap/extension-text-align'
 import Link from '@tiptap/extension-link'
 import Placeholder from '@tiptap/extension-placeholder'
+import TextStyle from '@tiptap/extension-text-style'
+import Color from '@tiptap/extension-color'
+import Image from '@tiptap/extension-image'
+import Table from '@tiptap/extension-table'
+import TableRow from '@tiptap/extension-table-row'
+import TableCell from '@tiptap/extension-table-cell'
+import TableHeader from '@tiptap/extension-table-header'
 
 // ---------------------------------------------------------------------------
-// Global editor styles — injected once, shared across all RichTextEditor instances
+// Global styles — injected once, shared across all RichTextEditor instances
 // ---------------------------------------------------------------------------
 
 function ensureEditorStyles() {
@@ -46,7 +60,11 @@ function ensureEditorStyles() {
     .tiptap code { background: #f1f1f1; padding: 1px 4px; border-radius: 3px; font-size: 0.9em; }
     .tiptap pre { background: #f8f8f8; border-radius: 6px; padding: 12px 16px; overflow-x: auto; }
     .tiptap pre code { background: none; padding: 0; }
-    /* Placeholder text — shown when the editor is empty */
+    .tiptap img { max-width: 100%; border-radius: 6px; display: block; margin: 8px 0; }
+    .tiptap table { border-collapse: collapse; width: 100%; margin: 12px 0; }
+    .tiptap td, .tiptap th { border: 1px solid #ddd; padding: 8px 12px; min-width: 60px; vertical-align: top; }
+    .tiptap th { background: #f8f8f8; font-weight: 600; }
+    .tiptap .selectedCell { background: #e0e7ff !important; }
     .tiptap p.is-editor-empty:first-child::before {
       content: attr(data-placeholder);
       float: left; color: #bbb; pointer-events: none; height: 0;
@@ -54,6 +72,16 @@ function ensureEditorStyles() {
   `
   document.head.appendChild(s)
 }
+
+// ---------------------------------------------------------------------------
+// Colour palette for the text colour picker
+// ---------------------------------------------------------------------------
+
+const COLOURS = [
+  '#000000', '#555555', '#888888', '#bbbbbb',
+  '#e94560', '#f97316', '#eab308', '#22c55e',
+  '#3b82f6', '#6366f1', '#8b5cf6', '#ec4899',
+]
 
 // ---------------------------------------------------------------------------
 // Props
@@ -64,22 +92,23 @@ interface Props {
   onChange: (html: string) => void
   minHeight?: number
   placeholder?: string
+  /** If provided, an image insert button is shown in the toolbar. */
+  onInsertImage?: () => Promise<string | null>
 }
 
 // ---------------------------------------------------------------------------
 // Internal toolbar helpers
 // ---------------------------------------------------------------------------
 
-/** Thin vertical rule used as a visual separator between toolbar groups */
 const SEP = () => <div style={{ width: 1, height: 20, background: '#e0e0e0', margin: '0 2px' }} />
 
 /**
- * Toolbar button. Uses onMouseDown + e.preventDefault() rather than onClick so
- * the editor does not lose focus (and therefore selection) before the command runs.
+ * Toolbar button. onMouseDown + preventDefault keeps editor focus/selection
+ * intact before the formatting command runs.
  */
 function Btn({
-  title, active, onClick, children,
-}: { title: string; active?: boolean; onClick: () => void; children: React.ReactNode }) {
+  title, active, onClick, children, style: extraStyle,
+}: { title: string; active?: boolean; onClick: () => void; children: React.ReactNode; style?: React.CSSProperties }) {
   return (
     <button
       title={title}
@@ -91,6 +120,8 @@ function Btn({
         borderRadius: 4, cursor: 'pointer',
         background: active ? '#e0e7ff' : 'white',
         color: '#333', fontSize: 12, fontFamily: 'inherit', fontWeight: 500,
+        position: 'relative',
+        ...extraStyle,
       }}
     >
       {children}
@@ -102,67 +133,84 @@ function Btn({
 // Component
 // ---------------------------------------------------------------------------
 
-export function RichTextEditor({ content, onChange, minHeight = 160, placeholder = 'Start typing…' }: Props) {
+export function RichTextEditor({
+  content, onChange, minHeight = 160, placeholder = 'Start typing…', onInsertImage,
+}: Props) {
   useEffect(ensureEditorStyles, [])
 
-  // Keep the onChange prop current inside the onUpdate closure without
-  // recreating the editor on every parent render.
   const onChangeRef = useRef(onChange)
   useEffect(() => { onChangeRef.current = onChange }, [onChange])
 
-  // null = hidden; string = current URL value being edited
   const [linkUrl, setLinkUrl] = useState<string | null>(null)
+  const [showColours, setShowColours] = useState(false)
+  const [showTableMenu, setShowTableMenu] = useState(false)
   const linkInputRef = useRef<HTMLInputElement>(null)
 
   const editor = useEditor({
     extensions: [
       StarterKit,
       Underline,
-      // TextAlign needs to know which node types it can act on
+      TextStyle,  // required peer for Color
+      Color,
       TextAlign.configure({ types: ['heading', 'paragraph'] }),
-      // openOnClick: false so clicking links in the editor selects them rather
-      // than navigating away while the user is still editing
       Link.configure({ openOnClick: false, HTMLAttributes: { target: '_blank', rel: 'noopener noreferrer' } }),
       Placeholder.configure({ placeholder }),
+      Image.configure({ inline: false }),
+      Table.configure({ resizable: false }),
+      TableRow,
+      TableHeader,
+      TableCell,
     ],
     content,
     onUpdate: ({ editor: e }) => onChangeRef.current(e.getHTML()),
   })
 
-  // Sync content when the parent changes it externally (e.g. after section switch
-  // triggered via the key prop causing remount — this guard is a safety net).
   useEffect(() => {
     if (editor && editor.getHTML() !== content) editor.commands.setContent(content, false)
   }, [content]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Auto-focus the URL input whenever the link bar appears
   useEffect(() => {
     if (linkUrl !== null) linkInputRef.current?.focus()
   }, [linkUrl !== null]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Editor initialises asynchronously; return nothing until it is ready
+  // Close menus when clicking outside
+  useEffect(() => {
+    function handleClick() { setShowColours(false); setShowTableMenu(false) }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [])
+
   if (!editor) return null
 
-  // Determine current heading level for the dropdown
   const headingLevel = ([1, 2, 3, 4] as const).find(l => editor.isActive('heading', { level: l }))
   const headingValue = headingLevel ? String(headingLevel) : '0'
+  const currentColour = editor.getAttributes('textStyle').color ?? '#000000'
+  const inTable = editor.isActive('table')
 
   function openLinkInput() {
-    // Pre-fill with existing href if cursor is already on a link
     const href = editor?.getAttributes('link').href ?? ''
     setLinkUrl(href)
   }
 
   function applyLink() {
     if (!linkUrl?.trim()) {
-      // Empty URL → remove the link
       editor?.chain().focus().unsetLink().run()
     } else {
-      // Prefix with https:// if the user typed a bare domain
       const href = linkUrl.match(/^https?:\/\//) ? linkUrl : `https://${linkUrl}`
       editor?.chain().focus().setLink({ href }).run()
     }
     setLinkUrl(null)
+  }
+
+  async function handleInsertImage() {
+    if (!onInsertImage) return
+    const url = await onInsertImage()
+    if (url) editor?.chain().focus().setImage({ src: url }).run()
+  }
+
+  function handleInsertTable() {
+    editor?.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()
+    setShowTableMenu(false)
   }
 
   // ---------------------------------------------------------------------------
@@ -172,7 +220,7 @@ export function RichTextEditor({ content, onChange, minHeight = 160, placeholder
   return (
     <div style={{ border: '1px solid #e0e0e0', borderRadius: 8, overflow: 'hidden' }}>
 
-      {/* ── Toolbar ── */}
+      {/* ── Main toolbar ── */}
       <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 3, padding: '6px 10px', background: '#f8f8f8', borderBottom: '1px solid #e0e0e0' }}>
 
         {/* Inline formatting */}
@@ -189,9 +237,42 @@ export function RichTextEditor({ content, onChange, minHeight = 160, placeholder
           <span style={{ textDecoration: 'line-through' }}>S</span>
         </Btn>
 
+        {/* Text colour — swatch popup */}
+        <div style={{ position: 'relative' }}>
+          <Btn
+            title="Text colour"
+            active={showColours}
+            onClick={() => setShowColours(v => !v)}
+          >
+            <span style={{ fontWeight: 700, color: currentColour === '#000000' ? '#333' : currentColour }}>A</span>
+            <span style={{ display: 'block', width: 14, height: 3, background: currentColour, borderRadius: 1, position: 'absolute', bottom: 4, left: '50%', transform: 'translateX(-50%)' }} />
+          </Btn>
+          {showColours && (
+            <div
+              style={{ position: 'absolute', top: '100%', left: 0, zIndex: 100, background: 'white', border: '1px solid #e0e0e0', borderRadius: 6, padding: 6, display: 'grid', gridTemplateColumns: 'repeat(4, 20px)', gap: 4, marginTop: 2, boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+              onMouseDown={e => e.preventDefault()}
+            >
+              {COLOURS.map(c => (
+                <div
+                  key={c}
+                  onMouseDown={e => { e.preventDefault(); editor.chain().focus().setColor(c).run(); setShowColours(false) }}
+                  style={{ width: 20, height: 20, borderRadius: 3, background: c, cursor: 'pointer', border: currentColour === c ? '2px solid #4f46e5' : '1px solid #ddd' }}
+                  title={c}
+                />
+              ))}
+              {/* Remove colour */}
+              <div
+                onMouseDown={e => { e.preventDefault(); editor.chain().focus().unsetColor().run(); setShowColours(false) }}
+                style={{ width: 20, height: 20, borderRadius: 3, background: 'white', cursor: 'pointer', border: '1px solid #ddd', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, color: '#aaa' }}
+                title="Remove colour"
+              >✕</div>
+            </div>
+          )}
+        </div>
+
         <SEP />
 
-        {/* Block style — implemented as a <select> so all heading levels fit compactly */}
+        {/* Block style */}
         <select
           value={headingValue}
           onChange={e => {
@@ -224,9 +305,47 @@ export function RichTextEditor({ content, onChange, minHeight = 160, placeholder
         <SEP />
 
         {/* Block elements */}
-        <Btn title="Blockquote"      active={editor.isActive('blockquote')} onClick={() => editor.chain().focus().toggleBlockquote().run()}>"</Btn>
-        <Btn title="Horizontal rule" active={false}                         onClick={() => editor.chain().focus().setHorizontalRule().run()}>─</Btn>
-        <Btn title="Link"            active={editor.isActive('link')}       onClick={openLinkInput}>🔗</Btn>
+        <Btn title="Blockquote"      active={editor.isActive('blockquote')}  onClick={() => editor.chain().focus().toggleBlockquote().run()}>"</Btn>
+        <Btn title="Horizontal rule" active={false}                          onClick={() => editor.chain().focus().setHorizontalRule().run()}>─</Btn>
+        <Btn title="Code block"      active={editor.isActive('codeBlock')}   onClick={() => editor.chain().focus().toggleCodeBlock().run()}>&lt;/&gt;</Btn>
+        <Btn title="Link"            active={editor.isActive('link')}        onClick={openLinkInput}>🔗</Btn>
+
+        {/* Image insert — only shown when parent provides the callback */}
+        {onInsertImage && (
+          <Btn title="Insert image" active={false} onClick={handleInsertImage}>🖼</Btn>
+        )}
+
+        {/* Table */}
+        <div style={{ position: 'relative' }}>
+          <Btn title={inTable ? 'Table options' : 'Insert table'} active={inTable || showTableMenu} onClick={() => setShowTableMenu(v => !v)}>
+            ⊞
+          </Btn>
+          {showTableMenu && (
+            <div
+              style={{ position: 'absolute', top: '100%', left: 0, zIndex: 100, background: 'white', border: '1px solid #e0e0e0', borderRadius: 6, padding: 4, marginTop: 2, minWidth: 160, boxShadow: '0 4px 12px rgba(0,0,0,0.1)', display: 'flex', flexDirection: 'column', gap: 1 }}
+              onMouseDown={e => e.preventDefault()}
+            >
+              {!inTable ? (
+                <TableMenuItem label="Insert 3×3 table" onClick={handleInsertTable} />
+              ) : (<>
+                <TableMenuItem label="Add row above"    onClick={() => { editor.chain().focus().addRowBefore().run(); setShowTableMenu(false) }} />
+                <TableMenuItem label="Add row below"    onClick={() => { editor.chain().focus().addRowAfter().run(); setShowTableMenu(false) }} />
+                <TableMenuItem label="Delete row"       onClick={() => { editor.chain().focus().deleteRow().run(); setShowTableMenu(false) }} danger />
+                <div style={{ height: 1, background: '#f0f0f0', margin: '2px 0' }} />
+                <TableMenuItem label="Add column left"  onClick={() => { editor.chain().focus().addColumnBefore().run(); setShowTableMenu(false) }} />
+                <TableMenuItem label="Add column right" onClick={() => { editor.chain().focus().addColumnAfter().run(); setShowTableMenu(false) }} />
+                <TableMenuItem label="Delete column"    onClick={() => { editor.chain().focus().deleteColumn().run(); setShowTableMenu(false) }} danger />
+                <div style={{ height: 1, background: '#f0f0f0', margin: '2px 0' }} />
+                <TableMenuItem label="Delete table"     onClick={() => { editor.chain().focus().deleteTable().run(); setShowTableMenu(false) }} danger />
+              </>)}
+            </div>
+          )}
+        </div>
+
+        <SEP />
+
+        {/* Clear formatting */}
+        <Btn title="Clear formatting" active={false} onClick={() => editor.chain().focus().clearNodes().unsetAllMarks().run()}>⊘</Btn>
 
         <SEP />
 
@@ -235,7 +354,7 @@ export function RichTextEditor({ content, onChange, minHeight = 160, placeholder
         <Btn title="Redo (Ctrl+Y)" active={false} onClick={() => editor.chain().focus().redo().run()}>↪</Btn>
       </div>
 
-      {/* ── Link input bar (shown when 🔗 is clicked) ── */}
+      {/* ── Link input bar ── */}
       {linkUrl !== null && (
         <div style={{ display: 'flex', gap: 6, padding: '6px 10px', background: '#f0f4ff', borderBottom: '1px solid #c7d2fe', alignItems: 'center' }}>
           <span style={{ fontSize: 12, color: '#555', whiteSpace: 'nowrap' }}>URL:</span>
@@ -255,8 +374,30 @@ export function RichTextEditor({ content, onChange, minHeight = 160, placeholder
         </div>
       )}
 
-      {/* ── Editor content area ── */}
+      {/* ── Editor content ── */}
       <EditorContent editor={editor} style={{ padding: '12px 16px', minHeight, fontSize: 14, lineHeight: 1.6 }} />
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Table dropdown menu item
+// ---------------------------------------------------------------------------
+
+function TableMenuItem({ label, onClick, danger }: { label: string; onClick: () => void; danger?: boolean }) {
+  const [hovered, setHovered] = useState(false)
+  return (
+    <div
+      onMouseDown={e => { e.preventDefault(); onClick() }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        padding: '5px 10px', fontSize: 12, cursor: 'pointer', borderRadius: 4,
+        color: danger ? '#e94560' : '#333',
+        background: hovered ? (danger ? '#fff5f6' : '#f5f5f5') : 'transparent',
+      }}
+    >
+      {label}
     </div>
   )
 }

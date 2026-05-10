@@ -1,6 +1,7 @@
 import { usePortfolio } from '../../store/PortfolioContext'
 import type { CodeSection as CodeSectionType, CodeItem, CodeLanguage, Section } from '../../types/portfolio'
 import { RichTextEditor } from '../shared/RichTextEditor'
+import { useImageInserter } from '../../hooks/useImageInserter'
 
 const LANGUAGES: CodeLanguage[] = [
   'javascript', 'typescript', 'python', 'gdscript',
@@ -9,6 +10,7 @@ const LANGUAGES: CodeLanguage[] = [
 
 export function CodeSection({ section }: { section: CodeSectionType }) {
   const { state, updatePortfolio } = usePortfolio()
+  const onInsertImage = useImageInserter()
 
   function updateSection(patch: Partial<CodeSectionType>) {
     updatePortfolio({
@@ -48,6 +50,7 @@ export function CodeSection({ section }: { section: CodeSectionType }) {
           onChange={description => updateSection({ description })}
           minHeight={80}
           placeholder="Add a description for this section…"
+          onInsertImage={onInsertImage}
         />
       </div>
 

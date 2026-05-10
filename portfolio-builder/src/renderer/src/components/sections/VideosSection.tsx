@@ -3,6 +3,7 @@ import { usePortfolio } from '../../store/PortfolioContext'
 import type { VideosSection as VideosSectionType, VideoItem, Section } from '../../types/portfolio'
 import { MediaDropzone } from '../shared/MediaDropzone'
 import { RichTextEditor } from '../shared/RichTextEditor'
+import { useImageInserter } from '../../hooks/useImageInserter'
 import { toFileUrl } from '../../utils/fileUrl'
 
 async function captureThumbnail(src: string): Promise<string> {
@@ -24,6 +25,7 @@ async function captureThumbnail(src: string): Promise<string> {
 
 export function VideosSection({ section }: { section: VideosSectionType }) {
   const { state, updatePortfolio } = usePortfolio()
+  const onInsertImage = useImageInserter()
   const [importError, setImportError] = useState<string | null>(null)
 
   function updateSection(patch: Partial<VideosSectionType>) {
@@ -77,6 +79,7 @@ export function VideosSection({ section }: { section: VideosSectionType }) {
           onChange={description => updateSection({ description })}
           minHeight={80}
           placeholder="Add a description for this section…"
+          onInsertImage={onInsertImage}
         />
       </div>
 

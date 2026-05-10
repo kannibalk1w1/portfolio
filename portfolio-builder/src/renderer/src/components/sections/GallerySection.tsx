@@ -3,10 +3,12 @@ import { usePortfolio } from '../../store/PortfolioContext'
 import type { GallerySection as GallerySectionType, MediaItem, Section } from '../../types/portfolio'
 import { MediaDropzone } from '../shared/MediaDropzone'
 import { RichTextEditor } from '../shared/RichTextEditor'
+import { useImageInserter } from '../../hooks/useImageInserter'
 import { toFileUrl } from '../../utils/fileUrl'
 
 export function GallerySection({ section }: { section: GallerySectionType }) {
   const { state, updatePortfolio } = usePortfolio()
+  const onInsertImage = useImageInserter()
   const [importError, setImportError] = useState<string | null>(null)
 
   function updateSection(patch: Partial<GallerySectionType>) {
@@ -48,6 +50,7 @@ export function GallerySection({ section }: { section: GallerySectionType }) {
           onChange={description => updateSection({ description })}
           minHeight={80}
           placeholder="Add a description for this gallery…"
+          onInsertImage={onInsertImage}
         />
       </div>
 

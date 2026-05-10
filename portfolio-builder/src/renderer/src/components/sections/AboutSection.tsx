@@ -2,10 +2,12 @@ import { usePortfolio } from '../../store/PortfolioContext'
 import type { AboutSection as AboutSectionType, Section } from '../../types/portfolio'
 import { MediaDropzone } from '../shared/MediaDropzone'
 import { RichTextEditor } from '../shared/RichTextEditor'
+import { useImageInserter } from '../../hooks/useImageInserter'
 import { toFileUrl } from '../../utils/fileUrl'
 
 export function AboutSection({ section }: { section: AboutSectionType }) {
   const { state, updatePortfolio } = usePortfolio()
+  const onInsertImage = useImageInserter()
 
   function updateSection(patch: Partial<AboutSectionType>) {
     updatePortfolio({
@@ -42,6 +44,7 @@ export function AboutSection({ section }: { section: AboutSectionType }) {
           onChange={bio => updateSection({ bio })}
           minHeight={120}
           placeholder="Write a short bio…"
+          onInsertImage={onInsertImage}
         />
       </div>
 
