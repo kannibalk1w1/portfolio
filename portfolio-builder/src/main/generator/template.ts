@@ -1,3 +1,18 @@
+/**
+ * wrapTemplate — generates the full HTML page for an exported portfolio.
+ *
+ * Design decisions:
+ *  - Hero banner: dark-to-indigo gradient, avatar + name. The avatar is taken
+ *    from the About section so it only appears once (not duplicated below).
+ *  - Sections render as white cards on a light-grey page background.
+ *  - Section titles use an indigo left-border accent.
+ *  - Gallery/project images use a CSS zoom-on-hover + a vanilla-JS lightbox
+ *    instead of opening in a new tab — better UX with no external dependencies.
+ *  - Code blocks use a dark background for readability.
+ *  - A lightbox <div> and small inline script are only emitted when the page
+ *    actually contains gallery or project images.
+ */
+
 import type { Portfolio, Section } from '../../renderer/src/types/portfolio'
 import { escHtml } from './utils'
 
@@ -5,7 +20,7 @@ function buildNavLinks(sections: Section[]): string {
   return sections
     .filter(s => s.visible)
     .map(s => `<a href="#${escHtml(s.id)}">${escHtml(s.title)}</a>`)
-    .join('\n    ')
+    .join('\n      ')
 }
 
 function needsModelViewer(sections: Section[]): boolean {
@@ -16,6 +31,14 @@ function needsHighlight(sections: Section[]): boolean {
   return sections.some(s => s.type === 'code' && s.visible && (s as any).items?.length > 0)
 }
 
+function needsLightbox(sections: Section[]): boolean {
+  return sections.some(s =>
+    s.visible &&
+    (s.type === 'gallery' || s.type === 'project') &&
+    ((s as any).items?.length > 0 || (s as any).coverImageFilename)
+  )
+}
+
 export function wrapTemplate(
   portfolio: Portfolio,
   body: string,
@@ -24,25 +47,46 @@ export function wrapTemplate(
   let modelViewerScript = ''
   if (needsModelViewer(portfolio.sections)) {
     if (opts?.inlineModelViewer) {
-      // Inline the script content so it works from file:// (Chrome blocks
-      // <script type="module" src="..."> from file:// but allows inline modules).
-      // Escape </script> sequences in the content so the HTML parser doesn't
-      // close the tag prematurely.
       const safe = opts.inlineModelViewer.replace(/<\/script>/gi, '<\\/script>')
       modelViewerScript = `<script type="module">${safe}</script>`
     } else {
       modelViewerScript = `<script type="module" src="assets/vendor/model-viewer.min.js"></script>`
     }
   }
+
   const highlightLinks = needsHighlight(portfolio.sections)
     ? `  <link rel="stylesheet" href="assets/vendor/highlight.min.css">
   <script src="assets/vendor/highlight.min.js"></script>
   <script>document.addEventListener('DOMContentLoaded', () => hljs.highlightAll())</script>`
     : ''
 
-  // Get CYP name from About section if available
-  const aboutSection = portfolio.sections.find(s => s.type === 'about')
-  const bio = aboutSection?.type === 'about' ? aboutSection.bio : ''
+  // Avatar lives in the hero — renderAbout only outputs the bio text so the
+  // image doesn't appear twice on the page.
+  const aboutSection = portfolio.sections.find(s => s.type === 'about' && s.visible)
+  const avatarFilename = aboutSection?.type === 'about' ? aboutSection.avatarFilename : undefined
+  const heroAvatar = avatarFilename
+    ? `\n    <img src="assets/${escHtml(avatarFilename)}" class="hero-avatar" alt="${escHtml(portfolio.name)}">`
+    : ''
+
+  const lightbox = needsLightbox(portfolio.sections) ? `
+  <div id="lb" role="dialog" aria-modal="true" aria-label="Image viewer">
+    <button id="lb-close" aria-label="Close">&times;</button>
+    <img id="lb-img" src="" alt="">
+  </div>
+  <script>
+    (function () {
+      var lb  = document.getElementById('lb');
+      var img = document.getElementById('lb-img');
+      function open(src) { img.src = src; lb.classList.add('open'); }
+      function close()   { lb.classList.remove('open'); img.src = ''; }
+      document.querySelectorAll('.lb-trigger').forEach(function (el) {
+        el.addEventListener('click', function (e) { e.preventDefault(); open(el.dataset.src || el.src); });
+      });
+      document.getElementById('lb-close').addEventListener('click', close);
+      lb.addEventListener('click', function (e) { if (e.target === lb) close(); });
+      document.addEventListener('keydown', function (e) { if (e.key === 'Escape') close(); });
+    })();
+  </script>` : ''
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -53,72 +97,152 @@ export function wrapTemplate(
   ${modelViewerScript}
   ${highlightLinks}
   <style>
+    /* ── Variables ── */
+    :root {
+      --accent:  #6366f1;
+      --accent-d:#4f46e5;
+      --dark:    #0f172a;
+      --dark-2:  #1e293b;
+      --text:    #1e293b;
+      --muted:   #64748b;
+      --bg:      #f1f5f9;
+      --card:    #ffffff;
+      --border:  #e2e8f0;
+      --radius:  12px;
+      --shadow:  0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.05);
+    }
+
+    /* ── Reset ── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: system-ui, -apple-system, sans-serif; background: #fff; color: #222; line-height: 1.6; }
-    nav { position: sticky; top: 0; background: white; border-bottom: 1px solid #e0e0e0; padding: 12px 32px; display: flex; gap: 24px; z-index: 100; flex-wrap: wrap; }
-    nav a { text-decoration: none; color: #555; font-size: 14px; font-weight: 500; }
-    nav a:hover { color: #222; }
-    .hero { padding: 48px 32px 32px; max-width: 800px; margin: 0 auto; }
-    .hero h1 { font-size: 32px; font-weight: 700; margin-bottom: 8px; }
-    .hero p { color: #555; font-size: 16px; }
-    .section { padding: 32px; max-width: 960px; margin: 0 auto; }
-    .section-title { font-size: 22px; font-weight: 600; margin-bottom: 20px; padding-bottom: 8px; border-bottom: 2px solid #f0f0f0; }
-    .about-block { display: flex; gap: 24px; align-items: flex-start; }
+    html { scroll-behavior: smooth; }
+    body { font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; }
+    img { max-width: 100%; display: block; }
+
+    /* ── Navigation ── */
+    nav { position: sticky; top: 0; z-index: 100; background: var(--dark); display: flex; align-items: center; gap: 20px; padding: 0 32px; height: 56px; }
+    .nav-brand { color: #fff; font-weight: 700; font-size: 15px; white-space: nowrap; flex-shrink: 0; }
+    .nav-links { display: flex; gap: 2px; overflow-x: auto; flex: 1; scrollbar-width: none; }
+    .nav-links::-webkit-scrollbar { display: none; }
+    nav a { text-decoration: none; color: rgba(255,255,255,0.65); font-size: 13px; font-weight: 500; padding: 6px 12px; border-radius: 6px; white-space: nowrap; transition: color .15s, background .15s; }
+    nav a:hover { color: #fff; background: rgba(255,255,255,0.1); }
+
+    /* ── Hero ── */
+    .hero { background: linear-gradient(135deg, var(--dark) 0%, #312e81 100%); padding: 64px 32px 60px; text-align: center; color: #fff; }
+    .hero-avatar { width: 120px; height: 120px; border-radius: 50%; object-fit: cover; border: 3px solid rgba(255,255,255,0.25); margin: 0 auto 20px; }
+    .hero h1 { font-size: 42px; font-weight: 800; letter-spacing: -1px; line-height: 1.1; }
+
+    /* ── Layout ── */
+    .sections-wrapper { max-width: 1040px; margin: 0 auto; padding: 40px 24px 56px; display: flex; flex-direction: column; gap: 20px; }
+    .section { background: var(--card); border-radius: var(--radius); padding: 32px 36px; box-shadow: var(--shadow); }
+    .section-title { font-size: 19px; font-weight: 700; margin-bottom: 24px; padding-left: 14px; border-left: 4px solid var(--accent); color: var(--dark-2); }
+
+    /* ── About ── */
+    .about-block { display: flex; gap: 28px; align-items: flex-start; }
+    .about-text { flex: 1; min-width: 0; }
     .avatar { width: 100px; height: 100px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
-    .gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; }
-    .gallery-grid img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 8px; }
-    .gallery-item a { display: block; }
-    .gallery-caption { font-size: 12px; color: #666; margin-top: 4px; text-align: center; }
-    .video-caption { font-size: 14px; font-weight: 500; margin-bottom: 6px; }
+
+    /* ── Gallery ── */
+    .gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 10px; }
+    .gallery-item { display: flex; flex-direction: column; gap: 5px; }
+    .gallery-item img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 8px; cursor: zoom-in; transition: transform .2s, box-shadow .2s; }
+    .gallery-item img:hover { transform: scale(1.04); box-shadow: 0 8px 24px rgba(0,0,0,0.15); }
+    .gallery-caption { font-size: 12px; color: var(--muted); text-align: center; }
+
+    /* ── Videos ── */
     .video-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
     .video-item video { width: 100%; border-radius: 8px; }
+    .video-caption { font-size: 14px; font-weight: 600; margin-bottom: 8px; color: var(--dark-2); }
+
+    /* ── 3D Models ── */
     .models-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
-    .model-label { text-align: center; font-size: 13px; color: #666; margin-top: 6px; }
+    .model-label { text-align: center; font-size: 13px; color: var(--muted); margin-top: 8px; }
+
+    /* ── Games ── */
     .game-item { margin-bottom: 32px; }
-    .game-item h3 { margin-bottom: 12px; font-size: 16px; }
+    .game-item:last-child { margin-bottom: 0; }
+    .game-item h3 { font-size: 16px; font-weight: 600; margin-bottom: 12px; color: var(--dark-2); }
+
+    /* ── Code ── */
     .code-block { margin-bottom: 20px; }
-    .code-label { font-size: 12px; color: #888; margin-bottom: 4px; font-family: monospace; }
-    pre { background: #f8f8f8; border-radius: 8px; padding: 16px; overflow-x: auto; }
-    code { font-family: monospace; font-size: 13px; }
-    .section-description { font-size: 15px; margin-bottom: 20px; line-height: 1.7; }
-    .section-description > * + * { margin-top: 0.6em; }
+    .code-block:last-child { margin-bottom: 0; }
+    .code-label { font-size: 11px; font-weight: 600; color: var(--muted); margin-bottom: 6px; font-family: monospace; text-transform: uppercase; letter-spacing: .05em; }
+    pre { background: var(--dark); color: #e2e8f0; border-radius: 8px; padding: 18px 20px; overflow-x: auto; }
+    code { font-family: 'Cascadia Code', 'Fira Code', ui-monospace, monospace; font-size: 13px; }
+    pre code { color: inherit; background: none; }
+
+    /* ── Project ── */
+    .project-cover { width: 100%; max-height: 420px; object-fit: cover; border-radius: 10px; margin-bottom: 24px; cursor: zoom-in; transition: opacity .2s; }
+    .project-cover:hover { opacity: .92; }
+    .project-description { margin-bottom: 24px; }
+
+    /* ── Rich-text content (section-description) ── */
+    .section-description { font-size: 15px; margin-bottom: 20px; line-height: 1.75; }
+    .section-description > * + * { margin-top: .65em; }
     .section-description h1 { font-size: 1.6em; font-weight: 700; }
     .section-description h2 { font-size: 1.35em; font-weight: 700; }
     .section-description h3 { font-size: 1.15em; font-weight: 600; }
     .section-description h4 { font-size: 1em; font-weight: 600; }
     .section-description ul, .section-description ol { padding-left: 1.4em; }
-    .section-description blockquote { border-left: 3px solid #ddd; padding-left: 12px; color: #666; }
-    .section-description hr { border: none; border-top: 2px solid #e0e0e0; margin: 12px 0; }
-    .section-description a { color: #4f46e5; }
+    .section-description blockquote { border-left: 3px solid var(--border); padding-left: 12px; color: var(--muted); }
+    .section-description hr { border: none; border-top: 2px solid var(--border); margin: 14px 0; }
+    .section-description a { color: var(--accent-d); }
     .section-description mark { background: #fef08a; border-radius: 2px; padding: 0 2px; }
-    .section-description sup { font-size: 0.75em; vertical-align: super; }
-    .section-description sub { font-size: 0.75em; vertical-align: sub; }
-    .section-description code { background: #f1f1f1; padding: 1px 4px; border-radius: 3px; font-size: 0.9em; font-family: monospace; }
-    .section-description pre { background: #f8f8f8; border-radius: 8px; padding: 16px; overflow-x: auto; }
-    .section-description pre code { background: none; padding: 0; }
-    .section-description img { max-width: 100%; border-radius: 6px; margin: 8px 0; display: block; }
+    .section-description sup { font-size: .75em; vertical-align: super; }
+    .section-description sub { font-size: .75em; vertical-align: sub; }
+    .section-description code { background: var(--bg); padding: 1px 5px; border-radius: 3px; font-size: .9em; font-family: monospace; }
+    .section-description pre { background: var(--dark); color: #e2e8f0; border-radius: 8px; padding: 16px; overflow-x: auto; }
+    .section-description pre code { background: none; padding: 0; color: inherit; }
+    .section-description img { max-width: 100%; border-radius: 6px; margin: 8px 0; cursor: zoom-in; }
     .section-description table { border-collapse: collapse; width: 100%; margin: 12px 0; }
-    .section-description td, .section-description th { border: 1px solid #ddd; padding: 8px 12px; text-align: left; }
-    .section-description th { background: #f8f8f8; font-weight: 600; }
-    .empty { color: #aaa; font-size: 14px; font-style: italic; }
-    .project-cover { width: 100%; max-height: 360px; object-fit: cover; border-radius: 10px; margin-bottom: 20px; }
-    .project-description { margin-bottom: 20px; }
-    @media (max-width: 600px) {
+    .section-description td, .section-description th { border: 1px solid var(--border); padding: 8px 12px; text-align: left; }
+    .section-description th { background: var(--bg); font-weight: 600; }
+
+    /* ── Empty state ── */
+    .empty { color: var(--muted); font-size: 14px; font-style: italic; }
+
+    /* ── Lightbox ── */
+    #lb { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.92); z-index: 200; align-items: center; justify-content: center; }
+    #lb.open { display: flex; }
+    #lb-img { max-width: 90vw; max-height: 90vh; border-radius: 8px; object-fit: contain; }
+    #lb-close { position: absolute; top: 16px; right: 20px; background: none; border: none; color: rgba(255,255,255,0.7); font-size: 36px; cursor: pointer; line-height: 1; padding: 4px 8px; }
+    #lb-close:hover { color: #fff; }
+
+    /* ── Footer ── */
+    footer { text-align: center; padding: 28px 24px; color: var(--muted); font-size: 13px; background: var(--card); border-top: 1px solid var(--border); }
+
+    /* ── Responsive ── */
+    @media (max-width: 640px) {
+      .hero { padding: 48px 20px 44px; }
+      .hero h1 { font-size: 30px; }
+      .hero-avatar { width: 90px; height: 90px; }
+      .sections-wrapper { padding: 24px 16px 40px; }
+      .section { padding: 24px 20px; }
+      nav { padding: 0 16px; gap: 12px; }
       .about-block { flex-direction: column; }
-      .section { padding: 24px 16px; }
-      .hero { padding: 32px 16px 24px; }
     }
   </style>
 </head>
 <body>
+
   <nav>
-    ${buildNavLinks(portfolio.sections)}
+    <span class="nav-brand">${escHtml(portfolio.name)}</span>
+    <div class="nav-links">
+      ${buildNavLinks(portfolio.sections)}
+    </div>
   </nav>
-  <div class="hero">
+
+  <header class="hero">${heroAvatar}
     <h1>${escHtml(portfolio.name)}</h1>
-    ${bio ? `<p>${escHtml(bio)}</p>` : ''}
+  </header>
+
+  <div class="sections-wrapper">
+    ${body}
   </div>
-  ${body}
+
+  ${lightbox}
+
+  <footer>Made with <strong>Launchpad</strong></footer>
+
 </body>
 </html>`
 }

@@ -6,9 +6,12 @@ export function renderGallery(section: GallerySection): string {
   const items = section.items
     .map(item => `
     <div class="gallery-item">
-      <a href="assets/${escHtml(item.filename)}" target="_blank" rel="noopener">
-        <img src="assets/${escHtml(item.filename)}" alt="${escHtml(item.caption ?? item.filename)}" loading="lazy">
-      </a>
+      <img
+        src="assets/${escHtml(item.filename)}"
+        class="lb-trigger"
+        data-src="assets/${escHtml(item.filename)}"
+        alt="${escHtml(item.caption ?? item.filename)}"
+        loading="lazy">
       ${item.caption ? `<p class="gallery-caption">${escHtml(item.caption)}</p>` : ''}
     </div>`)
     .join('')
