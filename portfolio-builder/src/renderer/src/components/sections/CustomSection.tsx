@@ -1,24 +1,29 @@
 import { usePortfolio } from '../../store/PortfolioContext'
 import type { CustomSection as CustomSectionType, Section } from '../../types/portfolio'
 import { RichTextEditor } from '../shared/RichTextEditor'
+import { SectionTitle } from '../shared/SectionTitle'
 import { useImageInserter } from '../../hooks/useImageInserter'
 
 export function CustomSection({ section }: { section: CustomSectionType }) {
   const { state, updatePortfolio } = usePortfolio()
   const onInsertImage = useImageInserter()
 
+  function updateSection(patch: Partial<CustomSectionType>) {
+    updatePortfolio({
+      ...state.portfolio!,
+      sections: state.portfolio!.sections.map(s =>
+        s.id === section.id ? { ...s, ...patch } as Section : s
+      ),
+    })
+  }
+
   return (
     <div>
-      <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 24 }}>{section.title}</h2>
+      <SectionTitle title={section.title} onChange={title => updateSection({ title })} />
       <RichTextEditor
         key={section.id}
         content={section.html}
-        onChange={html => updatePortfolio({
-          ...state.portfolio!,
-          sections: state.portfolio!.sections.map(s =>
-            s.id === section.id ? { ...s, html } as Section : s
-          ),
-        })}
+        onChange={html => updateSection({ html })}
         minHeight={300}
         placeholder="Start writing…"
         onInsertImage={onInsertImage}

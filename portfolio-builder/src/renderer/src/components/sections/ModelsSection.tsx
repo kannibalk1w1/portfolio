@@ -3,6 +3,7 @@ import { usePortfolio } from '../../store/PortfolioContext'
 import type { ModelsSection as ModelsSectionType, ModelItem, Section } from '../../types/portfolio'
 import { MediaDropzone } from '../shared/MediaDropzone'
 import { RichTextEditor } from '../shared/RichTextEditor'
+import { SectionTitle } from '../shared/SectionTitle'
 import { useImageInserter } from '../../hooks/useImageInserter'
 import { toFileUrl } from '../../utils/fileUrl'
 
@@ -44,7 +45,7 @@ export function ModelsSection({ section }: { section: ModelsSectionType }) {
 
   return (
     <div>
-      <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 24 }}>{section.title}</h2>
+      <SectionTitle title={section.title} onChange={title => updateSection({ title })} />
 
       <div style={{ marginBottom: 20 }}>
         <span style={{ fontSize: 13, color: '#666', display: 'block', marginBottom: 8 }}>Description</span>

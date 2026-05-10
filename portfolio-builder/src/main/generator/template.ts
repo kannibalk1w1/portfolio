@@ -68,6 +68,8 @@ export function wrapTemplate(
     .gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; }
     .gallery-grid img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 8px; }
     .gallery-item a { display: block; }
+    .gallery-caption { font-size: 12px; color: #666; margin-top: 4px; text-align: center; }
+    .video-caption { font-size: 14px; font-weight: 500; margin-bottom: 6px; }
     .video-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
     .video-item video { width: 100%; border-radius: 8px; }
     .models-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }

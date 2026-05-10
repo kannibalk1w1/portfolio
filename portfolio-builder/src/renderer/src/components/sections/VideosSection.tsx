@@ -3,6 +3,7 @@ import { usePortfolio } from '../../store/PortfolioContext'
 import type { VideosSection as VideosSectionType, VideoItem, Section } from '../../types/portfolio'
 import { MediaDropzone } from '../shared/MediaDropzone'
 import { RichTextEditor } from '../shared/RichTextEditor'
+import { SectionTitle } from '../shared/SectionTitle'
 import { useImageInserter } from '../../hooks/useImageInserter'
 import { toFileUrl } from '../../utils/fileUrl'
 
@@ -45,14 +46,10 @@ export function VideosSection({ section }: { section: VideosSectionType }) {
         id: `item-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
         filename,
       }))
-      // Attempt thumbnail capture for each video (best-effort, non-blocking)
       for (const item of newItems) {
         try {
-          await captureThumbnail(
-            toFileUrl(`${state.portfolioDir}/assets/${item.filename}`)
-          )
+          await captureThumbnail(toFileUrl(`${state.portfolioDir}/assets/${item.filename}`))
           // Thumbnail data URL available — future enhancement: save to assets via IPC
-          // For now we skip saving to keep this task scoped
         } catch {
           // thumbnail optional — continue without it
         }
@@ -67,9 +64,13 @@ export function VideosSection({ section }: { section: VideosSectionType }) {
     updateSection({ items: section.items.filter(i => i.id !== id) })
   }
 
+  function updateCaption(id: string, caption: string) {
+    updateSection({ items: section.items.map(i => i.id === id ? { ...i, caption } : i) })
+  }
+
   return (
     <div>
-      <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 24 }}>{section.title}</h2>
+      <SectionTitle title={section.title} onChange={title => updateSection({ title })} />
 
       <div style={{ marginBottom: 20 }}>
         <span style={{ fontSize: 13, color: '#666', display: 'block', marginBottom: 8 }}>Description</span>
@@ -85,19 +86,25 @@ export function VideosSection({ section }: { section: VideosSectionType }) {
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 16, marginBottom: 16 }}>
         {section.items.map(item => (
-          <div key={item.id} style={{ position: 'relative', borderRadius: 8, overflow: 'hidden', background: '#000', aspectRatio: '16/9' }}>
-            <video
-              src={toFileUrl(`${state.portfolioDir}/assets/${item.filename}`)}
-              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-              controls
+          <div key={item.id} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <div style={{ position: 'relative', borderRadius: 8, overflow: 'hidden', background: '#000', aspectRatio: '16/9' }}>
+              <video
+                src={toFileUrl(`${state.portfolioDir}/assets/${item.filename}`)}
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                controls
+              />
+              <button
+                onClick={() => removeItem(item.id)}
+                style={{ position: 'absolute', top: 4, right: 4, background: 'rgba(0,0,0,0.5)', color: 'white', border: 'none', borderRadius: '50%', width: 22, height: 22, cursor: 'pointer', fontSize: 12 }}
+                aria-label={`Remove ${item.filename}`}
+              >×</button>
+            </div>
+            <input
+              value={item.caption ?? ''}
+              onChange={e => updateCaption(item.id, e.target.value)}
+              placeholder="Title (optional)"
+              style={{ fontSize: 12, padding: '4px 8px', border: '1px solid #e0e0e0', borderRadius: 4, width: '100%', boxSizing: 'border-box' }}
             />
-            <button
-              onClick={() => removeItem(item.id)}
-              style={{ position: 'absolute', top: 4, right: 4, background: 'rgba(0,0,0,0.5)', color: 'white', border: 'none', borderRadius: '50%', width: 22, height: 22, cursor: 'pointer', fontSize: 12 }}
-              aria-label={`Remove ${item.filename}`}
-            >
-              ×
-            </button>
           </div>
         ))}
       </div>

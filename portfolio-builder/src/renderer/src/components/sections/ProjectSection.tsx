@@ -2,6 +2,7 @@ import { usePortfolio } from '../../store/PortfolioContext'
 import type { ProjectSection as ProjectSectionType, MediaItem } from '../../types/portfolio'
 import { MediaDropzone } from '../shared/MediaDropzone'
 import { RichTextEditor } from '../shared/RichTextEditor'
+import { SectionTitle } from '../shared/SectionTitle'
 import { useImageInserter } from '../../hooks/useImageInserter'
 import { toFileUrl } from '../../utils/fileUrl'
 
@@ -38,7 +39,7 @@ export function ProjectSection({ section }: { section: ProjectSectionType }) {
 
   return (
     <div style={{ maxWidth: 720 }}>
-      <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 24 }}>{section.title}</h2>
+      <SectionTitle title={section.title} onChange={title => updateSection({ title })} />
 
       <div style={{ marginBottom: 24 }}>
         <span style={{ fontSize: 13, color: '#666', display: 'block', marginBottom: 8 }}>Cover image</span>

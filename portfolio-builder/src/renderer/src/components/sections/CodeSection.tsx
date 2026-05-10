@@ -1,6 +1,7 @@
 import { usePortfolio } from '../../store/PortfolioContext'
 import type { CodeSection as CodeSectionType, CodeItem, CodeLanguage, Section } from '../../types/portfolio'
 import { RichTextEditor } from '../shared/RichTextEditor'
+import { SectionTitle } from '../shared/SectionTitle'
 import { useImageInserter } from '../../hooks/useImageInserter'
 
 const LANGUAGES: CodeLanguage[] = [
@@ -40,7 +41,7 @@ export function CodeSection({ section }: { section: CodeSectionType }) {
 
   return (
     <div>
-      <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 24 }}>{section.title}</h2>
+      <SectionTitle title={section.title} onChange={title => updateSection({ title })} />
 
       <div style={{ marginBottom: 20 }}>
         <span style={{ fontSize: 13, color: '#666', display: 'block', marginBottom: 8 }}>Description</span>

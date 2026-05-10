@@ -2,6 +2,7 @@ import { usePortfolio } from '../../store/PortfolioContext'
 import type { AboutSection as AboutSectionType, Section } from '../../types/portfolio'
 import { MediaDropzone } from '../shared/MediaDropzone'
 import { RichTextEditor } from '../shared/RichTextEditor'
+import { SectionTitle } from '../shared/SectionTitle'
 import { useImageInserter } from '../../hooks/useImageInserter'
 import { toFileUrl } from '../../utils/fileUrl'
 
@@ -25,7 +26,7 @@ export function AboutSection({ section }: { section: AboutSectionType }) {
 
   return (
     <div style={{ maxWidth: 640 }}>
-      <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 24 }}>About Me</h2>
+      <SectionTitle title={section.title} onChange={title => updateSection({ title })} />
 
       <label style={{ display: 'block', marginBottom: 16 }}>
         <span style={{ fontSize: 13, color: '#666', display: 'block', marginBottom: 4 }}>Name</span>

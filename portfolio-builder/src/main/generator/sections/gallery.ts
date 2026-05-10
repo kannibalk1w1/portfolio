@@ -9,6 +9,7 @@ export function renderGallery(section: GallerySection): string {
       <a href="assets/${escHtml(item.filename)}" target="_blank" rel="noopener">
         <img src="assets/${escHtml(item.filename)}" alt="${escHtml(item.caption ?? item.filename)}" loading="lazy">
       </a>
+      ${item.caption ? `<p class="gallery-caption">${escHtml(item.caption)}</p>` : ''}
     </div>`)
     .join('')
   return `

@@ -6,6 +6,7 @@ export function renderVideos(section: VideosSection): string {
   const items = section.items
     .map(item => `
     <div class="video-item">
+      ${item.caption ? `<p class="video-caption">${escHtml(item.caption)}</p>` : ''}
       <video src="assets/${escHtml(item.filename)}" controls preload="metadata"${item.thumbnailFilename ? ` poster="assets/${escHtml(item.thumbnailFilename)}"` : ''}></video>
     </div>`)
     .join('')
