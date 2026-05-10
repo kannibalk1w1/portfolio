@@ -15,6 +15,8 @@ import {
 import { createSnapshot, listSnapshots, restoreSnapshot } from './portfolio/snapshot'
 import { importMediaFiles, importGodotFolder } from './media/importer'
 import { buildSite, buildOfflineSite } from './generator/index'
+import archiver from 'archiver'
+import { createWriteStream } from 'fs'
 import { uploadFtp } from './publish/ftp'
 import {
   setFtpPassword,
@@ -125,6 +127,30 @@ export function registerIpcHandlers(): void {
   ipcMain.handle('site:export', async (_event, dir: string, p: Portfolio) => {
     await buildSite(dir, p)
     await shell.openPath(join(dir, 'output'))
+  })
+
+  ipcMain.handle('site:zip', async (_event, dir: string, p: Portfolio) => {
+    await buildSite(dir, p)
+    const outputDir = join(dir, 'output')
+
+    const result = await dialog.showSaveDialog({
+      title: 'Save portfolio as ZIP',
+      defaultPath: `${p.name} Portfolio.zip`,
+      filters: [{ name: 'ZIP Archive', extensions: ['zip'] }],
+    })
+    if (!result.filePath) return
+
+    await new Promise<void>((resolve, reject) => {
+      const output  = createWriteStream(result.filePath!)
+      const archive = archiver('zip', { zlib: { level: 6 } })
+      output.on('close', resolve)
+      archive.on('error', reject)
+      archive.pipe(output)
+      archive.directory(outputDir, false)
+      archive.finalize()
+    })
+
+    shell.showItemInFolder(result.filePath)
   })
 
   ipcMain.handle('site:offline', async (_event, dir: string, p: Portfolio) => {

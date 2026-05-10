@@ -165,6 +165,13 @@ export function Sidebar({ activeSectionId, onSelectSection, notify }: Props) {
           {busy === 'Export' ? 'Exporting…' : 'Export'}
         </button>
         <button
+          onClick={() => run('ZIP', () => window.api.zipExport(state.portfolioDir!, portfolio))}
+          disabled={!state.portfolioDir || busy !== null}
+          style={{ padding: '7px', border: '1px solid #e0e0e0', borderRadius: 6, cursor: busy ? 'wait' : 'pointer', fontSize: 12, background: 'white', opacity: busy === 'ZIP' ? 0.6 : 1 }}
+        >
+          {busy === 'ZIP' ? 'Zipping…' : 'Export ZIP'}
+        </button>
+        <button
           onClick={() => run('Offline', () => window.api.offlineExport(state.portfolioDir!, portfolio))}
           disabled={!state.portfolioDir || busy !== null}
           style={{ padding: '7px', border: '1px solid #e0e0e0', borderRadius: 6, cursor: busy ? 'wait' : 'pointer', fontSize: 12, background: 'white', opacity: busy === 'Offline' ? 0.6 : 1 }}
