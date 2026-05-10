@@ -45,26 +45,31 @@ export interface AboutSection extends BaseSection {
 
 export interface GallerySection extends BaseSection {
   type: 'gallery'
+  description?: string  // rich text HTML
   items: MediaItem[]
 }
 
 export interface VideosSection extends BaseSection {
   type: 'videos'
+  description?: string
   items: VideoItem[]
 }
 
 export interface ModelsSection extends BaseSection {
   type: 'models'
+  description?: string
   items: ModelItem[]
 }
 
 export interface GamesSection extends BaseSection {
   type: 'games'
+  description?: string
   items: GameItem[]
 }
 
 export interface CodeSection extends BaseSection {
   type: 'code'
+  description?: string
   items: CodeItem[]
 }
 

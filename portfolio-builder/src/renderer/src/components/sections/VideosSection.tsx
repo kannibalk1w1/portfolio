@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { usePortfolio } from '../../store/PortfolioContext'
 import type { VideosSection as VideosSectionType, VideoItem, Section } from '../../types/portfolio'
 import { MediaDropzone } from '../shared/MediaDropzone'
+import { RichTextEditor } from '../shared/RichTextEditor'
 import { toFileUrl } from '../../utils/fileUrl'
 
 async function captureThumbnail(src: string): Promise<string> {
@@ -67,6 +68,18 @@ export function VideosSection({ section }: { section: VideosSectionType }) {
   return (
     <div>
       <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 24 }}>{section.title}</h2>
+
+      <div style={{ marginBottom: 20 }}>
+        <span style={{ fontSize: 13, color: '#666', display: 'block', marginBottom: 8 }}>Description</span>
+        <RichTextEditor
+          key={section.id}
+          content={section.description ?? ''}
+          onChange={description => updateSection({ description })}
+          minHeight={80}
+          placeholder="Add a description for this section…"
+        />
+      </div>
+
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 16, marginBottom: 16 }}>
         {section.items.map(item => (
           <div key={item.id} style={{ position: 'relative', borderRadius: 8, overflow: 'hidden', background: '#000', aspectRatio: '16/9' }}>

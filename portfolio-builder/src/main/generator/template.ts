@@ -78,11 +78,19 @@ export function wrapTemplate(
     .code-label { font-size: 12px; color: #888; margin-bottom: 4px; font-family: monospace; }
     pre { background: #f8f8f8; border-radius: 8px; padding: 16px; overflow-x: auto; }
     code { font-family: monospace; font-size: 13px; }
-    .custom-content { font-size: 15px; }
-    .custom-content h2 { font-size: 20px; margin: 16px 0 8px; }
-    .custom-content h3 { font-size: 17px; margin: 14px 0 6px; }
-    .custom-content p { margin-bottom: 10px; }
-    .custom-content ul, .custom-content ol { padding-left: 20px; margin-bottom: 10px; }
+    .section-description { font-size: 15px; margin-bottom: 20px; line-height: 1.7; }
+    .section-description > * + * { margin-top: 0.6em; }
+    .section-description h1 { font-size: 1.6em; font-weight: 700; }
+    .section-description h2 { font-size: 1.35em; font-weight: 700; }
+    .section-description h3 { font-size: 1.15em; font-weight: 600; }
+    .section-description h4 { font-size: 1em; font-weight: 600; }
+    .section-description ul, .section-description ol { padding-left: 1.4em; }
+    .section-description blockquote { border-left: 3px solid #ddd; padding-left: 12px; color: #666; }
+    .section-description hr { border: none; border-top: 2px solid #e0e0e0; margin: 12px 0; }
+    .section-description a { color: #4f46e5; }
+    .section-description code { background: #f1f1f1; padding: 1px 4px; border-radius: 3px; font-size: 0.9em; font-family: monospace; }
+    .section-description pre { background: #f8f8f8; border-radius: 8px; padding: 16px; overflow-x: auto; }
+    .section-description pre code { background: none; padding: 0; }
     .empty { color: #aaa; font-size: 14px; font-style: italic; }
     .project-cover { width: 100%; max-height: 360px; object-fit: cover; border-radius: 10px; margin-bottom: 20px; }
     .project-description { margin-bottom: 20px; }

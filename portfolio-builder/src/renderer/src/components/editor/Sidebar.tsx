@@ -23,13 +23,13 @@ const SECTION_DEFAULTS: {
   models:  { type: 'models',  title: '3D Models',      visible: true, items: [] },
   games:   { type: 'games',   title: 'Games',          visible: true, items: [] },
   code:    { type: 'code',    title: 'Code',           visible: true, items: [] },
-  custom:  { type: 'custom',  title: 'Custom Section', visible: true, html: '' },
+  custom:  { type: 'custom',  title: 'Text',           visible: true, html: '' },
   project: { type: 'project', title: 'Project',        visible: true, description: '', items: [] },
 }
 
 const SECTION_LABELS: Record<SectionType, string> = {
   about: '👤 About Me', gallery: '🖼 Gallery', videos: '🎬 Videos',
-  models: '📦 3D Models', games: '🎮 Games', code: '💻 Code', custom: '📝 Custom',
+  models: '📦 3D Models', games: '🎮 Games', code: '💻 Code', custom: '📝 Text',
   project: '📋 Project',
 }
 

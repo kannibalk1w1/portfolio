@@ -1,6 +1,7 @@
 import { usePortfolio } from '../../store/PortfolioContext'
 import type { AboutSection as AboutSectionType, Section } from '../../types/portfolio'
 import { MediaDropzone } from '../shared/MediaDropzone'
+import { RichTextEditor } from '../shared/RichTextEditor'
 import { toFileUrl } from '../../utils/fileUrl'
 
 export function AboutSection({ section }: { section: AboutSectionType }) {
@@ -21,7 +22,7 @@ export function AboutSection({ section }: { section: AboutSectionType }) {
   }
 
   return (
-    <div style={{ maxWidth: 600 }}>
+    <div style={{ maxWidth: 640 }}>
       <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 24 }}>About Me</h2>
 
       <label style={{ display: 'block', marginBottom: 16 }}>
@@ -33,24 +34,32 @@ export function AboutSection({ section }: { section: AboutSectionType }) {
         />
       </label>
 
-      <label style={{ display: 'block', marginBottom: 16 }}>
-        <span style={{ fontSize: 13, color: '#666', display: 'block', marginBottom: 4 }}>Bio</span>
-        <textarea
-          value={section.bio}
-          onChange={e => updateSection({ bio: e.target.value })}
-          rows={4}
-          style={{ width: '100%', padding: '8px 12px', borderRadius: 6, border: '1px solid #ddd', fontSize: 14, resize: 'vertical', boxSizing: 'border-box' }}
+      <div style={{ marginBottom: 16 }}>
+        <span style={{ fontSize: 13, color: '#666', display: 'block', marginBottom: 8 }}>Bio</span>
+        <RichTextEditor
+          key={section.id}
+          content={section.bio}
+          onChange={bio => updateSection({ bio })}
+          minHeight={120}
+          placeholder="Write a short bio…"
         />
-      </label>
+      </div>
 
       <div style={{ marginBottom: 16 }}>
         <span style={{ fontSize: 13, color: '#666', display: 'block', marginBottom: 8 }}>Avatar photo</span>
         {section.avatarFilename && (
-          <img
-            src={toFileUrl(`${state.portfolioDir}/assets/${section.avatarFilename}`)}
-            style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: '50%', display: 'block', marginBottom: 8 }}
-            alt="Avatar"
-          />
+          <div style={{ position: 'relative', display: 'inline-block', marginBottom: 8 }}>
+            <img
+              src={toFileUrl(`${state.portfolioDir}/assets/${section.avatarFilename}`)}
+              style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: '50%', display: 'block' }}
+              alt="Avatar"
+            />
+            <button
+              onClick={() => updateSection({ avatarFilename: undefined })}
+              style={{ position: 'absolute', top: -4, right: -4, background: '#e94560', color: 'white', border: 'none', borderRadius: '50%', width: 20, height: 20, cursor: 'pointer', fontSize: 12, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              aria-label="Remove avatar"
+            >×</button>
+          </div>
         )}
         <MediaDropzone
           label="Click to choose avatar image"

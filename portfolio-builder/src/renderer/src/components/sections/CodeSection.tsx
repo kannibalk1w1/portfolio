@@ -1,5 +1,6 @@
 import { usePortfolio } from '../../store/PortfolioContext'
 import type { CodeSection as CodeSectionType, CodeItem, CodeLanguage, Section } from '../../types/portfolio'
+import { RichTextEditor } from '../shared/RichTextEditor'
 
 const LANGUAGES: CodeLanguage[] = [
   'javascript', 'typescript', 'python', 'gdscript',
@@ -38,6 +39,18 @@ export function CodeSection({ section }: { section: CodeSectionType }) {
   return (
     <div>
       <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 24 }}>{section.title}</h2>
+
+      <div style={{ marginBottom: 20 }}>
+        <span style={{ fontSize: 13, color: '#666', display: 'block', marginBottom: 8 }}>Description</span>
+        <RichTextEditor
+          key={section.id}
+          content={section.description ?? ''}
+          onChange={description => updateSection({ description })}
+          minHeight={80}
+          placeholder="Add a description for this section…"
+        />
+      </div>
+
       {section.items.map(item => (
         <div key={item.id} style={{ marginBottom: 24, border: '1px solid #e0e0e0', borderRadius: 8, overflow: 'hidden' }}>
           <div style={{ display: 'flex', gap: 8, padding: '8px 12px', background: '#f8f8f8', borderBottom: '1px solid #e0e0e0', alignItems: 'center' }}>

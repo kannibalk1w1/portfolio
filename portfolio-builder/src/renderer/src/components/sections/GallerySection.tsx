@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { usePortfolio } from '../../store/PortfolioContext'
 import type { GallerySection as GallerySectionType, MediaItem, Section } from '../../types/portfolio'
 import { MediaDropzone } from '../shared/MediaDropzone'
+import { RichTextEditor } from '../shared/RichTextEditor'
 import { toFileUrl } from '../../utils/fileUrl'
 
 export function GallerySection({ section }: { section: GallerySectionType }) {
@@ -38,6 +39,18 @@ export function GallerySection({ section }: { section: GallerySectionType }) {
   return (
     <div>
       <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 24 }}>{section.title}</h2>
+
+      <div style={{ marginBottom: 20 }}>
+        <span style={{ fontSize: 13, color: '#666', display: 'block', marginBottom: 8 }}>Description</span>
+        <RichTextEditor
+          key={section.id}
+          content={section.description ?? ''}
+          onChange={description => updateSection({ description })}
+          minHeight={80}
+          placeholder="Add a description for this gallery…"
+        />
+      </div>
+
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 12, marginBottom: 16 }}>
         {section.items.map(item => (
           <div key={item.id} style={{ position: 'relative', borderRadius: 8, overflow: 'hidden', background: '#f0f0f0', aspectRatio: '1' }}>
@@ -50,9 +63,7 @@ export function GallerySection({ section }: { section: GallerySectionType }) {
               onClick={() => removeItem(item.id)}
               style={{ position: 'absolute', top: 4, right: 4, background: 'rgba(0,0,0,0.5)', color: 'white', border: 'none', borderRadius: '50%', width: 22, height: 22, cursor: 'pointer', fontSize: 12, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
               aria-label={`Remove ${item.filename}`}
-            >
-              ×
-            </button>
+            >×</button>
           </div>
         ))}
       </div>
