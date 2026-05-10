@@ -1,7 +1,13 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { existsSync, mkdirSync, rmSync, writeFileSync } from 'fs'
 import { join } from 'path'
-import { listCyps, readPortfolio, writePortfolio, deletePortfolio } from '../../../src/main/portfolio/store'
+import {
+  listCyps,
+  readPortfolio,
+  writePortfolio,
+  deletePortfolio,
+  stripLegacyFtpPassword,
+} from '../../../src/main/portfolio/store'
 import type { Portfolio } from '../../../src/renderer/src/types/portfolio'
 
 const TMP = join(__dirname, '__tmp_portfolios__')
@@ -74,6 +80,69 @@ describe('writePortfolio', () => {
     expect(existsSync(join(TMP, 'charlie', 'assets'))).toBe(true)
     expect(existsSync(join(TMP, 'charlie', 'snapshots'))).toBe(true)
     expect(existsSync(join(TMP, 'charlie', 'output'))).toBe(true)
+  })
+})
+
+describe('stripLegacyFtpPassword', () => {
+  it('returns the portfolio unchanged when no FTP config is present', () => {
+    const p = makePortfolio('Alice')
+    const result = stripLegacyFtpPassword(p)
+    expect(result.password).toBeNull()
+    expect(result.portfolio).toEqual(p)
+  })
+
+  it('returns the portfolio unchanged when FTP config has no password', () => {
+    const p: Portfolio = {
+      ...makePortfolio('Alice'),
+      publish: { ftp: { host: 'h', port: 21, user: 'u', remotePath: '/x', secure: false } },
+    }
+    const result = stripLegacyFtpPassword(p)
+    expect(result.password).toBeNull()
+    expect(result.portfolio).toEqual(p)
+  })
+
+  it('extracts the password and returns a portfolio without it', () => {
+    const p: Portfolio = {
+      ...makePortfolio('Alice'),
+      publish: {
+        ftp: {
+          host: 'h',
+          port: 21,
+          user: 'u',
+          password: 'plaintext-secret',
+          remotePath: '/x',
+          secure: false,
+        },
+      },
+    }
+    const result = stripLegacyFtpPassword(p)
+    expect(result.password).toBe('plaintext-secret')
+    expect(result.portfolio.publish.ftp).toEqual({
+      host: 'h', port: 21, user: 'u', remotePath: '/x', secure: false,
+    })
+    expect(result.portfolio.publish.ftp).not.toHaveProperty('password')
+  })
+
+  it('does not mutate the input portfolio', () => {
+    const p: Portfolio = {
+      ...makePortfolio('Alice'),
+      publish: {
+        ftp: { host: 'h', port: 21, user: 'u', password: 'pw', remotePath: '/', secure: false },
+      },
+    }
+    stripLegacyFtpPassword(p)
+    expect(p.publish.ftp?.password).toBe('pw')
+  })
+
+  it('treats an empty-string password as no password', () => {
+    const p: Portfolio = {
+      ...makePortfolio('Alice'),
+      publish: {
+        ftp: { host: 'h', port: 21, user: 'u', password: '', remotePath: '/', secure: false },
+      },
+    }
+    const result = stripLegacyFtpPassword(p)
+    expect(result.password).toBeNull()
   })
 })
 
