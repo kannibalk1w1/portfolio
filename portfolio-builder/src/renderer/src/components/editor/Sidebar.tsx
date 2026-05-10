@@ -4,6 +4,7 @@ import { SortableContext, verticalListSortingStrategy, arrayMove } from '@dnd-ki
 import { usePortfolio } from '../../store/PortfolioContext'
 import { SidebarItem } from './SidebarItem'
 import { SnapshotPanel } from '../shared/SnapshotPanel'
+import { FtpModal } from '../shared/FtpModal'
 import type { Section, SectionType, AboutSection, GallerySection, VideosSection, ModelsSection, GamesSection, CodeSection, CustomSection, ProjectSection } from '../../types/portfolio'
 
 const SECTION_DEFAULTS: {
@@ -41,6 +42,7 @@ export function Sidebar({ activeSectionId, onSelectSection }: Props) {
   const { state, updatePortfolio } = usePortfolio()
   const [adding, setAdding] = useState(false)
   const [showSnapshots, setShowSnapshots] = useState(false)
+  const [showFtp, setShowFtp] = useState(false)
   const portfolio = state.portfolio!
 
   function handleDragEnd(event: DragEndEvent) {
@@ -134,16 +136,14 @@ export function Sidebar({ activeSectionId, onSelectSection }: Props) {
           Export
         </button>
         <button
-          onClick={() => {
-            if (!state.portfolioDir || !portfolio.publish.ftp) return
-            window.api.publishFtp(state.portfolioDir, portfolio.publish.ftp)
-          }}
+          onClick={() => setShowFtp(true)}
           style={{ padding: '7px', background: '#222', color: 'white', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 12 }}
         >
-          Publish
+          Publish…
         </button>
       </div>
       {showSnapshots && <SnapshotPanel onClose={() => setShowSnapshots(false)} />}
+      {showFtp && <FtpModal onClose={() => setShowFtp(false)} />}
     </div>
   )
 }
