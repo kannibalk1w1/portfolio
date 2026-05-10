@@ -13,7 +13,7 @@ import { usePortfolio } from '../../store/PortfolioContext'
 import type {
   ContentSection as ContentSectionType, ContentBlock, ContentTextBlock,
   ContentImageBlock, ContentVideoBlock, ContentQuoteBlock, ContentDividerBlock,
-  ContentTwoColumnBlock, Section,
+  ContentTwoColumnBlock, ContentProgressBlock, Section,
 } from '../../types/portfolio'
 import { RichTextEditor } from '../shared/RichTextEditor'
 import { SectionTitle } from '../shared/SectionTitle'
@@ -27,12 +27,13 @@ import { parseVideoUrl } from '../../utils/parseVideoUrl'
 // ---------------------------------------------------------------------------
 
 const BLOCK_TYPES: { type: ContentBlock['type']; label: string; icon: string }[] = [
-  { type: 'text',       label: 'Text',       icon: '📝' },
-  { type: 'image',      label: 'Image',      icon: '🖼' },
-  { type: 'video',      label: 'Video',      icon: '🎬' },
-  { type: 'quote',      label: 'Quote',      icon: '❝' },
+  { type: 'text',       label: 'Text',        icon: '📝' },
+  { type: 'image',      label: 'Image',       icon: '🖼' },
+  { type: 'video',      label: 'Video',       icon: '🎬' },
+  { type: 'quote',      label: 'Quote',       icon: '❝' },
+  { type: 'progress',   label: 'Progress bar', icon: '█' },
   { type: 'two-column', label: 'Two columns', icon: '▣' },
-  { type: 'divider',    label: 'Divider',    icon: '─' },
+  { type: 'divider',    label: 'Divider',     icon: '─' },
 ]
 
 function newBlock(type: ContentBlock['type']): ContentBlock {
@@ -43,6 +44,7 @@ function newBlock(type: ContentBlock['type']): ContentBlock {
     case 'video':      return { id, type } as ContentVideoBlock
     case 'quote':      return { id, type, quote: '' } as ContentQuoteBlock
     case 'divider':    return { id, type, style: 'line' } as ContentDividerBlock
+    case 'progress':   return { id, type, label: '', percentage: 75 } as ContentProgressBlock
     case 'two-column': return { id, type, leftHtml: '', rightHtml: '' } as ContentTwoColumnBlock
   }
 }
@@ -156,6 +158,42 @@ function QuoteBlockEditor({ block, onChange }: { block: ContentQuoteBlock; onCha
   )
 }
 
+function ProgressBlockEditor({ block, onChange }: { block: ContentProgressBlock; onChange: (b: Partial<ContentProgressBlock>) => void }) {
+  const pct = Math.max(0, Math.min(100, block.percentage))
+  const fill = block.colour ?? '#6366f1'
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+      <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+        <input
+          value={block.label}
+          onChange={e => onChange({ label: e.target.value })}
+          placeholder="Label (e.g. Python, Communication)"
+          style={{ flex: 1, padding: '7px 10px', border: '1px solid #e0e0e0', borderRadius: 6, fontSize: 13 }}
+        />
+        <input
+          type="color"
+          value={fill}
+          onChange={e => onChange({ colour: e.target.value })}
+          style={{ width: 32, height: 32, border: '1px solid #ddd', borderRadius: 4, cursor: 'pointer', padding: 2 }}
+          title="Bar colour"
+        />
+        <span style={{ fontSize: 13, fontWeight: 700, color: '#555', width: 36, textAlign: 'right' }}>{pct}%</span>
+      </div>
+      <input
+        type="range"
+        min={0} max={100} step={5}
+        value={pct}
+        onChange={e => onChange({ percentage: Number(e.target.value) })}
+        style={{ width: '100%' }}
+      />
+      {/* Live preview */}
+      <div style={{ background: '#f1f5f9', borderRadius: 999, height: 10, overflow: 'hidden' }}>
+        <div style={{ width: `${pct}%`, height: '100%', background: fill, borderRadius: 999, transition: 'width 0.2s' }} />
+      </div>
+    </div>
+  )
+}
+
 function TwoColumnBlockEditor({ block, onChange, onInsertImage }: { block: ContentTwoColumnBlock; onChange: (b: Partial<ContentTwoColumnBlock>) => void; onInsertImage?: () => Promise<string | null> }) {
   return (
     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
@@ -206,7 +244,7 @@ function DividerBlockEditor({ block, onChange }: { block: ContentDividerBlock; o
 
 const BLOCK_LABELS: Record<ContentBlock['type'], string> = {
   text: '📝 Text', image: '🖼 Image', video: '🎬 Video', quote: '❝ Quote',
-  divider: '─ Divider', 'two-column': '▣ Two columns',
+  progress: '█ Progress', divider: '─ Divider', 'two-column': '▣ Two columns',
 }
 
 function BlockCard({ block, onUpdate, onRemove, portfolioDir, onInsertImage }: {
@@ -239,6 +277,7 @@ function BlockCard({ block, onUpdate, onRemove, portfolioDir, onInsertImage }: {
           {block.type === 'image'      && <ImageBlockEditor      block={block} onChange={p => onUpdate(p)} portfolioDir={portfolioDir} />}
           {block.type === 'video'      && <VideoBlockEditor      block={block} onChange={p => onUpdate(p)} portfolioDir={portfolioDir} />}
           {block.type === 'quote'      && <QuoteBlockEditor      block={block} onChange={p => onUpdate(p)} />}
+          {block.type === 'progress'   && <ProgressBlockEditor   block={block} onChange={p => onUpdate(p)} />}
           {block.type === 'two-column' && <TwoColumnBlockEditor  block={block} onChange={p => onUpdate(p)} onInsertImage={onInsertImage} />}
           {block.type === 'divider'    && <DividerBlockEditor    block={block} onChange={p => onUpdate(p)} />}
         </div>

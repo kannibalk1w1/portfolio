@@ -163,10 +163,11 @@ export interface ContentVideoBlock     { id: string; type: 'video';      filenam
 export interface ContentQuoteBlock     { id: string; type: 'quote';      quote: string; attribution?: string }
 export interface ContentDividerBlock   { id: string; type: 'divider';    style?: 'line' | 'dots' | 'stars' | 'thick' }
 export interface ContentTwoColumnBlock { id: string; type: 'two-column'; leftHtml: string; rightHtml: string }
+export interface ContentProgressBlock  { id: string; type: 'progress';    label: string; percentage: number; colour?: string }
 
 export type ContentBlock =
   | ContentTextBlock | ContentImageBlock | ContentVideoBlock
-  | ContentQuoteBlock | ContentDividerBlock | ContentTwoColumnBlock
+  | ContentQuoteBlock | ContentDividerBlock | ContentTwoColumnBlock | ContentProgressBlock
 
 export interface ContentSection extends BaseSection {
   type: 'content'
@@ -256,6 +257,7 @@ export interface Portfolio {
   schemaVersion: 1
   name: string
   slug: string
+  tagline?: string
   theme?: ThemeName
   customisation?: PortfolioCustomisation
   sections: Section[]

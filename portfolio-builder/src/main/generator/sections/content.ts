@@ -42,6 +42,17 @@ function renderBlock(block: ContentBlock): string {
     case 'divider':
       return `<hr class="divider-${block.style ?? 'line'}">`
 
+    case 'progress': {
+      if (!block.label && !block.percentage) return ''
+      const pct = Math.max(0, Math.min(100, block.percentage))
+      const colour = /^#[0-9a-fA-F]{3,8}$/.test(block.colour ?? '') ? block.colour : null
+      const fillStyle = colour ? `background:${colour}` : ''
+      return `<div class="cb cb-progress">
+        <div class="progress-label"><span>${escHtml(block.label)}</span><span>${pct}%</span></div>
+        <div class="progress-bar-bg"><div class="progress-bar-fill" style="width:${pct}%;${fillStyle}"></div></div>
+      </div>`
+    }
+
     case 'two-column':
       return `<div class="cb cb-two-col">
         <div class="two-col-left">${sanitizeContent(block.leftHtml)}</div>

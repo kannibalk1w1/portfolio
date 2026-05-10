@@ -40,6 +40,16 @@ export function AboutSection({ section }: { section: AboutSectionType }) {
         />
       </label>
 
+      <label style={{ display: 'block', marginBottom: 16 }}>
+        <span style={{ fontSize: 13, color: '#666', display: 'block', marginBottom: 4 }}>Tagline</span>
+        <input
+          value={state.portfolio?.tagline ?? ''}
+          onChange={e => updatePortfolio({ ...state.portfolio!, tagline: e.target.value || undefined })}
+          placeholder="e.g. Game developer & digital artist"
+          style={{ width: '100%', padding: '8px 12px', borderRadius: 6, border: '1px solid #ddd', fontSize: 14, boxSizing: 'border-box' }}
+        />
+      </label>
+
       <div style={{ marginBottom: 16 }}>
         <span style={{ fontSize: 13, color: '#666', display: 'block', marginBottom: 8 }}>Bio</span>
         <RichTextEditor

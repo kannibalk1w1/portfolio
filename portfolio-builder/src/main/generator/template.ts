@@ -183,6 +183,7 @@ export function wrapTemplate(
     .hero { background: linear-gradient(135deg, var(--hero-from) 0%, var(--hero-to) 100%); padding: 64px 32px 60px; text-align: center; color: var(--hero-color); }
     .hero-avatar { width: 120px; height: 120px; border-radius: 50%; object-fit: cover; border: 3px solid var(--hero-avatar-border); margin: 0 auto 20px; }
     .hero h1 { font-size: 42px; font-weight: 800; letter-spacing: -1px; line-height: 1.1; }
+    .hero-tagline { margin-top: 10px; font-size: 16px; opacity: 0.72; font-weight: 400; }
 
     /* ── Layout ── */
     .sections-wrapper { max-width: 1040px; margin: 0 auto; padding: 40px 24px 56px; display: flex; flex-direction: column; gap: 20px; }
@@ -283,6 +284,12 @@ export function wrapTemplate(
     .tl-title { font-size: 16px; font-weight: 600; color: var(--dark-2); margin-bottom: 4px; }
     .tl-desc { font-size: 14px; color: var(--muted); line-height: 1.6; }
 
+    /* ── Progress bars (Content block) ── */
+    .cb-progress { margin-bottom: 4px; }
+    .progress-label { display: flex; justify-content: space-between; font-size: 14px; font-weight: 600; color: var(--dark-2); margin-bottom: 6px; }
+    .progress-bar-bg   { background: var(--border); border-radius: 999px; height: 10px; overflow: hidden; }
+    .progress-bar-fill { height: 100%; border-radius: 999px; background: var(--accent); }
+
     /* ── Stats ── */
     .stats-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 16px; }
     .stat-card  { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px 16px; text-align: center; }
@@ -364,6 +371,7 @@ export function wrapTemplate(
 
   <header class="hero">${heroAvatar}
     <h1>${escHtml(portfolio.name)}</h1>
+    ${portfolio.tagline ? `<p class="hero-tagline">${escHtml(portfolio.tagline)}</p>` : ''}
   </header>
 
   <div class="sections-wrapper">
