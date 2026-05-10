@@ -76,8 +76,8 @@ export function ModelsSection({ section }: { section: ModelsSectionType }) {
       </div>
       {importError && <div style={{ color: '#e94560', fontSize: 12, marginBottom: 8 }}>{importError}</div>}
       <MediaDropzone
-        label="Click to add 3D models (GLB, GLTF)"
-        filters={[{ name: '3D Models', extensions: ['glb', 'gltf'] }]}
+        label="Click to add 3D models (GLB, GLTF, FBX, STL, 3DS, OBJ, PLY)"
+        filters={[{ name: '3D Models', extensions: ['glb', 'gltf', 'fbx', 'stl', '3ds', 'obj', 'ply'] }]}
         onFiles={handleImport}
       />
     </div>

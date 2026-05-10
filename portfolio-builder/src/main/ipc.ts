@@ -95,7 +95,9 @@ export function registerIpcHandlers(): void {
     '.mjs': 'application/javascript', '.json': 'application/json',
     '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.png': 'image/png',
     '.gif': 'image/gif', '.webp': 'image/webp', '.svg': 'image/svg+xml',
+    '.avif': 'image/avif', '.tif': 'image/tiff', '.tiff': 'image/tiff',
     '.mp4': 'video/mp4', '.webm': 'video/webm',
+    '.mov': 'video/quicktime', '.m4v': 'video/mp4',
     '.glb': 'model/gltf-binary', '.gltf': 'model/gltf+json',
     '.wasm': 'application/wasm',
   }

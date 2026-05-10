@@ -54,7 +54,7 @@ export function AboutSection({ section }: { section: AboutSectionType }) {
         )}
         <MediaDropzone
           label="Click to choose avatar image"
-          filters={[{ name: 'Images', extensions: ['jpg', 'jpeg', 'png', 'webp', 'heic'] }]}
+          filters={[{ name: 'Images', extensions: ['jpg', 'jpeg', 'png', 'webp', 'avif', 'heic', 'heif', 'tif', 'tiff'] }]}
           multiple={false}
           onFiles={handleAvatarImport}
         />
