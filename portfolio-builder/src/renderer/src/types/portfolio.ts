@@ -10,6 +10,7 @@ export interface MediaItem {
 
 export interface VideoItem extends MediaItem {
   thumbnailFilename?: string  // relative to assets/
+  embedUrl?: string           // YouTube/Vimeo embed URL; when set, filename is unused
 }
 
 export interface ModelItem extends MediaItem {
