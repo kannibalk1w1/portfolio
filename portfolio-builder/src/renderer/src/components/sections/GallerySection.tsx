@@ -20,12 +20,13 @@ import { toFileUrl } from '../../utils/fileUrl'
 // ---------------------------------------------------------------------------
 
 function SortableItem({
-  item, portfolioDir, onRemove, onCaptionChange,
+  item, portfolioDir, onRemove, onCaptionChange, onAltChange,
 }: {
   item: MediaItem
   portfolioDir: string
   onRemove: () => void
   onCaptionChange: (caption: string) => void
+  onAltChange: (alt: string) => void
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.id })
 
@@ -64,11 +65,18 @@ function SortableItem({
       </div>
 
       <input
-        onPointerDown={e => e.stopPropagation()}  // don't let caption input start a drag
+        onPointerDown={e => e.stopPropagation()}
         value={item.caption ?? ''}
         onChange={e => onCaptionChange(e.target.value)}
         placeholder="Caption…"
         style={{ fontSize: 11, padding: '3px 6px', border: '1px solid #e0e0e0', borderRadius: 4, width: '100%', boxSizing: 'border-box' }}
+      />
+      <input
+        onPointerDown={e => e.stopPropagation()}
+        value={item.alt ?? ''}
+        onChange={e => onAltChange(e.target.value)}
+        placeholder="Alt text (accessibility)…"
+        style={{ fontSize: 11, padding: '3px 6px', border: '1px solid #e0e0e0', borderRadius: 4, width: '100%', boxSizing: 'border-box', color: '#666' }}
       />
     </div>
   )
@@ -142,6 +150,7 @@ export function GallerySection({ section }: { section: GallerySectionType }) {
                 portfolioDir={state.portfolioDir!}
                 onRemove={() => updateSection({ items: section.items.filter(i => i.id !== item.id) })}
                 onCaptionChange={caption => updateSection({ items: section.items.map(i => i.id === item.id ? { ...i, caption } : i) })}
+                onAltChange={alt => updateSection({ items: section.items.map(i => i.id === item.id ? { ...i, alt } : i) })}
               />
             ))}
           </div>

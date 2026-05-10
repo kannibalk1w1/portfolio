@@ -1,4 +1,4 @@
-export type SectionType = 'about' | 'gallery' | 'videos' | 'models' | 'games' | 'code' | 'custom' | 'project' | 'links'
+export type SectionType = 'about' | 'gallery' | 'videos' | 'models' | 'games' | 'code' | 'custom' | 'project' | 'links' | 'skills' | 'timeline'
 
 export type ThemeName = 'launchpad' | 'midnight' | 'warm' | 'minimal'
 
@@ -6,6 +6,7 @@ export interface MediaItem {
   id: string
   filename: string       // relative to assets/
   caption?: string
+  alt?: string           // alt text for screen readers; falls back to caption then filename
 }
 
 export interface VideoItem extends MediaItem {
@@ -94,6 +95,30 @@ export interface LinksSection extends BaseSection {
   items: LinkItem[]
 }
 
+export interface SkillItem {
+  id: string
+  label: string
+}
+
+export interface SkillsSection extends BaseSection {
+  type: 'skills'
+  description?: string
+  items: SkillItem[]
+}
+
+export interface TimelineItem {
+  id: string
+  date: string           // e.g. "2026", "May 2026", free text
+  title: string
+  description?: string
+}
+
+export interface TimelineSection extends BaseSection {
+  type: 'timeline'
+  description?: string
+  items: TimelineItem[]
+}
+
 export interface ProjectSection extends BaseSection {
   type: 'project'
   description: string   // TipTap HTML
@@ -111,6 +136,8 @@ export type Section =
   | CustomSection
   | ProjectSection
   | LinksSection
+  | SkillsSection
+  | TimelineSection
 
 export interface FtpConfig {
   host: string

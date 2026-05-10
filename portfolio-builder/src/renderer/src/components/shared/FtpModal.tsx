@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import QRCode from 'qrcode'
 import { usePortfolio } from '../../store/PortfolioContext'
 import type { FtpConfig } from '../../types/portfolio'
 
@@ -32,6 +33,7 @@ export function FtpModal({ onClose }: Props) {
   const [hasStoredPw, setHasStoredPw] = useState(false)
   const [status, setStatus] = useState<Status>(null)
   const [busy, setBusy] = useState(false)
+  const [qrSrc, setQrSrc] = useState<string | null>(null)
 
   useEffect(() => {
     window.api.hasFtpPassword(slug).then(setHasStoredPw)
@@ -81,6 +83,9 @@ export function FtpModal({ onClose }: Props) {
       await persistSettings()
       await window.api.publishFtp(state.portfolioDir!, buildConfig())
       setStatus({ kind: 'success', msg: 'Published successfully.' })
+      // Generate QR code for the published URL
+      const url = `${secure ? 'https' : 'http'}://${host}${remotePath.endsWith('/') ? remotePath : remotePath + '/'}`
+      QRCode.toDataURL(url, { width: 160, margin: 1 }).then(setQrSrc).catch(() => {})
     } catch (e: any) {
       setStatus({ kind: 'error', msg: e.message ?? 'Publish failed.' })
     } finally {
@@ -145,6 +150,14 @@ export function FtpModal({ onClose }: Props) {
         {status && (
           <div style={{ fontSize: 13, color: status.kind === 'error' ? '#e94560' : '#4caf50', padding: '8px 10px', background: status.kind === 'error' ? '#fff5f6' : '#f5fdf5', borderRadius: 6 }}>
             {status.msg}
+          </div>
+        )}
+
+        {/* QR code shown after successful publish */}
+        {qrSrc && status?.kind === 'success' && (
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, padding: '12px 0 4px' }}>
+            <img src={qrSrc} alt="QR code for published portfolio" style={{ width: 160, height: 160, borderRadius: 8, border: '1px solid #e0e0e0' }} />
+            <span style={{ fontSize: 11, color: '#94a3b8' }}>Scan to open the published portfolio</span>
           </div>
         )}
 

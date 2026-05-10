@@ -243,6 +243,19 @@ export function wrapTemplate(
     .link-card:hover { border-color: var(--accent); box-shadow: 0 2px 8px rgba(0,0,0,0.1); color: var(--accent-d); }
     .link-icon { font-size: 20px; line-height: 1; }
 
+    /* ── Skills ── */
+    .skills-grid { display: flex; flex-wrap: wrap; gap: 10px; }
+    .skill-badge { display: inline-block; padding: 6px 14px; border-radius: 999px; font-size: 14px; font-weight: 600; }
+
+    /* ── Timeline ── */
+    .timeline { display: flex; flex-direction: column; gap: 0; border-left: 2px solid var(--border); padding-left: 0; margin-left: 8px; }
+    .tl-item { display: flex; gap: 16px; align-items: flex-start; padding: 0 0 24px 24px; position: relative; }
+    .tl-dot { position: absolute; left: -7px; top: 4px; width: 12px; height: 12px; border-radius: 50%; background: var(--accent); border: 2px solid var(--card); flex-shrink: 0; }
+    .tl-content { flex: 1; }
+    .tl-date { font-size: 12px; font-weight: 600; color: var(--accent); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 4px; }
+    .tl-title { font-size: 16px; font-weight: 600; color: var(--dark-2); margin-bottom: 4px; }
+    .tl-desc { font-size: 14px; color: var(--muted); line-height: 1.6; }
+
     /* ── Empty state ── */
     .empty { color: var(--muted); font-size: 14px; font-style: italic; }
 

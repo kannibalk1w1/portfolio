@@ -6,7 +6,7 @@ import { SidebarItem } from './SidebarItem'
 import { SnapshotPanel } from '../shared/SnapshotPanel'
 import { FtpModal } from '../shared/FtpModal'
 import type { NotifyFn } from '../shared/Toaster'
-import type { Section, SectionType, AboutSection, GallerySection, VideosSection, ModelsSection, GamesSection, CodeSection, CustomSection, ProjectSection, LinksSection } from '../../types/portfolio'
+import type { Section, SectionType, AboutSection, GallerySection, VideosSection, ModelsSection, GamesSection, CodeSection, CustomSection, ProjectSection, LinksSection, SkillsSection, TimelineSection } from '../../types/portfolio'
 
 const SECTION_DEFAULTS: {
   about: Omit<AboutSection, 'id'>
@@ -18,22 +18,26 @@ const SECTION_DEFAULTS: {
   custom: Omit<CustomSection, 'id'>
   project: Omit<ProjectSection, 'id'>
   links: Omit<LinksSection, 'id'>
+  skills: Omit<SkillsSection, 'id'>
+  timeline: Omit<TimelineSection, 'id'>
 } = {
-  about:   { type: 'about',   title: 'About Me',      visible: true, bio: '' },
-  gallery: { type: 'gallery', title: 'Gallery',        visible: true, items: [] },
-  videos:  { type: 'videos',  title: 'Videos',         visible: true, items: [] },
-  models:  { type: 'models',  title: '3D Models',      visible: true, items: [] },
-  games:   { type: 'games',   title: 'Games',          visible: true, items: [] },
-  code:    { type: 'code',    title: 'Code',           visible: true, items: [] },
-  custom:  { type: 'custom',  title: 'Text',           visible: true, html: '' },
-  project: { type: 'project', title: 'Project',        visible: true, description: '', items: [] },
-  links:   { type: 'links',   title: 'Links',          visible: true, items: [] },
+  about:    { type: 'about',    title: 'About Me',   visible: true, bio: '' },
+  gallery:  { type: 'gallery',  title: 'Gallery',    visible: true, items: [] },
+  videos:   { type: 'videos',   title: 'Videos',     visible: true, items: [] },
+  models:   { type: 'models',   title: '3D Models',  visible: true, items: [] },
+  games:    { type: 'games',    title: 'Games',      visible: true, items: [] },
+  code:     { type: 'code',     title: 'Code',       visible: true, items: [] },
+  custom:   { type: 'custom',   title: 'Text',       visible: true, html: '' },
+  project:  { type: 'project',  title: 'Project',    visible: true, description: '', items: [] },
+  links:    { type: 'links',    title: 'Links',      visible: true, items: [] },
+  skills:   { type: 'skills',   title: 'Skills',     visible: true, items: [] },
+  timeline: { type: 'timeline', title: 'Timeline',   visible: true, items: [] },
 }
 
 const SECTION_LABELS: Record<SectionType, string> = {
   about: '👤 About Me', gallery: '🖼 Gallery', videos: '🎬 Videos',
   models: '📦 3D Models', games: '🎮 Games', code: '💻 Code', custom: '📝 Text',
-  project: '📋 Project', links: '🔗 Links',
+  project: '📋 Project', links: '🔗 Links', skills: '⭐ Skills', timeline: '📅 Timeline',
 }
 
 interface Props {
@@ -156,6 +160,13 @@ export function Sidebar({ activeSectionId, onSelectSection, notify }: Props) {
           style={{ padding: '7px', border: '1px solid #e0e0e0', borderRadius: 6, cursor: busy ? 'wait' : 'pointer', fontSize: 12, background: 'white', opacity: busy === 'Preview' ? 0.6 : 1 }}
         >
           {busy === 'Preview' ? 'Opening…' : 'Preview'}
+        </button>
+        <button
+          onClick={() => run('Mobile', () => window.api.previewMobile(state.portfolioDir!, portfolio))}
+          disabled={!state.portfolioDir || busy !== null}
+          style={{ padding: '7px', border: '1px solid #e0e0e0', borderRadius: 6, cursor: busy ? 'wait' : 'pointer', fontSize: 12, background: 'white', opacity: busy === 'Mobile' ? 0.6 : 1 }}
+        >
+          {busy === 'Mobile' ? 'Opening…' : '📱 Mobile'}
         </button>
         <button
           onClick={() => run('Export', () => window.api.exportSite(state.portfolioDir!, portfolio))}

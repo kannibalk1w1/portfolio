@@ -38,6 +38,7 @@ declare global {
       openFolderPicker(): Promise<string | null>
       buildSite(portfolioDir: string, portfolio: Portfolio): Promise<void>
       previewSite(portfolioDir: string, portfolio: Portfolio): Promise<void>
+      previewMobile(portfolioDir: string, portfolio: Portfolio): Promise<void>
       exportSite(portfolioDir: string, portfolio: Portfolio): Promise<void>
       zipExport(portfolioDir: string, portfolio: Portfolio): Promise<void>
       offlineExport(portfolioDir: string, portfolio: Portfolio): Promise<void>
