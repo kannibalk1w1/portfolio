@@ -14,6 +14,9 @@ import { renderProject } from './sections/project'
 import { renderLinks } from './sections/links'
 import { renderSkills } from './sections/skills'
 import { renderTimeline } from './sections/timeline'
+import { renderQuote } from './sections/quote'
+import { renderEmbed } from './sections/embed'
+import { renderContent } from './sections/content'
 
 function renderSection(section: Section): string {
   switch (section.type) {
@@ -28,6 +31,9 @@ function renderSection(section: Section): string {
     case 'links':    return renderLinks(section)
     case 'skills':   return renderSkills(section)
     case 'timeline': return renderTimeline(section)
+    case 'quote':    return renderQuote(section)
+    case 'embed':    return renderEmbed(section)
+    case 'content':  return renderContent(section)
   }
 }
 

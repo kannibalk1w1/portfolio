@@ -44,6 +44,7 @@ import TableCell from '@tiptap/extension-table-cell'
 import TableHeader from '@tiptap/extension-table-header'
 import { StyledDivider, type DividerStyle } from '../../lib/tiptap/StyledDivider'
 import { ColourPalette } from '../../lib/tiptap/ColourPalette'
+import { Callout, type CalloutType } from '../../lib/tiptap/Callout'
 
 // ---------------------------------------------------------------------------
 // Global styles — injected once, shared across all RichTextEditor instances
@@ -82,6 +83,17 @@ function ensureEditorStyles() {
     }
     .tiptap .colour-palette { display: inline-flex; align-items: center; gap: 5px; vertical-align: middle; }
     .tiptap .palette-swatch { width: 22px; height: 22px; border-radius: 50%; display: inline-block; border: 1px solid rgba(0,0,0,0.12); }
+    .tiptap .callout { padding: 12px 16px 12px 44px; border-radius: 8px; border-left: 4px solid; margin: 12px 0; position: relative; }
+    .tiptap .callout::before { position: absolute; left: 12px; top: 13px; font-size: 16px; line-height: 1; }
+    .tiptap .callout > * + * { margin-top: 0.4em; }
+    .tiptap .callout-info    { background: #eff6ff; border-color: #3b82f6; }
+    .tiptap .callout-info::before    { content: 'ℹ️'; }
+    .tiptap .callout-tip     { background: #f0fdf4; border-color: #22c55e; }
+    .tiptap .callout-tip::before     { content: '💡'; }
+    .tiptap .callout-warning { background: #fffbeb; border-color: #f59e0b; }
+    .tiptap .callout-warning::before { content: '⚠️'; }
+    .tiptap .callout-note    { background: #faf5ff; border-color: #8b5cf6; }
+    .tiptap .callout-note::before    { content: '📝'; }
   `
   document.head.appendChild(s)
 }
@@ -158,6 +170,7 @@ export function RichTextEditor({
   const [showColours, setShowColours] = useState(false)
   const [showTableMenu, setShowTableMenu] = useState(false)
   const [showDividerMenu, setShowDividerMenu] = useState(false)
+  const [showCalloutMenu, setShowCalloutMenu] = useState(false)
   const [hexInput, setHexInput] = useState('')
   const linkInputRef = useRef<HTMLInputElement>(null)
 
@@ -166,6 +179,7 @@ export function RichTextEditor({
       StarterKit.configure({ horizontalRule: false }), // replaced by StyledDivider
       StyledDivider,
       ColourPalette,
+      Callout,
       Underline,
       TextStyle,  // required peer for Color
       Color,
@@ -195,7 +209,7 @@ export function RichTextEditor({
 
   // Close menus when clicking outside
   useEffect(() => {
-    function handleClick() { setShowColours(false); setShowTableMenu(false); setShowDividerMenu(false) }
+    function handleClick() { setShowColours(false); setShowTableMenu(false); setShowDividerMenu(false); setShowCalloutMenu(false) }
     document.addEventListener('mousedown', handleClick)
     return () => document.removeEventListener('mousedown', handleClick)
   }, [])
@@ -401,6 +415,30 @@ export function RichTextEditor({
 
         {/* Colour palette insert */}
         <Btn title="Insert colour palette" active={false} onClick={() => editor.chain().focus().insertColourPalette().run()}>🎨+</Btn>
+
+        {/* Callout / info box */}
+        <div style={{ position: 'relative' }}>
+          <Btn title="Insert callout box" active={editor.isActive('callout') || showCalloutMenu} onClick={() => setShowCalloutMenu(v => !v)}>💬▾</Btn>
+          {showCalloutMenu && (
+            <div
+              style={{ position: 'absolute', top: '100%', right: 0, zIndex: 100, background: 'white', border: '1px solid #e0e0e0', borderRadius: 6, padding: 4, marginTop: 2, minWidth: 150, boxShadow: '0 4px 12px rgba(0,0,0,0.1)', display: 'flex', flexDirection: 'column', gap: 1 }}
+              onMouseDown={e => e.preventDefault()}
+            >
+              {([
+                ['info',    'ℹ️  Info'],
+                ['tip',     '💡  Tip'],
+                ['warning', '⚠️  Warning'],
+                ['note',    '📝  Note'],
+              ] as [CalloutType, string][]).map(([type, label]) => (
+                <TableMenuItem key={type} label={label} onClick={() => { editor.chain().focus().insertCallout(type).run(); setShowCalloutMenu(false) }} />
+              ))}
+              {editor.isActive('callout') && <>
+                <div style={{ height: 1, background: '#f0f0f0', margin: '2px 0' }} />
+                <TableMenuItem label="Remove callout" onClick={() => { editor.chain().focus().lift('callout').run(); setShowCalloutMenu(false) }} danger />
+              </>}
+            </div>
+          )}
+        </div>
 
         {/* Image insert — only shown when parent provides the callback */}
         {onInsertImage && (

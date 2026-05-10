@@ -17,6 +17,9 @@ const SECTION_COMPONENTS: Record<SectionType, React.LazyExoticComponent<React.Co
   links:    lazy(() => import('../components/sections/LinksSection').then(m => ({ default: m.LinksSection }))),
   skills:   lazy(() => import('../components/sections/SkillsSection').then(m => ({ default: m.SkillsSection }))),
   timeline: lazy(() => import('../components/sections/TimelineSection').then(m => ({ default: m.TimelineSection }))),
+  quote:    lazy(() => import('../components/sections/QuoteSection').then(m => ({ default: m.QuoteSection }))),
+  embed:    lazy(() => import('../components/sections/EmbedSection').then(m => ({ default: m.EmbedSection }))),
+  content:  lazy(() => import('../components/sections/ContentSection').then(m => ({ default: m.ContentSection }))),
 }
 
 const AUTO_SAVE_DELAY = 10_000  // 10 seconds after last change

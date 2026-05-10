@@ -75,23 +75,7 @@ function SortableVideoItem({
   )
 }
 
-// ---------------------------------------------------------------------------
-// URL parsing — converts YouTube/Vimeo share URLs to embed URLs
-// ---------------------------------------------------------------------------
-
-function parseVideoUrl(raw: string): string | null {
-  const url = raw.trim()
-
-  // YouTube: youtube.com/watch?v=ID, youtu.be/ID, youtube.com/shorts/ID
-  const yt = url.match(/(?:youtube\.com\/(?:watch\?v=|shorts\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/)
-  if (yt) return `https://www.youtube-nocookie.com/embed/${yt[1]}`
-
-  // Vimeo: vimeo.com/ID or vimeo.com/channels/.../ID etc.
-  const vm = url.match(/vimeo\.com\/(?:.*\/)?(\d+)/)
-  if (vm) return `https://player.vimeo.com/video/${vm[1]}`
-
-  return null
-}
+import { parseVideoUrl } from '../../utils/parseVideoUrl'
 
 // ---------------------------------------------------------------------------
 // Component

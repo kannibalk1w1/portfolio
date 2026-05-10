@@ -1,4 +1,4 @@
-export type SectionType = 'about' | 'gallery' | 'videos' | 'models' | 'games' | 'code' | 'custom' | 'project' | 'links' | 'skills' | 'timeline'
+export type SectionType = 'about' | 'gallery' | 'videos' | 'models' | 'games' | 'code' | 'custom' | 'project' | 'links' | 'skills' | 'timeline' | 'quote' | 'embed' | 'content'
 
 export type ThemeName = 'launchpad' | 'midnight' | 'warm' | 'minimal'
 
@@ -126,6 +126,56 @@ export interface ProjectSection extends BaseSection {
   items: MediaItem[]    // project screenshots/images
 }
 
+// ---------------------------------------------------------------------------
+// Quote section
+// ---------------------------------------------------------------------------
+
+export interface QuoteItem {
+  id: string
+  quote: string
+  attribution?: string
+}
+
+export interface QuoteSection extends BaseSection {
+  type: 'quote'
+  items: QuoteItem[]
+}
+
+// ---------------------------------------------------------------------------
+// Embed section (generic iframe)
+// ---------------------------------------------------------------------------
+
+export interface EmbedSection extends BaseSection {
+  type: 'embed'
+  description?: string
+  url: string
+  embedTitle?: string  // optional iframe title attr (distinct from section title)
+  height: number       // iframe height in px
+}
+
+// ---------------------------------------------------------------------------
+// Content section (block editor)
+// ---------------------------------------------------------------------------
+
+export interface ContentTextBlock   { id: string; type: 'text';    html: string }
+export interface ContentImageBlock  { id: string; type: 'image';   filename: string; caption?: string; alt?: string }
+export interface ContentVideoBlock  { id: string; type: 'video';   filename?: string; embedUrl?: string; caption?: string }
+export interface ContentQuoteBlock  { id: string; type: 'quote';   quote: string; attribution?: string }
+export interface ContentDividerBlock { id: string; type: 'divider'; style?: 'line' | 'dots' | 'stars' | 'thick' }
+
+export type ContentBlock =
+  | ContentTextBlock | ContentImageBlock | ContentVideoBlock
+  | ContentQuoteBlock | ContentDividerBlock
+
+export interface ContentSection extends BaseSection {
+  type: 'content'
+  blocks: ContentBlock[]
+}
+
+// ---------------------------------------------------------------------------
+// Section union
+// ---------------------------------------------------------------------------
+
 export type Section =
   | AboutSection
   | GallerySection
@@ -138,6 +188,9 @@ export type Section =
   | LinksSection
   | SkillsSection
   | TimelineSection
+  | QuoteSection
+  | EmbedSection
+  | ContentSection
 
 export interface FtpConfig {
   host: string

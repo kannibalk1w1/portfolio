@@ -6,7 +6,7 @@ import { SidebarItem } from './SidebarItem'
 import { SnapshotPanel } from '../shared/SnapshotPanel'
 import { FtpModal } from '../shared/FtpModal'
 import type { NotifyFn } from '../shared/Toaster'
-import type { Section, SectionType, AboutSection, GallerySection, VideosSection, ModelsSection, GamesSection, CodeSection, CustomSection, ProjectSection, LinksSection, SkillsSection, TimelineSection } from '../../types/portfolio'
+import type { Section, SectionType, AboutSection, GallerySection, VideosSection, ModelsSection, GamesSection, CodeSection, CustomSection, ProjectSection, LinksSection, SkillsSection, TimelineSection, QuoteSection, EmbedSection, ContentSection } from '../../types/portfolio'
 
 const SECTION_DEFAULTS: {
   about: Omit<AboutSection, 'id'>
@@ -20,6 +20,9 @@ const SECTION_DEFAULTS: {
   links: Omit<LinksSection, 'id'>
   skills: Omit<SkillsSection, 'id'>
   timeline: Omit<TimelineSection, 'id'>
+  quote: Omit<QuoteSection, 'id'>
+  embed: Omit<EmbedSection, 'id'>
+  content: Omit<ContentSection, 'id'>
 } = {
   about:    { type: 'about',    title: 'About Me',   visible: true, bio: '' },
   gallery:  { type: 'gallery',  title: 'Gallery',    visible: true, items: [] },
@@ -32,12 +35,16 @@ const SECTION_DEFAULTS: {
   links:    { type: 'links',    title: 'Links',      visible: true, items: [] },
   skills:   { type: 'skills',   title: 'Skills',     visible: true, items: [] },
   timeline: { type: 'timeline', title: 'Timeline',   visible: true, items: [] },
+  quote:    { type: 'quote',    title: 'Quote',      visible: true, items: [] },
+  embed:    { type: 'embed',    title: 'Embed',      visible: true, url: '', height: 400 },
+  content:  { type: 'content',  title: 'Content',    visible: true, blocks: [] },
 }
 
 const SECTION_LABELS: Record<SectionType, string> = {
   about: '👤 About Me', gallery: '🖼 Gallery', videos: '🎬 Videos',
   models: '📦 3D Models', games: '🎮 Games', code: '💻 Code', custom: '📝 Text',
   project: '📋 Project', links: '🔗 Links', skills: '⭐ Skills', timeline: '📅 Timeline',
+  quote: '❝ Quote', embed: '📡 Embed', content: '🧩 Content',
 }
 
 interface Props {

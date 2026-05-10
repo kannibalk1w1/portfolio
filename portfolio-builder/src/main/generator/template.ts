@@ -283,6 +283,32 @@ export function wrapTemplate(
     .tl-title { font-size: 16px; font-weight: 600; color: var(--dark-2); margin-bottom: 4px; }
     .tl-desc { font-size: 14px; color: var(--muted); line-height: 1.6; }
 
+    /* ── Quote section ── */
+    .quotes-list { display: flex; flex-direction: column; gap: 20px; }
+    .quote-block { border-left: 4px solid var(--accent); padding: 12px 20px; background: var(--bg); border-radius: 0 8px 8px 0; margin: 0; }
+    .quote-text  { font-size: 17px; font-style: italic; color: var(--dark-2); line-height: 1.7; margin: 0 0 8px; }
+    .quote-attr  { font-size: 13px; color: var(--muted); font-style: normal; display: block; }
+
+    /* ── Callout boxes (from rich-text editor) ── */
+    .callout { padding: 12px 16px 12px 44px; border-radius: 8px; border-left: 4px solid; margin: 14px 0; position: relative; }
+    .callout::before { position: absolute; left: 12px; top: 13px; font-size: 16px; }
+    .callout > * + * { margin-top: 0.4em; }
+    .callout-info    { background: #eff6ff; border-color: #3b82f6; }
+    .callout-info::before    { content: 'ℹ️'; }
+    .callout-tip     { background: #f0fdf4; border-color: #22c55e; }
+    .callout-tip::before     { content: '💡'; }
+    .callout-warning { background: #fffbeb; border-color: #f59e0b; }
+    .callout-warning::before { content: '⚠️'; }
+    .callout-note    { background: #faf5ff; border-color: #8b5cf6; }
+    .callout-note::before    { content: '📝'; }
+
+    /* ── Content blocks ── */
+    .content-blocks { display: flex; flex-direction: column; gap: 20px; }
+    .cb { }
+    .cb-image img, .cb-video video, .cb-video iframe { width: 100%; border-radius: 8px; display: block; }
+    .cb-caption { font-size: 13px; color: var(--muted); margin-top: 6px; text-align: center; }
+    .cb-quote { border-left: 4px solid var(--accent); padding: 12px 20px; background: var(--bg); border-radius: 0 8px 8px 0; margin: 0; }
+
     /* ── Empty state ── */
     .empty { color: var(--muted); font-size: 14px; font-style: italic; }
 

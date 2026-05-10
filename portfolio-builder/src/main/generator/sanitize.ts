@@ -25,6 +25,7 @@ const ALLOWED_TAGS = [
   'mark', 'sup', 'sub',
   // Block
   'h1', 'h2', 'h3', 'h4', 'ul', 'ol', 'li', 'blockquote', 'pre', 'hr',
+  'div',  // callout boxes
   // Media
   'img',
   // Table
@@ -38,6 +39,7 @@ const ALLOWED_ATTRS: sanitizeHtml.IOptions['allowedAttributes'] = {
   th:   ['colspan', 'rowspan'],
   hr:   ['class'],             // styled divider variants (divider-dots etc.)
   span: ['class', 'data-colours'],  // colour-palette and palette-swatch nodes
+  div:  ['class', 'data-callout'],  // callout boxes (info/tip/warning/note)
   '*':  ['style'],
 }
 
