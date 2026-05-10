@@ -13,8 +13,56 @@
  *    actually contains gallery or project images.
  */
 
-import type { Portfolio, Section } from '../../renderer/src/types/portfolio'
+import type { Portfolio, Section, ThemeName } from '../../renderer/src/types/portfolio'
 import { escHtml } from './utils'
+
+// ---------------------------------------------------------------------------
+// Theme CSS variable blocks
+// Each theme overrides the same set of custom properties; the rest of the CSS
+// is identical across all themes.
+// ---------------------------------------------------------------------------
+
+function themeVars(theme: ThemeName = 'launchpad'): string {
+  const themes: Record<ThemeName, string> = {
+    launchpad: `
+      --accent:#6366f1; --accent-d:#4f46e5;
+      --nav-bg:#0f172a;
+      --dark:#0f172a; --dark-2:#1e293b;
+      --text:#1e293b; --muted:#64748b;
+      --bg:#f1f5f9; --card:#ffffff; --border:#e2e8f0;
+      --hero-from:#0f172a; --hero-to:#312e81;
+      --hero-color:#ffffff; --hero-avatar-border:rgba(255,255,255,0.25);
+      --code-bg:#0f172a;`,
+    midnight: `
+      --accent:#10b981; --accent-d:#059669;
+      --nav-bg:#030712;
+      --dark:#030712; --dark-2:#111827;
+      --text:#f1f5f9; --muted:#94a3b8;
+      --bg:#0f172a; --card:#1e293b; --border:#334155;
+      --hero-from:#030712; --hero-to:#064e3b;
+      --hero-color:#ffffff; --hero-avatar-border:rgba(255,255,255,0.2);
+      --code-bg:#030712;`,
+    warm: `
+      --accent:#f59e0b; --accent-d:#d97706;
+      --nav-bg:#1c0a00;
+      --dark:#1c0a00; --dark-2:#431407;
+      --text:#1c1917; --muted:#78716c;
+      --bg:#fef7ee; --card:#ffffff; --border:#f5e6d3;
+      --hero-from:#1c0a00; --hero-to:#7c2d12;
+      --hero-color:#ffffff; --hero-avatar-border:rgba(255,255,255,0.25);
+      --code-bg:#1c1917;`,
+    minimal: `
+      --accent:#0ea5e9; --accent-d:#0284c7;
+      --nav-bg:#0f172a;
+      --dark:#0f172a; --dark-2:#1e293b;
+      --text:#334155; --muted:#94a3b8;
+      --bg:#ffffff; --card:#ffffff; --border:#f1f5f9;
+      --hero-from:#f0f9ff; --hero-to:#bae6fd;
+      --hero-color:#0f172a; --hero-avatar-border:rgba(0,0,0,0.15);
+      --code-bg:#1e293b;`,
+  }
+  return themes[theme] ?? themes.launchpad
+}
 
 function buildNavLinks(sections: Section[]): string {
   return sections
@@ -97,19 +145,11 @@ export function wrapTemplate(
   ${modelViewerScript}
   ${highlightLinks}
   <style>
-    /* ── Variables ── */
+    /* ── Variables (theme-specific values injected here) ── */
     :root {
-      --accent:  #6366f1;
-      --accent-d:#4f46e5;
-      --dark:    #0f172a;
-      --dark-2:  #1e293b;
-      --text:    #1e293b;
-      --muted:   #64748b;
-      --bg:      #f1f5f9;
-      --card:    #ffffff;
-      --border:  #e2e8f0;
-      --radius:  12px;
-      --shadow:  0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.05);
+      ${themeVars(portfolio.theme)}
+      --radius: 12px;
+      --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.05);
     }
 
     /* ── Reset ── */
@@ -119,7 +159,7 @@ export function wrapTemplate(
     img { max-width: 100%; display: block; }
 
     /* ── Navigation ── */
-    nav { position: sticky; top: 0; z-index: 100; background: var(--dark); display: flex; align-items: center; gap: 20px; padding: 0 32px; height: 56px; }
+    nav { position: sticky; top: 0; z-index: 100; background: var(--nav-bg); display: flex; align-items: center; gap: 20px; padding: 0 32px; height: 56px; }
     .nav-brand { color: #fff; font-weight: 700; font-size: 15px; white-space: nowrap; flex-shrink: 0; }
     .nav-links { display: flex; gap: 2px; overflow-x: auto; flex: 1; scrollbar-width: none; }
     .nav-links::-webkit-scrollbar { display: none; }
@@ -127,8 +167,8 @@ export function wrapTemplate(
     nav a:hover { color: #fff; background: rgba(255,255,255,0.1); }
 
     /* ── Hero ── */
-    .hero { background: linear-gradient(135deg, var(--dark) 0%, #312e81 100%); padding: 64px 32px 60px; text-align: center; color: #fff; }
-    .hero-avatar { width: 120px; height: 120px; border-radius: 50%; object-fit: cover; border: 3px solid rgba(255,255,255,0.25); margin: 0 auto 20px; }
+    .hero { background: linear-gradient(135deg, var(--hero-from) 0%, var(--hero-to) 100%); padding: 64px 32px 60px; text-align: center; color: var(--hero-color); }
+    .hero-avatar { width: 120px; height: 120px; border-radius: 50%; object-fit: cover; border: 3px solid var(--hero-avatar-border); margin: 0 auto 20px; }
     .hero h1 { font-size: 42px; font-weight: 800; letter-spacing: -1px; line-height: 1.1; }
 
     /* ── Layout ── */
@@ -166,7 +206,7 @@ export function wrapTemplate(
     .code-block { margin-bottom: 20px; }
     .code-block:last-child { margin-bottom: 0; }
     .code-label { font-size: 11px; font-weight: 600; color: var(--muted); margin-bottom: 6px; font-family: monospace; text-transform: uppercase; letter-spacing: .05em; }
-    pre { background: var(--dark); color: #e2e8f0; border-radius: 8px; padding: 18px 20px; overflow-x: auto; }
+    pre { background: var(--code-bg); color: #e2e8f0; border-radius: 8px; padding: 18px 20px; overflow-x: auto; }
     code { font-family: 'Cascadia Code', 'Fira Code', ui-monospace, monospace; font-size: 13px; }
     pre code { color: inherit; background: none; }
 
@@ -190,7 +230,7 @@ export function wrapTemplate(
     .section-description sup { font-size: .75em; vertical-align: super; }
     .section-description sub { font-size: .75em; vertical-align: sub; }
     .section-description code { background: var(--bg); padding: 1px 5px; border-radius: 3px; font-size: .9em; font-family: monospace; }
-    .section-description pre { background: var(--dark); color: #e2e8f0; border-radius: 8px; padding: 16px; overflow-x: auto; }
+    .section-description pre { background: var(--code-bg); color: #e2e8f0; border-radius: 8px; padding: 16px; overflow-x: auto; }
     .section-description pre code { background: none; padding: 0; color: inherit; }
     .section-description img { max-width: 100%; border-radius: 6px; margin: 8px 0; cursor: zoom-in; }
     .section-description table { border-collapse: collapse; width: 100%; margin: 12px 0; }

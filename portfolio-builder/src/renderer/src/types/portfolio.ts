@@ -1,5 +1,7 @@
 export type SectionType = 'about' | 'gallery' | 'videos' | 'models' | 'games' | 'code' | 'custom' | 'project'
 
+export type ThemeName = 'launchpad' | 'midnight' | 'warm' | 'minimal'
+
 export interface MediaItem {
   id: string
   filename: string       // relative to assets/
@@ -114,6 +116,7 @@ export interface Portfolio {
   schemaVersion: 1
   name: string
   slug: string
+  theme?: ThemeName
   sections: Section[]
   publish: {
     ftp?: FtpConfig

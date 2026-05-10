@@ -19,6 +19,7 @@ function makeDefaultPortfolio(name: string): Portfolio {
     schemaVersion: 1,
     name,
     slug,
+    theme: 'launchpad',
     sections: [aboutSection],
     publish: {},
   }
