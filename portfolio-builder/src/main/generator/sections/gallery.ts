@@ -6,7 +6,7 @@ export function renderGallery(section: GallerySection): string {
     .map(item => `
     <div class="gallery-item">
       <a href="assets/${escHtml(item.filename)}" target="_blank" rel="noopener">
-        <img src="assets/${escHtml(item.filename)}" alt="${escHtml(item.caption ?? item.filename)}" loading="lazy">
+        <img src="assets/${escHtml(item.filename)}" alt="${escHtml(item.caption ?? item.filename)}" loading="lazy" decoding="async">
       </a>
     </div>`)
     .join('')

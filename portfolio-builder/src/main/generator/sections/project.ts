@@ -12,7 +12,7 @@ const ALLOWED_ATTRS: Record<string, string[]> = {
 
 export function renderProject(section: ProjectSection): string {
   const cover = section.coverImageFilename
-    ? `<img src="assets/${escHtml(section.coverImageFilename)}" class="project-cover" alt="Cover image">`
+    ? `<img src="assets/${escHtml(section.coverImageFilename)}" class="project-cover" alt="Cover image" loading="lazy" decoding="async">`
     : ''
 
   const safeDescription = sanitizeHtml(section.description, {
@@ -24,7 +24,7 @@ export function renderProject(section: ProjectSection): string {
     .map(item => `
     <div class="gallery-item">
       <a href="assets/${escHtml(item.filename)}" target="_blank" rel="noopener">
-        <img src="assets/${escHtml(item.filename)}" alt="${escHtml(item.caption ?? item.filename)}" loading="lazy">
+        <img src="assets/${escHtml(item.filename)}" alt="${escHtml(item.caption ?? item.filename)}" loading="lazy" decoding="async">
       </a>
     </div>`)
     .join('')

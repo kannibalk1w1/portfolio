@@ -3,7 +3,7 @@ import { escHtml } from '../utils'
 
 export function renderAbout(section: AboutSection): string {
   const avatar = section.avatarFilename
-    ? `<img src="assets/${escHtml(section.avatarFilename)}" class="avatar" alt="Avatar">`
+    ? `<img src="assets/${escHtml(section.avatarFilename)}" class="avatar" alt="Avatar" loading="lazy" decoding="async">`
     : ''
   return `
 <section id="${escHtml(section.id)}" class="section">

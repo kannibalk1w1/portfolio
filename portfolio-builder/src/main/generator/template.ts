@@ -1,6 +1,12 @@
 import type { Portfolio, Section } from '../../renderer/src/types/portfolio'
 import { escHtml } from './utils'
 
+function truncate(text: string, max: number): string {
+  const t = text.trim()
+  if (t.length <= max) return t
+  return t.slice(0, max - 1).trimEnd() + '…'
+}
+
 function buildNavLinks(sections: Section[]): string {
   return sections
     .filter(s => s.visible)
@@ -26,16 +32,40 @@ export function wrapTemplate(portfolio: Portfolio, body: string): string {
   <script>document.addEventListener('DOMContentLoaded', () => hljs.highlightAll())</script>`
     : ''
 
-  // Get CYP name from About section if available
+  // Extract About-section data used by the hero block and the conditional
+  // Open Graph / Twitter meta tags below.
   const aboutSection = portfolio.sections.find(s => s.type === 'about')
   const bio = aboutSection?.type === 'about' ? aboutSection.bio : ''
+  const avatarFilename = aboutSection?.type === 'about' ? aboutSection.avatarFilename : undefined
+  const ogImage = avatarFilename
+    ? `<meta property="og:image" content="assets/${escHtml(avatarFilename)}">
+  <meta name="twitter:image" content="assets/${escHtml(avatarFilename)}">`
+    : ''
+  const trimmedBio = bio.trim()
+  const ogDescription = trimmedBio
+    ? (() => {
+        const desc = escHtml(truncate(trimmedBio, 200))
+        return `<meta property="og:description" content="${desc}">
+  <meta name="twitter:description" content="${desc}">`
+      })()
+    : ''
+
+  const siteTitle = `${portfolio.name}'s Portfolio`
+  const escSiteTitle = escHtml(siteTitle)
 
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>${escHtml(portfolio.name)}'s Portfolio</title>
+  <title>${escSiteTitle}</title>
+  <meta property="og:title" content="${escSiteTitle}">
+  <meta property="og:type" content="profile">
+  <meta property="og:site_name" content="${escSiteTitle}">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="${escSiteTitle}">
+  ${ogImage}
+  ${ogDescription}
   ${modelViewerScript}
   ${highlightLinks}
   <style>
