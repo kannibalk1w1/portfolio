@@ -1,7 +1,7 @@
 {
-  "name": "portfolio-builder",
+  "name": "launchpad",
   "version": "1.0.0",
-  "description": "CYP Portfolio Builder - A Windows desktop app for building CYP portfolios",
+  "description": "Launchpad - A Windows desktop app for building and publishing CYP portfolios",
   "main": "./out/main/index.js",
   "author": "",
   "homepage": "https://electron-vite.org",

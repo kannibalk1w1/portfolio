@@ -71,7 +71,7 @@ export function Picker() {
 
   return (
     <div style={{ padding: 32, maxWidth: 480, margin: '48px auto' }}>
-      <h1 style={{ fontSize: 22, fontWeight: 700, marginBottom: 4 }}>CYP Portfolios</h1>
+      <h1 style={{ fontSize: 22, fontWeight: 700, marginBottom: 4 }}>Launchpad</h1>
       <button
         onClick={handleChangeFolder}
         style={{ fontSize: 12, marginBottom: 24, background: 'none', border: 'none', color: '#999', cursor: 'pointer', padding: 0, textAlign: 'left' }}

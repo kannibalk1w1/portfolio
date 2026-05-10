@@ -1,5 +1,5 @@
-appId: com.playerready.cyp-portfolio-builder
-productName: CYP Portfolio Builder
+appId: com.playerready.launchpad
+productName: Launchpad
 copyright: Player Ready
 
 directories:
@@ -18,7 +18,7 @@ nsis:
   allowToChangeInstallationDirectory: true
   createDesktopShortcut: true
   createStartMenuShortcut: true
-  shortcutName: CYP Portfolio Builder
+  shortcutName: Launchpad
 
 files:
   - "!**/.git/**"
