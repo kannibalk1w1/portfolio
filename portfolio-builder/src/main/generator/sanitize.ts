@@ -22,6 +22,7 @@ import sanitizeHtml from 'sanitize-html'
 const ALLOWED_TAGS = [
   // Inline
   'p', 'br', 'b', 'i', 'u', 's', 'strong', 'em', 'a', 'span', 'code',
+  'mark', 'sup', 'sub',
   // Block
   'h1', 'h2', 'h3', 'h4', 'ul', 'ol', 'li', 'blockquote', 'pre', 'hr',
   // Media

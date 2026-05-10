@@ -90,6 +90,9 @@ export function wrapTemplate(
     .section-description blockquote { border-left: 3px solid #ddd; padding-left: 12px; color: #666; }
     .section-description hr { border: none; border-top: 2px solid #e0e0e0; margin: 12px 0; }
     .section-description a { color: #4f46e5; }
+    .section-description mark { background: #fef08a; border-radius: 2px; padding: 0 2px; }
+    .section-description sup { font-size: 0.75em; vertical-align: super; }
+    .section-description sub { font-size: 0.75em; vertical-align: sub; }
     .section-description code { background: #f1f1f1; padding: 1px 4px; border-radius: 3px; font-size: 0.9em; font-family: monospace; }
     .section-description pre { background: #f8f8f8; border-radius: 8px; padding: 16px; overflow-x: auto; }
     .section-description pre code { background: none; padding: 0; }

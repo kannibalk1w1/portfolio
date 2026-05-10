@@ -2,7 +2,10 @@
  * RichTextEditor — shared rich-text editing component built on TipTap.
  *
  * Features:
- *   - Inline formatting: Bold, Italic, Underline, Strikethrough, Text colour
+ *   - Inline formatting: Bold, Italic, Underline, Strikethrough, Inline code
+ *   - Superscript and Subscript
+ *   - Text colour (12 swatches + custom hex input)
+ *   - Text highlight / background colour
  *   - Block style dropdown: Paragraph / H1–H4
  *   - Text alignment: Left, Centre, Right
  *   - Lists: Bullet and Numbered
@@ -31,6 +34,9 @@ import Link from '@tiptap/extension-link'
 import Placeholder from '@tiptap/extension-placeholder'
 import TextStyle from '@tiptap/extension-text-style'
 import Color from '@tiptap/extension-color'
+import Highlight from '@tiptap/extension-highlight'
+import Superscript from '@tiptap/extension-superscript'
+import Subscript from '@tiptap/extension-subscript'
 import Image from '@tiptap/extension-image'
 import Table from '@tiptap/extension-table'
 import TableRow from '@tiptap/extension-table-row'
@@ -57,7 +63,10 @@ function ensureEditorStyles() {
     .tiptap blockquote { border-left: 3px solid #ddd; padding-left: 12px; color: #666; }
     .tiptap hr { border: none; border-top: 2px solid #e0e0e0; margin: 12px 0; }
     .tiptap a { color: #4f46e5; text-decoration: underline; }
-    .tiptap code { background: #f1f1f1; padding: 1px 4px; border-radius: 3px; font-size: 0.9em; }
+    .tiptap code { background: #f1f1f1; padding: 1px 4px; border-radius: 3px; font-size: 0.9em; font-family: monospace; }
+    .tiptap mark { background: #fef08a; border-radius: 2px; padding: 0 2px; }
+    .tiptap sup { font-size: 0.75em; vertical-align: super; }
+    .tiptap sub { font-size: 0.75em; vertical-align: sub; }
     .tiptap pre { background: #f8f8f8; border-radius: 6px; padding: 12px 16px; overflow-x: auto; }
     .tiptap pre code { background: none; padding: 0; }
     .tiptap img { max-width: 100%; border-radius: 6px; display: block; margin: 8px 0; }
@@ -144,6 +153,7 @@ export function RichTextEditor({
   const [linkUrl, setLinkUrl] = useState<string | null>(null)
   const [showColours, setShowColours] = useState(false)
   const [showTableMenu, setShowTableMenu] = useState(false)
+  const [hexInput, setHexInput] = useState('')
   const linkInputRef = useRef<HTMLInputElement>(null)
 
   const editor = useEditor({
@@ -152,6 +162,9 @@ export function RichTextEditor({
       Underline,
       TextStyle,  // required peer for Color
       Color,
+      Highlight.configure({ multicolor: false }),
+      Superscript,
+      Subscript,
       TextAlign.configure({ types: ['heading', 'paragraph'] }),
       Link.configure({ openOnClick: false, HTMLAttributes: { target: '_blank', rel: 'noopener noreferrer' } }),
       Placeholder.configure({ placeholder }),
@@ -236,6 +249,15 @@ export function RichTextEditor({
         <Btn title="Strikethrough" active={editor.isActive('strike')} onClick={() => editor.chain().focus().toggleStrike().run()}>
           <span style={{ textDecoration: 'line-through' }}>S</span>
         </Btn>
+        <Btn title="Inline code" active={editor.isActive('code')} onClick={() => editor.chain().focus().toggleCode().run()}>
+          <code style={{ fontSize: 11 }}>`</code>
+        </Btn>
+        <Btn title="Superscript" active={editor.isActive('superscript')} onClick={() => editor.chain().focus().toggleSuperscript().run()}>
+          x<sup style={{ fontSize: 8 }}>2</sup>
+        </Btn>
+        <Btn title="Subscript" active={editor.isActive('subscript')} onClick={() => editor.chain().focus().toggleSubscript().run()}>
+          x<sub style={{ fontSize: 8 }}>2</sub>
+        </Btn>
 
         {/* Text colour — swatch popup */}
         <div style={{ position: 'relative' }}>
@@ -249,26 +271,66 @@ export function RichTextEditor({
           </Btn>
           {showColours && (
             <div
-              style={{ position: 'absolute', top: '100%', left: 0, zIndex: 100, background: 'white', border: '1px solid #e0e0e0', borderRadius: 6, padding: 6, display: 'grid', gridTemplateColumns: 'repeat(4, 20px)', gap: 4, marginTop: 2, boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+              style={{ position: 'absolute', top: '100%', left: 0, zIndex: 100, background: 'white', border: '1px solid #e0e0e0', borderRadius: 6, padding: 6, marginTop: 2, boxShadow: '0 4px 12px rgba(0,0,0,0.1)', width: 116 }}
               onMouseDown={e => e.preventDefault()}
             >
-              {COLOURS.map(c => (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 20px)', gap: 4, marginBottom: 6 }}>
+                {COLOURS.map(c => (
+                  <div
+                    key={c}
+                    onMouseDown={e => { e.preventDefault(); editor.chain().focus().setColor(c).run(); setShowColours(false) }}
+                    style={{ width: 20, height: 20, borderRadius: 3, background: c, cursor: 'pointer', border: currentColour === c ? '2px solid #4f46e5' : '1px solid #ddd' }}
+                    title={c}
+                  />
+                ))}
+                {/* Remove colour */}
                 <div
-                  key={c}
-                  onMouseDown={e => { e.preventDefault(); editor.chain().focus().setColor(c).run(); setShowColours(false) }}
-                  style={{ width: 20, height: 20, borderRadius: 3, background: c, cursor: 'pointer', border: currentColour === c ? '2px solid #4f46e5' : '1px solid #ddd' }}
-                  title={c}
+                  onMouseDown={e => { e.preventDefault(); editor.chain().focus().unsetColor().run(); setShowColours(false) }}
+                  style={{ width: 20, height: 20, borderRadius: 3, background: 'white', cursor: 'pointer', border: '1px solid #ddd', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, color: '#aaa' }}
+                  title="Remove colour"
+                >✕</div>
+              </div>
+              {/* Custom hex input */}
+              <div style={{ display: 'flex', gap: 4 }}>
+                <input
+                  value={hexInput}
+                  onChange={e => setHexInput(e.target.value)}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter') {
+                      const hex = hexInput.startsWith('#') ? hexInput : `#${hexInput}`
+                      if (/^#[0-9a-fA-F]{6}$/.test(hex)) {
+                        editor.chain().focus().setColor(hex).run()
+                        setShowColours(false)
+                        setHexInput('')
+                      }
+                    }
+                  }}
+                  placeholder="#hex"
+                  maxLength={7}
+                  style={{ flex: 1, fontSize: 11, padding: '3px 5px', border: '1px solid #ddd', borderRadius: 3, minWidth: 0 }}
                 />
-              ))}
-              {/* Remove colour */}
-              <div
-                onMouseDown={e => { e.preventDefault(); editor.chain().focus().unsetColor().run(); setShowColours(false) }}
-                style={{ width: 20, height: 20, borderRadius: 3, background: 'white', cursor: 'pointer', border: '1px solid #ddd', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, color: '#aaa' }}
-                title="Remove colour"
-              >✕</div>
+                <div
+                  onMouseDown={e => {
+                    e.preventDefault()
+                    const hex = hexInput.startsWith('#') ? hexInput : `#${hexInput}`
+                    if (/^#[0-9a-fA-F]{6}$/.test(hex)) {
+                      editor.chain().focus().setColor(hex).run()
+                      setShowColours(false)
+                      setHexInput('')
+                    }
+                  }}
+                  style={{ width: 24, height: 24, borderRadius: 3, background: /^#[0-9a-fA-F]{6}$/.test(hexInput.startsWith('#') ? hexInput : `#${hexInput}`) ? (hexInput.startsWith('#') ? hexInput : `#${hexInput}`) : '#eee', border: '1px solid #ddd', cursor: 'pointer', flexShrink: 0 }}
+                  title="Apply custom colour"
+                />
+              </div>
             </div>
           )}
         </div>
+
+        {/* Highlight / background colour */}
+        <Btn title="Highlight" active={editor.isActive('highlight')} onClick={() => editor.chain().focus().toggleHighlight().run()}>
+          <span style={{ background: '#fef08a', padding: '0 3px', borderRadius: 2, fontSize: 11, lineHeight: 1.4 }}>H</span>
+        </Btn>
 
         <SEP />
 
