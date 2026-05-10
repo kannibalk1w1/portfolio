@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import type { Section } from '../../types/portfolio'
@@ -10,6 +11,7 @@ const SECTION_ICONS: Record<string, string> = {
   games: '🎮',
   code: '💻',
   custom: '📝',
+  project: '📋',
 }
 
 interface Props {
@@ -17,10 +19,17 @@ interface Props {
   active: boolean
   onClick: () => void
   onToggleVisible: () => void
+  onDelete: () => void
 }
 
-export function SidebarItem({ section, active, onClick, onToggleVisible }: Props) {
+export function SidebarItem({ section, active, onClick, onToggleVisible, onDelete }: Props) {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: section.id })
+  const [hovered, setHovered] = useState(false)
+
+  function handleDelete(e: React.MouseEvent) {
+    e.stopPropagation()
+    if (confirm(`Delete "${section.title}"? This cannot be undone.`)) onDelete()
+  }
 
   return (
     <div
@@ -37,6 +46,8 @@ export function SidebarItem({ section, active, onClick, onToggleVisible }: Props
         cursor: 'pointer',
       }}
       onClick={onClick}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
     >
       <span
         {...attributes}
@@ -57,6 +68,19 @@ export function SidebarItem({ section, active, onClick, onToggleVisible }: Props
         aria-label={section.visible ? `Hide ${section.title}` : `Show ${section.title}`}
       >
         {section.visible ? '👁' : '🙈'}
+      </button>
+      {/* Delete button — visible on hover or when item is active */}
+      <button
+        onClick={handleDelete}
+        style={{
+          background: 'none', border: 'none', cursor: 'pointer', fontSize: 14, flexShrink: 0,
+          color: hovered || active ? '#e94560' : 'transparent',
+          transition: 'color 0.1s',
+        }}
+        title={`Delete ${section.title}`}
+        aria-label={`Delete ${section.title}`}
+      >
+        ×
       </button>
     </div>
   )

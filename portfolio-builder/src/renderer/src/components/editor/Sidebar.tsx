@@ -60,6 +60,15 @@ export function Sidebar({ activeSectionId, onSelectSection }: Props) {
     })
   }
 
+  function handleDelete(id: string) {
+    const remaining = portfolio.sections.filter(s => s.id !== id)
+    updatePortfolio({ ...portfolio, sections: remaining })
+    // If the deleted section was selected, move focus to the first remaining section
+    if (activeSectionId === id) {
+      onSelectSection(remaining[0]?.id ?? null)
+    }
+  }
+
   function handleAddSection(type: SectionType) {
     const id = `${type}-${Date.now()}`
     const newSection = { ...SECTION_DEFAULTS[type], id } as Section
@@ -80,6 +89,7 @@ export function Sidebar({ activeSectionId, onSelectSection }: Props) {
                 active={section.id === activeSectionId}
                 onClick={() => onSelectSection(section.id)}
                 onToggleVisible={() => handleToggleVisible(section.id)}
+                onDelete={() => handleDelete(section.id)}
               />
             ))}
           </SortableContext>
