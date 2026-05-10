@@ -136,6 +136,12 @@ export function Sidebar({ activeSectionId, onSelectSection }: Props) {
           Export
         </button>
         <button
+          onClick={() => state.portfolioDir && window.api.offlineExport(state.portfolioDir, portfolio)}
+          style={{ padding: '7px', border: '1px solid #e0e0e0', borderRadius: 6, cursor: 'pointer', fontSize: 12, background: 'white' }}
+        >
+          Offline
+        </button>
+        <button
           onClick={() => setShowFtp(true)}
           style={{ padding: '7px', background: '#222', color: 'white', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 12 }}
         >

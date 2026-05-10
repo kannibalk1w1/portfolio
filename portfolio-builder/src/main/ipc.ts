@@ -14,7 +14,7 @@ import {
 } from './portfolio/store'
 import { createSnapshot, listSnapshots, restoreSnapshot } from './portfolio/snapshot'
 import { importMediaFiles, importGodotFolder } from './media/importer'
-import { buildSite } from './generator/index'
+import { buildSite, buildOfflineSite } from './generator/index'
 import { uploadFtp } from './publish/ftp'
 import {
   setFtpPassword,
@@ -125,6 +125,17 @@ export function registerIpcHandlers(): void {
   ipcMain.handle('site:export', async (_event, dir: string, p: Portfolio) => {
     await buildSite(dir, p)
     await shell.openPath(join(dir, 'output'))
+  })
+
+  ipcMain.handle('site:offline', async (_event, dir: string, p: Portfolio) => {
+    const result = await dialog.showOpenDialog({
+      title: 'Choose folder for offline export',
+      properties: ['openDirectory', 'createDirectory'],
+    })
+    if (result.canceled || !result.filePaths[0]) return
+    const dest = result.filePaths[0]
+    await buildOfflineSite(dir, p, dest)
+    await shell.openPath(dest)
   })
 
   ipcMain.handle('publish:ftp', async (_event, dir: string, config: FtpConfig) => {

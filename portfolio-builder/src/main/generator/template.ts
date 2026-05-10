@@ -16,10 +16,24 @@ function needsHighlight(sections: Section[]): boolean {
   return sections.some(s => s.type === 'code' && s.visible && (s as any).items?.length > 0)
 }
 
-export function wrapTemplate(portfolio: Portfolio, body: string): string {
-  const modelViewerScript = needsModelViewer(portfolio.sections)
-    ? `<script type="module" src="assets/vendor/model-viewer.min.js"></script>`
-    : ''
+export function wrapTemplate(
+  portfolio: Portfolio,
+  body: string,
+  opts?: { inlineModelViewer?: string | null },
+): string {
+  let modelViewerScript = ''
+  if (needsModelViewer(portfolio.sections)) {
+    if (opts?.inlineModelViewer) {
+      // Inline the script content so it works from file:// (Chrome blocks
+      // <script type="module" src="..."> from file:// but allows inline modules).
+      // Escape </script> sequences in the content so the HTML parser doesn't
+      // close the tag prematurely.
+      const safe = opts.inlineModelViewer.replace(/<\/script>/gi, '<\\/script>')
+      modelViewerScript = `<script type="module">${safe}</script>`
+    } else {
+      modelViewerScript = `<script type="module" src="assets/vendor/model-viewer.min.js"></script>`
+    }
+  }
   const highlightLinks = needsHighlight(portfolio.sections)
     ? `  <link rel="stylesheet" href="assets/vendor/highlight.min.css">
   <script src="assets/vendor/highlight.min.js"></script>

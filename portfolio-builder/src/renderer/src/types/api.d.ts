@@ -39,6 +39,7 @@ declare global {
       buildSite(portfolioDir: string, portfolio: Portfolio): Promise<void>
       previewSite(portfolioDir: string, portfolio: Portfolio): Promise<void>
       exportSite(portfolioDir: string, portfolio: Portfolio): Promise<void>
+      offlineExport(portfolioDir: string, portfolio: Portfolio): Promise<void>
       publishFtp(portfolioDir: string, config: FtpConfig): Promise<void>
       setFtpPassword(slug: string, password: string): Promise<void>
       hasFtpPassword(slug: string): Promise<boolean>
