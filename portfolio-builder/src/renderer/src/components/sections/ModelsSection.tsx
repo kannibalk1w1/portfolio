@@ -1,4 +1,12 @@
 import { useState } from 'react'
+import {
+  DndContext, closestCenter,
+  PointerSensor, useSensor, useSensors,
+} from '@dnd-kit/core'
+import {
+  SortableContext, verticalListSortingStrategy, arrayMove, useSortable,
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 import { usePortfolio } from '../../store/PortfolioContext'
 import type { ModelsSection as ModelsSectionType, ModelItem, Section } from '../../types/portfolio'
 import { MediaDropzone } from '../shared/MediaDropzone'
@@ -7,10 +15,63 @@ import { SectionTitle } from '../shared/SectionTitle'
 import { useImageInserter } from '../../hooks/useImageInserter'
 import { toFileUrl } from '../../utils/fileUrl'
 
+// model-viewer captures pointer events so we use an explicit ⠿ drag handle
+function SortableModelItem({
+  item, portfolioDir, onRemove, onLabelChange,
+}: {
+  item: ModelItem
+  portfolioDir: string
+  onRemove: () => void
+  onLabelChange: (label: string) => void
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.id })
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={{ transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.45 : 1, background: '#f5f5f5', borderRadius: 8, overflow: 'hidden' }}
+    >
+      {/* @ts-ignore */}
+      <model-viewer
+        src={toFileUrl(`${portfolioDir}/assets/${item.filename}`)}
+        alt={item.label ?? item.filename}
+        auto-rotate camera-controls
+        style={{ width: '100%', height: '260px', display: 'block' }}
+      />
+      <div style={{ padding: '8px 12px', display: 'flex', alignItems: 'center', gap: 12 }}>
+        {/* Drag handle */}
+        <div
+          {...attributes}
+          {...listeners}
+          style={{ cursor: isDragging ? 'grabbing' : 'grab', color: '#ccc', fontSize: 18, flexShrink: 0, lineHeight: 1, padding: '0 2px' }}
+          title="Drag to reorder"
+        >⠿</div>
+        <div style={{ flex: 1 }}>
+          <div style={{ fontSize: 12, color: '#aaa', marginBottom: 4 }}>{item.filename}</div>
+          <input
+            onPointerDown={e => e.stopPropagation()}
+            value={item.label ?? ''}
+            onChange={e => onLabelChange(e.target.value)}
+            placeholder="Label (optional)"
+            style={{ width: '100%', padding: '5px 8px', border: '1px solid #e0e0e0', borderRadius: 4, fontSize: 13, boxSizing: 'border-box' }}
+          />
+        </div>
+        <button
+          onPointerDown={e => e.stopPropagation()}
+          onClick={onRemove}
+          style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ccc', fontSize: 18 }}
+          aria-label={`Remove ${item.filename}`}
+        >×</button>
+      </div>
+    </div>
+  )
+}
+
 export function ModelsSection({ section }: { section: ModelsSectionType }) {
   const { state, updatePortfolio } = usePortfolio()
   const onInsertImage = useImageInserter()
   const [importError, setImportError] = useState<string | null>(null)
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }))
 
   function updateSection(patch: Partial<ModelsSectionType>) {
     updatePortfolio({
@@ -59,38 +120,27 @@ export function ModelsSection({ section }: { section: ModelsSectionType }) {
         />
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 16 }}>
-        {section.items.map(item => (
-          <div key={item.id} style={{ background: '#f5f5f5', borderRadius: 8, overflow: 'hidden' }}>
-            {/* @ts-ignore — model-viewer is a custom element registered via @google/model-viewer */}
-            <model-viewer
-              src={toFileUrl(`${state.portfolioDir}/assets/${item.filename}`)}
-              alt={item.label ?? item.filename}
-              auto-rotate
-              camera-controls
-              style={{ width: '100%', height: '260px', display: 'block' }}
-            />
-            <div style={{ padding: '8px 12px', display: 'flex', alignItems: 'center', gap: 12 }}>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 12, color: '#aaa', marginBottom: 4 }}>{item.filename}</div>
-                <input
-                  value={item.label ?? ''}
-                  onChange={e => updateLabel(item.id, e.target.value)}
-                  placeholder="Label (optional)"
-                  style={{ width: '100%', padding: '5px 8px', border: '1px solid #e0e0e0', borderRadius: 4, fontSize: 13, boxSizing: 'border-box' }}
-                />
-              </div>
-              <button
-                onClick={() => removeItem(item.id)}
-                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ccc', fontSize: 18 }}
-                aria-label={`Remove ${item.filename}`}
-              >
-                ×
-              </button>
-            </div>
+      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={event => {
+        const { active, over } = event
+        if (!over || active.id === over.id) return
+        const oldIndex = section.items.findIndex(i => i.id === active.id)
+        const newIndex = section.items.findIndex(i => i.id === over.id)
+        updateSection({ items: arrayMove(section.items, oldIndex, newIndex) })
+      }}>
+        <SortableContext items={section.items.map(i => i.id)} strategy={verticalListSortingStrategy}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 16 }}>
+            {section.items.map(item => (
+              <SortableModelItem
+                key={item.id}
+                item={item}
+                portfolioDir={state.portfolioDir!}
+                onRemove={() => removeItem(item.id)}
+                onLabelChange={label => updateLabel(item.id, label)}
+              />
+            ))}
           </div>
-        ))}
-      </div>
+        </SortableContext>
+      </DndContext>
       {importError && <div style={{ color: '#e94560', fontSize: 12, marginBottom: 8 }}>{importError}</div>}
       <MediaDropzone
         label="Click to add 3D models (GLB, GLTF)"

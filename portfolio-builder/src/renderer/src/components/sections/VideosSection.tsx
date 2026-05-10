@@ -1,4 +1,12 @@
 import { useState } from 'react'
+import {
+  DndContext, closestCenter, DragEndEvent,
+  PointerSensor, useSensor, useSensors,
+} from '@dnd-kit/core'
+import {
+  SortableContext, rectSortingStrategy, arrayMove, useSortable,
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 import { usePortfolio } from '../../store/PortfolioContext'
 import type { VideosSection as VideosSectionType, VideoItem, Section } from '../../types/portfolio'
 import { MediaDropzone } from '../shared/MediaDropzone'
@@ -6,6 +14,66 @@ import { RichTextEditor } from '../shared/RichTextEditor'
 import { SectionTitle } from '../shared/SectionTitle'
 import { useImageInserter } from '../../hooks/useImageInserter'
 import { toFileUrl } from '../../utils/fileUrl'
+
+// ---------------------------------------------------------------------------
+// Sortable video item (uses explicit drag handle — iframes capture pointer events)
+// ---------------------------------------------------------------------------
+
+function SortableVideoItem({
+  item, portfolioDir, onRemove, onCaptionChange,
+}: {
+  item: VideoItem
+  portfolioDir: string
+  onRemove: () => void
+  onCaptionChange: (caption: string) => void
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.id })
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={{ transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.45 : 1, display: 'flex', flexDirection: 'column', gap: 0 }}
+    >
+      {/* Drag handle bar */}
+      <div
+        {...attributes}
+        {...listeners}
+        style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 20, cursor: isDragging ? 'grabbing' : 'grab', color: '#ccc', fontSize: 14, borderRadius: '8px 8px 0 0', background: '#f5f5f5', border: '1px solid #e8e8e8', borderBottom: 'none' }}
+        title="Drag to reorder"
+      >⠿</div>
+
+      <div style={{ position: 'relative', borderRadius: '0 0 8px 8px', overflow: 'hidden', background: '#000', aspectRatio: '16/9' }}>
+        {item.embedUrl ? (
+          <iframe
+            src={item.embedUrl}
+            style={{ width: '100%', height: '100%', border: 'none', display: 'block' }}
+            allowFullScreen
+            title={item.caption ?? 'Video'}
+          />
+        ) : (
+          <video
+            src={toFileUrl(`${portfolioDir}/assets/${item.filename}`)}
+            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+            controls
+          />
+        )}
+        <button
+          onPointerDown={e => e.stopPropagation()}
+          onClick={onRemove}
+          style={{ position: 'absolute', top: 4, right: 4, background: 'rgba(0,0,0,0.55)', color: 'white', border: 'none', borderRadius: '50%', width: 24, height: 24, cursor: 'pointer', fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1 }}
+          aria-label="Remove video"
+        >×</button>
+      </div>
+      <input
+        onPointerDown={e => e.stopPropagation()}
+        value={item.caption ?? ''}
+        onChange={e => onCaptionChange(e.target.value)}
+        placeholder="Title (optional)"
+        style={{ fontSize: 12, padding: '4px 8px', border: '1px solid #e0e0e0', borderTop: 'none', borderRadius: '0 0 6px 6px', width: '100%', boxSizing: 'border-box' }}
+      />
+    </div>
+  )
+}
 
 // ---------------------------------------------------------------------------
 // URL parsing — converts YouTube/Vimeo share URLs to embed URLs
@@ -77,6 +145,16 @@ export function VideosSection({ section }: { section: VideosSectionType }) {
     setShowUrlInput(false)
   }
 
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }))
+
+  function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event
+    if (!over || active.id === over.id) return
+    const oldIndex = section.items.findIndex(i => i.id === active.id)
+    const newIndex = section.items.findIndex(i => i.id === over.id)
+    updateSection({ items: arrayMove(section.items, oldIndex, newIndex) })
+  }
+
   function removeItem(id: string) {
     updateSection({ items: section.items.filter(i => i.id !== id) })
   }
@@ -102,39 +180,21 @@ export function VideosSection({ section }: { section: VideosSectionType }) {
       </div>
 
       {/* Video grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 16, marginBottom: 16 }}>
-        {section.items.map(item => (
-          <div key={item.id} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            <div style={{ position: 'relative', borderRadius: 8, overflow: 'hidden', background: '#000', aspectRatio: '16/9' }}>
-              {item.embedUrl ? (
-                <iframe
-                  src={item.embedUrl}
-                  style={{ width: '100%', height: '100%', border: 'none', display: 'block' }}
-                  allowFullScreen
-                  title={item.caption ?? 'Video'}
-                />
-              ) : (
-                <video
-                  src={toFileUrl(`${state.portfolioDir}/assets/${item.filename}`)}
-                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                  controls
-                />
-              )}
-              <button
-                onClick={() => removeItem(item.id)}
-                style={{ position: 'absolute', top: 4, right: 4, background: 'rgba(0,0,0,0.55)', color: 'white', border: 'none', borderRadius: '50%', width: 24, height: 24, cursor: 'pointer', fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1 }}
-                aria-label="Remove video"
-              >×</button>
-            </div>
-            <input
-              value={item.caption ?? ''}
-              onChange={e => updateCaption(item.id, e.target.value)}
-              placeholder="Title (optional)"
-              style={{ fontSize: 12, padding: '4px 8px', border: '1px solid #e0e0e0', borderRadius: 4, width: '100%', boxSizing: 'border-box' }}
-            />
+      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+        <SortableContext items={section.items.map(i => i.id)} strategy={rectSortingStrategy}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 16, marginBottom: 16 }}>
+            {section.items.map(item => (
+              <SortableVideoItem
+                key={item.id}
+                item={item}
+                portfolioDir={state.portfolioDir!}
+                onRemove={() => removeItem(item.id)}
+                onCaptionChange={caption => updateCaption(item.id, caption)}
+              />
+            ))}
           </div>
-        ))}
-      </div>
+        </SortableContext>
+      </DndContext>
 
       {/* Add local video */}
       {importError && <div style={{ color: '#e94560', fontSize: 12, marginBottom: 8 }}>{importError}</div>}
