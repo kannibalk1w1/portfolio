@@ -14,6 +14,7 @@ interface AppState {
   portfolio: Portfolio | null
   portfolioDir: string | null
   dirty: boolean
+  lastSaved: Date | null
 }
 
 type Action =
@@ -33,24 +34,31 @@ function reducer(state: AppState, action: Action): AppState {
         openPortfolioSlug: action.slug,
         portfolio: action.portfolio,
         portfolioDir: joinPaths(action.root, action.slug),
-        dirty: false
+        dirty: false,
+        lastSaved: null,
       }
     case 'CLOSE_PORTFOLIO':
-      return { ...state, openPortfolioSlug: null, portfolio: null, portfolioDir: null, dirty: false }
+      return { ...state, openPortfolioSlug: null, portfolio: null, portfolioDir: null, dirty: false, lastSaved: null }
     case 'UPDATE_PORTFOLIO':
       return { ...state, portfolio: action.portfolio, dirty: true }
     case 'MARK_CLEAN':
-      return { ...state, dirty: false }
+      return { ...state, dirty: false, lastSaved: new Date() }
     default:
       return state
   }
+}
+
+interface SaveOptions {
+  /** Whether to create a version snapshot before saving. Defaults to true.
+   *  Auto-saves pass false to avoid generating a snapshot every few seconds. */
+  snapshot?: boolean
 }
 
 interface PortfolioContextValue {
   state: AppState
   openPortfolio: (slug: string) => Promise<void>
   closePortfolio: () => void
-  savePortfolio: (p?: Portfolio) => Promise<void>
+  savePortfolio: (p?: Portfolio, opts?: SaveOptions) => Promise<void>
   updatePortfolio: (p: Portfolio) => void
   setRoot: (root: string) => Promise<void>
 }
@@ -63,7 +71,8 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
     openPortfolioSlug: null,
     portfolio: null,
     portfolioDir: null,
-    dirty: false
+    dirty: false,
+    lastSaved: null,
   })
 
   const setRoot = useCallback(async (root: string) => {
@@ -81,11 +90,14 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
     dispatch({ type: 'CLOSE_PORTFOLIO' })
   }, [])
 
-  const savePortfolio = useCallback(async (p?: Portfolio) => {
+  const savePortfolio = useCallback(async (p?: Portfolio, opts: SaveOptions = {}) => {
     const portfolio = p ?? state.portfolio
     if (!portfolio || !state.portfolioDir || !state.openPortfolioSlug) return
-    await window.api.createSnapshot(state.portfolioDir)
-    // writePortfolio takes root + portfolio.slug; it writes to root/portfolio.slug/portfolio.json
+    // Manual saves create a snapshot for version history; auto-saves skip this
+    // so we don't generate hundreds of snapshots per session.
+    if (opts.snapshot !== false) {
+      await window.api.createSnapshot(state.portfolioDir)
+    }
     await window.api.writePortfolio(state.portfoliosRoot, portfolio)
     dispatch({ type: 'MARK_CLEAN' })
   }, [state.portfolio, state.portfolioDir, state.portfoliosRoot, state.openPortfolioSlug])

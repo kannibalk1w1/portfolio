@@ -1,4 +1,4 @@
-import { useState, useEffect, lazy, Suspense } from 'react'
+import { useState, useEffect, useRef, lazy, Suspense } from 'react'
 import { TopBar } from '../components/editor/TopBar'
 import { Sidebar } from '../components/editor/Sidebar'
 import { Toaster, useToaster } from '../components/shared/Toaster'
@@ -16,12 +16,36 @@ const SECTION_COMPONENTS: Record<SectionType, React.LazyExoticComponent<React.Co
   project: lazy(() => import('../components/sections/ProjectSection').then(m => ({ default: m.ProjectSection }))),
 }
 
+const AUTO_SAVE_DELAY = 10_000  // 10 seconds after last change
+
 export function Editor() {
-  const { state } = usePortfolio()
+  const { state, savePortfolio } = usePortfolio()
   const { toasts, notify } = useToaster()
   const [activeSectionId, setActiveSectionId] = useState<string | null>(
     state.portfolio?.sections[0]?.id ?? null
   )
+  const [autosaving, setAutosaving] = useState(false)
+
+  // Keep a stable ref to savePortfolio so the debounce closure doesn't go stale
+  const saveRef = useRef(savePortfolio)
+  useEffect(() => { saveRef.current = savePortfolio }, [savePortfolio])
+
+  // Auto-save: 10 seconds after the last portfolio change, write without
+  // creating a snapshot (snapshots are only created on manual Save).
+  useEffect(() => {
+    if (!state.dirty) return
+    const timer = setTimeout(async () => {
+      setAutosaving(true)
+      try {
+        await saveRef.current(undefined, { snapshot: false })
+      } catch {
+        // Auto-save failures are silent — the manual Save button remains available
+      } finally {
+        setAutosaving(false)
+      }
+    }, AUTO_SAVE_DELAY)
+    return () => clearTimeout(timer)
+  }, [state.portfolio, state.dirty])
 
   useEffect(() => {
     const ids = state.portfolio?.sections.map(s => s.id) ?? []
@@ -35,7 +59,7 @@ export function Editor() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden' }}>
-      <TopBar notify={notify} />
+      <TopBar notify={notify} autosaving={autosaving} />
       <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
         <Sidebar activeSectionId={activeSectionId} onSelectSection={setActiveSectionId} notify={notify} />
         <div style={{ flex: 1, overflowY: 'auto', padding: 32 }}>
