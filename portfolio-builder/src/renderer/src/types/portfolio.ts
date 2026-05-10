@@ -1,4 +1,4 @@
-export type SectionType = 'about' | 'gallery' | 'videos' | 'models' | 'games' | 'code' | 'custom' | 'project'
+export type SectionType = 'about' | 'gallery' | 'videos' | 'models' | 'games' | 'code' | 'custom' | 'project' | 'links'
 
 export type ThemeName = 'launchpad' | 'midnight' | 'warm' | 'minimal'
 
@@ -81,6 +81,19 @@ export interface CustomSection extends BaseSection {
   html: string           // TipTap outputs HTML
 }
 
+export interface LinkItem {
+  id: string
+  url: string
+  label: string
+  icon: string           // emoji
+}
+
+export interface LinksSection extends BaseSection {
+  type: 'links'
+  description?: string
+  items: LinkItem[]
+}
+
 export interface ProjectSection extends BaseSection {
   type: 'project'
   description: string   // TipTap HTML
@@ -97,6 +110,7 @@ export type Section =
   | CodeSection
   | CustomSection
   | ProjectSection
+  | LinksSection
 
 export interface FtpConfig {
   host: string

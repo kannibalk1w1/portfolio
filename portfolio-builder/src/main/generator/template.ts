@@ -237,6 +237,12 @@ export function wrapTemplate(
     .section-description td, .section-description th { border: 1px solid var(--border); padding: 8px 12px; text-align: left; }
     .section-description th { background: var(--bg); font-weight: 600; }
 
+    /* ── Links ── */
+    .links-grid { display: flex; flex-wrap: wrap; gap: 12px; }
+    .link-card { display: inline-flex; align-items: center; gap: 10px; padding: 12px 20px; background: var(--card); border: 1px solid var(--border); border-radius: 10px; text-decoration: none; color: var(--text); font-size: 15px; font-weight: 500; transition: border-color .15s, box-shadow .15s, color .15s; }
+    .link-card:hover { border-color: var(--accent); box-shadow: 0 2px 8px rgba(0,0,0,0.1); color: var(--accent-d); }
+    .link-icon { font-size: 20px; line-height: 1; }
+
     /* ── Empty state ── */
     .empty { color: var(--muted); font-size: 14px; font-style: italic; }
 

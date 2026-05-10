@@ -14,6 +14,7 @@ const SECTION_COMPONENTS: Record<SectionType, React.LazyExoticComponent<React.Co
   code:    lazy(() => import('../components/sections/CodeSection').then(m => ({ default: m.CodeSection }))),
   custom:  lazy(() => import('../components/sections/CustomSection').then(m => ({ default: m.CustomSection }))),
   project: lazy(() => import('../components/sections/ProjectSection').then(m => ({ default: m.ProjectSection }))),
+  links:   lazy(() => import('../components/sections/LinksSection').then(m => ({ default: m.LinksSection }))),
 }
 
 const AUTO_SAVE_DELAY = 10_000  // 10 seconds after last change

@@ -6,7 +6,7 @@ import { SidebarItem } from './SidebarItem'
 import { SnapshotPanel } from '../shared/SnapshotPanel'
 import { FtpModal } from '../shared/FtpModal'
 import type { NotifyFn } from '../shared/Toaster'
-import type { Section, SectionType, AboutSection, GallerySection, VideosSection, ModelsSection, GamesSection, CodeSection, CustomSection, ProjectSection } from '../../types/portfolio'
+import type { Section, SectionType, AboutSection, GallerySection, VideosSection, ModelsSection, GamesSection, CodeSection, CustomSection, ProjectSection, LinksSection } from '../../types/portfolio'
 
 const SECTION_DEFAULTS: {
   about: Omit<AboutSection, 'id'>
@@ -17,6 +17,7 @@ const SECTION_DEFAULTS: {
   code: Omit<CodeSection, 'id'>
   custom: Omit<CustomSection, 'id'>
   project: Omit<ProjectSection, 'id'>
+  links: Omit<LinksSection, 'id'>
 } = {
   about:   { type: 'about',   title: 'About Me',      visible: true, bio: '' },
   gallery: { type: 'gallery', title: 'Gallery',        visible: true, items: [] },
@@ -26,12 +27,13 @@ const SECTION_DEFAULTS: {
   code:    { type: 'code',    title: 'Code',           visible: true, items: [] },
   custom:  { type: 'custom',  title: 'Text',           visible: true, html: '' },
   project: { type: 'project', title: 'Project',        visible: true, description: '', items: [] },
+  links:   { type: 'links',   title: 'Links',          visible: true, items: [] },
 }
 
 const SECTION_LABELS: Record<SectionType, string> = {
   about: '👤 About Me', gallery: '🖼 Gallery', videos: '🎬 Videos',
   models: '📦 3D Models', games: '🎮 Games', code: '💻 Code', custom: '📝 Text',
-  project: '📋 Project',
+  project: '📋 Project', links: '🔗 Links',
 }
 
 interface Props {
