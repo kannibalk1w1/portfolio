@@ -1,6 +1,6 @@
 import { cp, mkdir, readFile, writeFile } from 'fs/promises'
 import { existsSync } from 'fs'
-import { join } from 'path'
+import { basename, dirname, extname, join } from 'path'
 import type { Portfolio, Section } from '../../renderer/src/types/portfolio'
 import { wrapTemplate } from './template'
 import { renderAbout } from './sections/about'
@@ -124,6 +124,70 @@ const LAUNCHER_BAT = `@echo off
 powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0launch.ps1"
 `
 
+// Read a companion file, trying the full relative path first then just the
+// basename (our importer flattens everything into the assets folder).
+async function readCompanion(dir: string, ref: string): Promise<Buffer | null> {
+  const full = join(dir, ref)
+  if (existsSync(full)) return readFile(full).catch(() => null)
+  const flat = join(dir, basename(ref))
+  return readFile(flat).catch(() => null)
+}
+
+// Embed a .gltf + its companions (.bin, textures) as a single self-contained
+// data URI by replacing every external URI in the JSON with a base64 data URI.
+async function embedGltfAsDataUri(gltfPath: string): Promise<string> {
+  let raw: string
+  try { raw = await readFile(gltfPath, 'utf-8') } catch { return '' }
+  let gltf: Record<string, unknown[]>
+  try { gltf = JSON.parse(raw) } catch { return '' }
+  const dir = dirname(gltfPath)
+
+  for (const buf of (gltf.buffers ?? []) as Array<{ uri?: string }>) {
+    if (buf.uri && !buf.uri.startsWith('data:')) {
+      const data = await readCompanion(dir, buf.uri)
+      if (data) buf.uri = `data:application/octet-stream;base64,${data.toString('base64')}`
+    }
+  }
+  for (const img of (gltf.images ?? []) as Array<{ uri?: string }>) {
+    if (img.uri && !img.uri.startsWith('data:')) {
+      const ext = extname(img.uri).toLowerCase()
+      const mime = ext === '.png' ? 'image/png' : 'image/jpeg'
+      const data = await readCompanion(dir, img.uri)
+      if (data) img.uri = `data:${mime};base64,${data.toString('base64')}`
+    }
+  }
+
+  return `data:model/gltf+json;base64,${Buffer.from(JSON.stringify(gltf)).toString('base64')}`
+}
+
+// Replace every <model-viewer src="assets/..."> in the HTML with a data URI
+// so the model loads from file:// without any network fetch.
+async function embedModelsAsDataUri(html: string, assetsDir: string): Promise<string> {
+  const filenames = new Set<string>()
+  for (const m of html.matchAll(/<model-viewer src="assets\/([^"]+)"/g)) filenames.add(m[1])
+  if (filenames.size === 0) return html
+
+  const replacements = new Map<string, string>()
+  for (const filename of filenames) {
+    const filePath = join(assetsDir, filename)
+    const ext = extname(filename).toLowerCase()
+    try {
+      if (ext === '.gltf') {
+        replacements.set(filename, await embedGltfAsDataUri(filePath))
+      } else {
+        const buf = await readFile(filePath)
+        const mime = ext === '.glb' ? 'model/gltf-binary' : 'application/octet-stream'
+        replacements.set(filename, `data:${mime};base64,${buf.toString('base64')}`)
+      }
+    } catch { /* skip unreadable files */ }
+  }
+
+  return html.replace(/<model-viewer src="assets\/([^"]+)"/g, (match, filename) => {
+    const dataUri = replacements.get(filename)
+    return dataUri ? `<model-viewer src="${dataUri}"` : match
+  })
+}
+
 export async function buildOfflineSite(
   portfolioDir: string,
   portfolio: Portfolio,
@@ -149,7 +213,8 @@ export async function buildOfflineSite(
   }
 
   const body = portfolio.sections.filter(s => s.visible).map(renderSection).join('\n')
-  const html = wrapTemplate(portfolio, body, { inlineModelViewer: modelViewerContent })
+  let html = wrapTemplate(portfolio, body, { inlineModelViewer: modelViewerContent })
+  html = await embedModelsAsDataUri(html, destAssets)
   await writeFile(join(destDir, 'index.html'), html, 'utf-8')
   await writeFile(join(destDir, 'launch.ps1'), LAUNCHER_PS1, 'utf-8')
   await writeFile(join(destDir, 'Launch Portfolio.bat'), LAUNCHER_BAT, 'utf-8')
