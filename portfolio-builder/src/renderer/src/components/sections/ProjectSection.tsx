@@ -100,7 +100,7 @@ export function ProjectSection({ section }: { section: ProjectSectionType }) {
         ) : (
           <MediaDropzone
             label="Click to add a cover image"
-            filters={[{ name: 'Images', extensions: ['jpg', 'jpeg', 'png', 'webp', 'gif', 'heic'] }]}
+            filters={[{ name: 'Images', extensions: ['jpg', 'jpeg', 'png', 'webp', 'gif', 'avif', 'heic', 'heif', 'tif', 'tiff'] }]}
             multiple={false}
             onFiles={handleCoverImport}
           />
@@ -148,7 +148,7 @@ export function ProjectSection({ section }: { section: ProjectSectionType }) {
         )}
         <MediaDropzone
           label="Click to add project images"
-          filters={[{ name: 'Images', extensions: ['jpg', 'jpeg', 'png', 'gif', 'webp', 'heic'] }]}
+          filters={[{ name: 'Images', extensions: ['jpg', 'jpeg', 'png', 'gif', 'webp', 'avif', 'heic', 'heif', 'tif', 'tiff'] }]}
           onFiles={handleImagesImport}
         />
       </div>

@@ -32,9 +32,11 @@
     "@google/model-viewer": "^4.0.0",
     "@tiptap/react": "^2.11.7",
     "@tiptap/starter-kit": "^2.11.7",
+    "assimpjs": "^0.0.10",
     "basic-ftp": "^5.0.5",
     "heic-convert": "^2.1.0",
-    "sanitize-html": "^2.17.3"
+    "sanitize-html": "^2.17.3",
+    "sharp": "^0.34.5"
   },
   "devDependencies": {
     "@electron-toolkit/eslint-config-prettier": "^3.0.0",

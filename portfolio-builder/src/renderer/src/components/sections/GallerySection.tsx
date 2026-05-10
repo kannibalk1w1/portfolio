@@ -59,7 +59,7 @@ export function GallerySection({ section }: { section: GallerySectionType }) {
       {importError && <div style={{ color: '#e94560', fontSize: 12, marginBottom: 8 }}>{importError}</div>}
       <MediaDropzone
         label="Click to add images or GIFs"
-        filters={[{ name: 'Images', extensions: ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'heic'] }]}
+        filters={[{ name: 'Images', extensions: ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'avif', 'heic', 'heif', 'tif', 'tiff'] }]}
         onFiles={handleImport}
       />
     </div>
