@@ -16,6 +16,7 @@ import { createSnapshot, listSnapshots, restoreSnapshot } from './portfolio/snap
 import { importMediaFiles, importGodotFolder } from './media/importer'
 import { buildSite } from './generator/index'
 import { uploadFtp } from './publish/ftp'
+import { resolveSafePath } from './preview/safePath'
 import {
   setFtpPassword,
   getFtpPassword,
@@ -105,8 +106,10 @@ export function registerIpcHandlers(): void {
     const outputDir = pathJoin(dir, 'output')
 
     const server = createServer((req, res) => {
-      const safePath = (req.url ?? '/').split('?')[0]
-      const filePath = pathJoin(outputDir, safePath === '/' ? 'index.html' : safePath)
+      const filePath = resolveSafePath(outputDir, req.url)
+      if (filePath === null) {
+        res.writeHead(403); res.end('Forbidden'); return
+      }
       if (!existsSync(filePath)) {
         res.writeHead(404); res.end('Not found'); return
       }
