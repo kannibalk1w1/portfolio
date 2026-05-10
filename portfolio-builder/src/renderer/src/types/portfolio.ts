@@ -154,11 +154,19 @@ export interface FtpConfig {
   secure: boolean
 }
 
+/** User-defined overrides applied on top of the chosen theme. */
+export interface PortfolioCustomisation {
+  accentColour?: string   // hex — overrides --accent / --accent-d
+  bgColour?: string       // hex — overrides --bg
+  fontFamily?: string     // CSS font-family string
+}
+
 export interface Portfolio {
   schemaVersion: 1
   name: string
   slug: string
   theme?: ThemeName
+  customisation?: PortfolioCustomisation
   sections: Section[]
   publish: {
     ftp?: FtpConfig

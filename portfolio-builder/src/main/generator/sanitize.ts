@@ -36,14 +36,19 @@ const ALLOWED_ATTRS: sanitizeHtml.IOptions['allowedAttributes'] = {
   img:  ['src', 'alt', 'width', 'height'],
   td:   ['colspan', 'rowspan'],
   th:   ['colspan', 'rowspan'],
-  // style is allowed on these elements but filtered to safe properties below
+  hr:   ['class'],             // styled divider variants (divider-dots etc.)
+  span: ['class', 'data-colours'],  // colour-palette and palette-swatch nodes
   '*':  ['style'],
 }
 
+const COLOUR_RE = [/^#[0-9a-fA-F]{3,8}$/, /^rgb\(/, /^rgba\(/]
+
 const ALLOWED_STYLES: sanitizeHtml.IOptions['allowedStyles'] = {
   '*': {
-    'text-align': [/^left$/, /^center$/, /^right$/, /^justify$/],
-    'color':      [/^#[0-9a-fA-F]{3,8}$/, /^rgb\(/, /^rgba\(/],
+    'text-align':       [/^left$/, /^center$/, /^right$/, /^justify$/],
+    'color':            COLOUR_RE,
+    'background':       COLOUR_RE,
+    'background-color': COLOUR_RE,
   },
 }
 
@@ -67,6 +72,8 @@ export function sanitizeContent(html: string): string {
         tagName,
         attribs: { ...attribs, src: rewriteAssetUrl(attribs.src ?? '') },
       }),
+      // Palette spans: keep data-colours so the swatch children render correctly
+      span: (tagName, attribs) => ({ tagName, attribs }),
     },
   })
 }

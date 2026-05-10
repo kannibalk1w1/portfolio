@@ -13,8 +13,18 @@
  *    actually contains gallery or project images.
  */
 
-import type { Portfolio, Section, ThemeName } from '../../renderer/src/types/portfolio'
+import type { Portfolio, Section, ThemeName, PortfolioCustomisation } from '../../renderer/src/types/portfolio'
 import { escHtml } from './utils'
+
+function buildCustomisationCss(c: PortfolioCustomisation | undefined): string {
+  if (!c) return ''
+  const lines: string[] = []
+  if (c.accentColour) lines.push(`--accent:${c.accentColour};--accent-d:${c.accentColour};`)
+  if (c.bgColour)     lines.push(`--bg:${c.bgColour};`)
+  const root = lines.length ? `:root{${lines.join('')}}` : ''
+  const body = c.fontFamily ? `body{font-family:${c.fontFamily};}` : ''
+  return root + body
+}
 
 // ---------------------------------------------------------------------------
 // Theme CSS variable blocks
@@ -152,6 +162,9 @@ export function wrapTemplate(
       --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.05);
     }
 
+    /* ── User customisation overrides ── */
+    ${buildCustomisationCss(portfolio.customisation)}
+
     /* ── Reset ── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     html { scroll-behavior: smooth; }
@@ -242,6 +255,20 @@ export function wrapTemplate(
     .link-card { display: inline-flex; align-items: center; gap: 10px; padding: 12px 20px; background: var(--card); border: 1px solid var(--border); border-radius: 10px; text-decoration: none; color: var(--text); font-size: 15px; font-weight: 500; transition: border-color .15s, box-shadow .15s, color .15s; }
     .link-card:hover { border-color: var(--accent); box-shadow: 0 2px 8px rgba(0,0,0,0.1); color: var(--accent-d); }
     .link-icon { font-size: 20px; line-height: 1; }
+
+    /* ── Colour palette (inline rich-text node) ── */
+    .colour-palette { display: inline-flex; align-items: center; gap: 6px; vertical-align: middle; padding: 2px 0; }
+    .palette-swatch { width: 28px; height: 28px; border-radius: 50%; display: inline-block; border: 1px solid rgba(0,0,0,0.12); }
+
+    /* ── Styled dividers ── */
+    hr.divider-line  { border: none; border-top: 2px solid var(--border); margin: 16px 0; }
+    hr.divider-dots  { border: none; margin: 16px 0; text-align: center; }
+    hr.divider-dots::before  { content: '· · ·'; font-size: 20px; color: var(--muted); letter-spacing: 4px; }
+    hr.divider-stars { border: none; margin: 16px 0; text-align: center; }
+    hr.divider-stars::before { content: '★  ★  ★'; font-size: 16px; color: var(--muted); letter-spacing: 4px; }
+    hr.divider-thick { border: none; border-top: 4px solid var(--border); margin: 16px 0; }
+    /* plain <hr> fallback */
+    hr { border: none; border-top: 2px solid var(--border); margin: 16px 0; }
 
     /* ── Skills ── */
     .skills-grid { display: flex; flex-wrap: wrap; gap: 10px; }

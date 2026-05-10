@@ -42,6 +42,8 @@ import Table from '@tiptap/extension-table'
 import TableRow from '@tiptap/extension-table-row'
 import TableCell from '@tiptap/extension-table-cell'
 import TableHeader from '@tiptap/extension-table-header'
+import { StyledDivider, type DividerStyle } from '../../lib/tiptap/StyledDivider'
+import { ColourPalette } from '../../lib/tiptap/ColourPalette'
 
 // ---------------------------------------------------------------------------
 // Global styles — injected once, shared across all RichTextEditor instances
@@ -78,6 +80,8 @@ function ensureEditorStyles() {
       content: attr(data-placeholder);
       float: left; color: #bbb; pointer-events: none; height: 0;
     }
+    .tiptap .colour-palette { display: inline-flex; align-items: center; gap: 5px; vertical-align: middle; }
+    .tiptap .palette-swatch { width: 22px; height: 22px; border-radius: 50%; display: inline-block; border: 1px solid rgba(0,0,0,0.12); }
   `
   document.head.appendChild(s)
 }
@@ -153,12 +157,15 @@ export function RichTextEditor({
   const [linkUrl, setLinkUrl] = useState<string | null>(null)
   const [showColours, setShowColours] = useState(false)
   const [showTableMenu, setShowTableMenu] = useState(false)
+  const [showDividerMenu, setShowDividerMenu] = useState(false)
   const [hexInput, setHexInput] = useState('')
   const linkInputRef = useRef<HTMLInputElement>(null)
 
   const editor = useEditor({
     extensions: [
-      StarterKit,
+      StarterKit.configure({ horizontalRule: false }), // replaced by StyledDivider
+      StyledDivider,
+      ColourPalette,
       Underline,
       TextStyle,  // required peer for Color
       Color,
@@ -188,7 +195,7 @@ export function RichTextEditor({
 
   // Close menus when clicking outside
   useEffect(() => {
-    function handleClick() { setShowColours(false); setShowTableMenu(false) }
+    function handleClick() { setShowColours(false); setShowTableMenu(false); setShowDividerMenu(false) }
     document.addEventListener('mousedown', handleClick)
     return () => document.removeEventListener('mousedown', handleClick)
   }, [])
@@ -367,10 +374,33 @@ export function RichTextEditor({
         <SEP />
 
         {/* Block elements */}
-        <Btn title="Blockquote"      active={editor.isActive('blockquote')}  onClick={() => editor.chain().focus().toggleBlockquote().run()}>"</Btn>
-        <Btn title="Horizontal rule" active={false}                          onClick={() => editor.chain().focus().setHorizontalRule().run()}>─</Btn>
-        <Btn title="Code block"      active={editor.isActive('codeBlock')}   onClick={() => editor.chain().focus().toggleCodeBlock().run()}>&lt;/&gt;</Btn>
-        <Btn title="Link"            active={editor.isActive('link')}        onClick={openLinkInput}>🔗</Btn>
+        <Btn title="Blockquote"  active={editor.isActive('blockquote')} onClick={() => editor.chain().focus().toggleBlockquote().run()}>"</Btn>
+
+        {/* Styled divider dropdown */}
+        <div style={{ position: 'relative' }}>
+          <Btn title="Insert divider" active={showDividerMenu} onClick={() => setShowDividerMenu(v => !v)}>─▾</Btn>
+          {showDividerMenu && (
+            <div
+              style={{ position: 'absolute', top: '100%', left: 0, zIndex: 100, background: 'white', border: '1px solid #e0e0e0', borderRadius: 6, padding: 4, marginTop: 2, minWidth: 150, boxShadow: '0 4px 12px rgba(0,0,0,0.1)', display: 'flex', flexDirection: 'column', gap: 1 }}
+              onMouseDown={e => e.preventDefault()}
+            >
+              {([
+                ['line',  '─────  Line'],
+                ['dots',  '· · ·  Dots'],
+                ['stars', '★ ★ ★  Stars'],
+                ['thick', '▬▬▬  Thick'],
+              ] as [DividerStyle, string][]).map(([style, label]) => (
+                <TableMenuItem key={style} label={label} onClick={() => { editor.chain().focus().insertDivider(style).run(); setShowDividerMenu(false) }} />
+              ))}
+            </div>
+          )}
+        </div>
+
+        <Btn title="Code block" active={editor.isActive('codeBlock')} onClick={() => editor.chain().focus().toggleCodeBlock().run()}>&lt;/&gt;</Btn>
+        <Btn title="Link"       active={editor.isActive('link')}      onClick={openLinkInput}>🔗</Btn>
+
+        {/* Colour palette insert */}
+        <Btn title="Insert colour palette" active={false} onClick={() => editor.chain().focus().insertColourPalette().run()}>🎨+</Btn>
 
         {/* Image insert — only shown when parent provides the callback */}
         {onInsertImage && (

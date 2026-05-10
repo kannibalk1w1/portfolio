@@ -4,6 +4,7 @@ import { MediaDropzone } from '../shared/MediaDropzone'
 import { RichTextEditor } from '../shared/RichTextEditor'
 import { SectionTitle } from '../shared/SectionTitle'
 import { ThemePicker } from '../shared/ThemePicker'
+import { ThemeCustomiser } from '../shared/ThemeCustomiser'
 import { useImageInserter } from '../../hooks/useImageInserter'
 import type { ThemeName } from '../../types/portfolio'
 import { toFileUrl } from '../../utils/fileUrl'
@@ -55,6 +56,13 @@ export function AboutSection({ section }: { section: AboutSectionType }) {
         <ThemePicker
           value={state.portfolio!.theme ?? 'launchpad'}
           onChange={(theme: ThemeName) => updatePortfolio({ ...state.portfolio!, theme })}
+        />
+      </div>
+
+      <div style={{ marginBottom: 24 }}>
+        <ThemeCustomiser
+          value={state.portfolio!.customisation ?? {}}
+          onChange={customisation => updatePortfolio({ ...state.portfolio!, customisation })}
         />
       </div>
 
