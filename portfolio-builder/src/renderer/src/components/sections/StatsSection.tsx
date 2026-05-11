@@ -61,13 +61,13 @@ export function StatsSection({ section }: { section: StatsSectionType }) {
                 value={item.value}
                 onChange={e => updateItem(item.id, { value: e.target.value })}
                 placeholder="200+"
-                style={{ display: 'block', width: '100%', border: 'none', textAlign: 'center', fontSize: 28, fontWeight: 800, color: '#6366f1', outline: 'none', background: 'transparent', boxSizing: 'border-box', marginBottom: 6 }}
+                style={{ display: 'block', width: '100%', border: 'none', textAlign: 'center', fontSize: 22, fontWeight: 800, color: '#6366f1', outline: 'none', background: 'transparent', boxSizing: 'border-box', marginBottom: 6, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
               />
               <input
                 value={item.label}
                 onChange={e => updateItem(item.id, { label: e.target.value })}
                 placeholder="Hours"
-                style={{ display: 'block', width: '100%', border: 'none', borderTop: '1px solid #f0f0f0', textAlign: 'center', fontSize: 12, color: '#64748b', outline: 'none', background: 'transparent', boxSizing: 'border-box', paddingTop: 6 }}
+                style={{ display: 'block', width: '100%', border: 'none', borderTop: '1px solid #f0f0f0', textAlign: 'center', fontSize: 12, color: '#64748b', outline: 'none', background: 'transparent', boxSizing: 'border-box', paddingTop: 6, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
               />
             </div>
           ))}
