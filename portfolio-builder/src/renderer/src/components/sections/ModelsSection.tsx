@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import {
   DndContext, closestCenter,
   PointerSensor, useSensor, useSensors,
@@ -14,6 +14,37 @@ import { RichTextEditor } from '../shared/RichTextEditor'
 import { SectionTitle } from '../shared/SectionTitle'
 import { useImageInserter } from '../../hooks/useImageInserter'
 import { toFileUrl } from '../../utils/fileUrl'
+
+function LazyModelViewer({ src, alt }: { src: string; alt: string }) {
+  const ref = useRef<HTMLDivElement>(null)
+  const [visible, setVisible] = useState(false)
+
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const obs = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) { setVisible(true); obs.disconnect() } },
+      { rootMargin: '200px' }
+    )
+    obs.observe(el)
+    return () => obs.disconnect()
+  }, [])
+
+  return (
+    <div ref={ref} style={{ width: '100%', height: '260px', background: '#f0f0f0', borderRadius: 4 }}>
+      {visible && (
+        /* @ts-ignore */
+        <model-viewer
+          src={src}
+          alt={alt}
+          auto-rotate
+          camera-controls
+          style={{ width: '100%', height: '260px', display: 'block' }}
+        />
+      )}
+    </div>
+  )
+}
 
 // model-viewer captures pointer events so we use an explicit ⠿ drag handle
 function SortableModelItem({
@@ -31,12 +62,9 @@ function SortableModelItem({
       ref={setNodeRef}
       style={{ transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.45 : 1, background: '#f5f5f5', borderRadius: 8, overflow: 'hidden' }}
     >
-      {/* @ts-ignore */}
-      <model-viewer
+      <LazyModelViewer
         src={toFileUrl(`${portfolioDir}/assets/${item.filename}`)}
         alt={item.label ?? item.filename}
-        auto-rotate camera-controls
-        style={{ width: '100%', height: '260px', display: 'block' }}
       />
       <div style={{ padding: '8px 12px', display: 'flex', alignItems: 'center', gap: 12 }}>
         {/* Drag handle */}
