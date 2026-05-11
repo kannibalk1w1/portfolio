@@ -70,8 +70,8 @@ function ensureEditorStyles() {
     .tiptap mark { background: #fef08a; border-radius: 2px; padding: 0 2px; }
     .tiptap sup { font-size: 0.75em; vertical-align: super; }
     .tiptap sub { font-size: 0.75em; vertical-align: sub; }
-    .tiptap pre { background: #f8f8f8; border-radius: 6px; padding: 12px 16px; overflow-x: auto; }
-    .tiptap pre code { background: none; padding: 0; }
+    .tiptap pre { background: #1e293b; color: #e2e8f0; border-radius: 6px; padding: 12px 16px; overflow-x: auto; }
+    .tiptap pre code { background: none; padding: 0; color: inherit; }
     .tiptap img { max-width: 100%; border-radius: 6px; display: block; margin: 8px 0; }
     .tiptap table { border-collapse: collapse; width: 100%; margin: 12px 0; }
     .tiptap td, .tiptap th { border: 1px solid #ddd; padding: 8px 12px; min-width: 60px; vertical-align: top; }
@@ -532,6 +532,11 @@ export function RichTextEditor({
         <Btn title="Redo (Ctrl+Y)" active={false} onClick={() => editor.chain().focus().redo().run()}>↪</Btn>
       </div>
 
+      {/* ── Shift+Enter hint ── */}
+      <div style={{ padding: '2px 10px', background: '#fafafa', borderBottom: '1px solid #f0f0f0', fontSize: 10, color: '#bbb' }}>
+        Shift+Enter = soft line break &nbsp;·&nbsp; Enter = new paragraph
+      </div>
+
       {/* ── Link input bar ── */}
       {linkUrl !== null && (
         <div style={{ display: 'flex', gap: 6, padding: '6px 10px', background: '#f0f4ff', borderBottom: '1px solid #c7d2fe', alignItems: 'center' }}>
@@ -554,6 +559,13 @@ export function RichTextEditor({
 
       {/* ── Editor content ── */}
       <EditorContent editor={editor} style={{ padding: '12px 16px', minHeight, fontSize: 14, lineHeight: 1.6 }} />
+      <div
+        style={{ height: 24, cursor: 'text' }}
+        onMouseDown={e => {
+          e.preventDefault()
+          editor.commands.focus('end')
+        }}
+      />
     </div>
   )
 }
