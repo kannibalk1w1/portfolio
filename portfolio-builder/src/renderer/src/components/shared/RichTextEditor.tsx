@@ -26,6 +26,7 @@
  */
 
 import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Underline from '@tiptap/extension-underline'
@@ -162,6 +163,41 @@ function Btn({
 }
 
 // ---------------------------------------------------------------------------
+// DropdownPortal — renders dropdown content at document.body via React Portal
+// with position:fixed so it escapes any overflow:hidden/auto scroll containers.
+// ---------------------------------------------------------------------------
+
+function DropdownPortal({
+  triggerRef, open, align = 'left', children,
+}: {
+  triggerRef: React.RefObject<HTMLElement | null>
+  open: boolean
+  align?: 'left' | 'right'
+  children: React.ReactNode
+}) {
+  const [pos, setPos] = useState({ top: 0, left: 0, right: 0 })
+
+  useEffect(() => {
+    if (open && triggerRef.current) {
+      const r = triggerRef.current.getBoundingClientRect()
+      setPos({ top: r.bottom + 2, left: r.left, right: window.innerWidth - r.right })
+    }
+  }, [open])
+
+  if (!open) return null
+
+  return createPortal(
+    <div
+      style={{ position: 'fixed', top: pos.top, zIndex: 9999, ...(align === 'left' ? { left: pos.left } : { right: pos.right }) }}
+      onMouseDown={e => e.preventDefault()}
+    >
+      {children}
+    </div>,
+    document.body
+  )
+}
+
+// ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
 
@@ -181,6 +217,11 @@ export function RichTextEditor({
   const [showCalloutMenu, setShowCalloutMenu] = useState(false)
   const [hexInput, setHexInput] = useState('')
   const linkInputRef = useRef<HTMLInputElement>(null)
+  const colourBtnRef = useRef<HTMLDivElement>(null)
+  const highlightBtnRef = useRef<HTMLDivElement>(null)
+  const dividerBtnRef = useRef<HTMLDivElement>(null)
+  const calloutBtnRef = useRef<HTMLDivElement>(null)
+  const tableBtnRef = useRef<HTMLDivElement>(null)
 
   const editor = useEditor({
     extensions: [
@@ -289,7 +330,7 @@ export function RichTextEditor({
         </Btn>
 
         {/* Text colour — swatch popup */}
-        <div style={{ position: 'relative' }}>
+        <div ref={colourBtnRef}>
           <Btn
             title="Text colour"
             active={showColours}
@@ -298,11 +339,8 @@ export function RichTextEditor({
             <span style={{ fontWeight: 700, color: currentColour === '#000000' ? '#333' : currentColour }}>A</span>
             <span style={{ display: 'block', width: 14, height: 3, background: currentColour, borderRadius: 1, position: 'absolute', bottom: 4, left: '50%', transform: 'translateX(-50%)' }} />
           </Btn>
-          {showColours && (
-            <div
-              style={{ position: 'absolute', top: '100%', left: 0, zIndex: 100, background: 'white', border: '1px solid #e0e0e0', borderRadius: 6, padding: 6, marginTop: 2, boxShadow: '0 4px 12px rgba(0,0,0,0.1)', width: 116 }}
-              onMouseDown={e => e.preventDefault()}
-            >
+          <DropdownPortal triggerRef={colourBtnRef} open={showColours} align="left">
+            <div style={{ background: 'white', border: '1px solid #e0e0e0', borderRadius: 6, padding: 6, boxShadow: '0 4px 12px rgba(0,0,0,0.1)', width: 116 }}>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 20px)', gap: 4, marginBottom: 6 }}>
                 {COLOURS.map(c => (
                   <div
@@ -353,11 +391,11 @@ export function RichTextEditor({
                 />
               </div>
             </div>
-          )}
+          </DropdownPortal>
         </div>
 
         {/* Highlight colour */}
-        <div style={{ position: 'relative' }}>
+        <div ref={highlightBtnRef}>
           <Btn
             title="Highlight colour"
             active={editor.isActive('highlight') || showHighlights}
@@ -369,11 +407,8 @@ export function RichTextEditor({
               border: '1px solid rgba(0,0,0,0.1)',
             }}>H</span>
           </Btn>
-          {showHighlights && (
-            <div
-              style={{ position: 'absolute', top: '100%', left: 0, zIndex: 100, background: 'white', border: '1px solid #e0e0e0', borderRadius: 6, padding: 6, marginTop: 2, boxShadow: '0 4px 12px rgba(0,0,0,0.1)', width: 116 }}
-              onMouseDown={e => e.preventDefault()}
-            >
+          <DropdownPortal triggerRef={highlightBtnRef} open={showHighlights} align="left">
+            <div style={{ background: 'white', border: '1px solid #e0e0e0', borderRadius: 6, padding: 6, boxShadow: '0 4px 12px rgba(0,0,0,0.1)', width: 116 }}>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 20px)', gap: 4, marginBottom: 4 }}>
                 {HIGHLIGHT_COLOURS.map(c => (
                   <div
@@ -398,7 +433,7 @@ export function RichTextEditor({
                 >✕</div>
               </div>
             </div>
-          )}
+          </DropdownPortal>
         </div>
 
         <SEP />
@@ -439,13 +474,10 @@ export function RichTextEditor({
         <Btn title="Blockquote"  active={editor.isActive('blockquote')} onClick={() => editor.chain().focus().toggleBlockquote().run()}>"</Btn>
 
         {/* Styled divider dropdown */}
-        <div style={{ position: 'relative' }}>
+        <div ref={dividerBtnRef}>
           <Btn title="Insert divider" active={showDividerMenu} onClick={() => setShowDividerMenu(v => !v)}>─▾</Btn>
-          {showDividerMenu && (
-            <div
-              style={{ position: 'absolute', top: '100%', left: 0, zIndex: 100, background: 'white', border: '1px solid #e0e0e0', borderRadius: 6, padding: 4, marginTop: 2, minWidth: 150, boxShadow: '0 4px 12px rgba(0,0,0,0.1)', display: 'flex', flexDirection: 'column', gap: 1 }}
-              onMouseDown={e => e.preventDefault()}
-            >
+          <DropdownPortal triggerRef={dividerBtnRef} open={showDividerMenu} align="left">
+            <div style={{ background: 'white', border: '1px solid #e0e0e0', borderRadius: 6, padding: 4, minWidth: 150, boxShadow: '0 4px 12px rgba(0,0,0,0.1)', display: 'flex', flexDirection: 'column', gap: 1 }}>
               {([
                 ['line',  '─────  Line'],
                 ['dots',  '· · ·  Dots'],
@@ -455,7 +487,7 @@ export function RichTextEditor({
                 <TableMenuItem key={style} label={label} onClick={() => { editor.chain().focus().insertDivider(style).run(); setShowDividerMenu(false) }} />
               ))}
             </div>
-          )}
+          </DropdownPortal>
         </div>
 
         <Btn title="Code block" active={editor.isActive('codeBlock')} onClick={() => editor.chain().focus().toggleCodeBlock().run()}>&lt;/&gt;</Btn>
@@ -465,13 +497,10 @@ export function RichTextEditor({
         <Btn title="Insert colour palette" active={false} onClick={() => editor.chain().focus().insertColourPalette().run()}>🎨+</Btn>
 
         {/* Callout / info box */}
-        <div style={{ position: 'relative' }}>
+        <div ref={calloutBtnRef}>
           <Btn title="Insert callout box" active={editor.isActive('callout') || showCalloutMenu} onClick={() => setShowCalloutMenu(v => !v)}>💬▾</Btn>
-          {showCalloutMenu && (
-            <div
-              style={{ position: 'absolute', top: '100%', right: 0, zIndex: 100, background: 'white', border: '1px solid #e0e0e0', borderRadius: 6, padding: 4, marginTop: 2, minWidth: 150, boxShadow: '0 4px 12px rgba(0,0,0,0.1)', display: 'flex', flexDirection: 'column', gap: 1 }}
-              onMouseDown={e => e.preventDefault()}
-            >
+          <DropdownPortal triggerRef={calloutBtnRef} open={showCalloutMenu} align="right">
+            <div style={{ background: 'white', border: '1px solid #e0e0e0', borderRadius: 6, padding: 4, minWidth: 150, boxShadow: '0 4px 12px rgba(0,0,0,0.1)', display: 'flex', flexDirection: 'column', gap: 1 }}>
               {([
                 ['info',    'ℹ️  Info'],
                 ['tip',     '💡  Tip'],
@@ -485,7 +514,7 @@ export function RichTextEditor({
                 <TableMenuItem label="Remove callout" onClick={() => { editor.chain().focus().lift('callout').run(); setShowCalloutMenu(false) }} danger />
               </>}
             </div>
-          )}
+          </DropdownPortal>
         </div>
 
         {/* Image insert — only shown when parent provides the callback */}
@@ -494,15 +523,12 @@ export function RichTextEditor({
         )}
 
         {/* Table */}
-        <div style={{ position: 'relative' }}>
+        <div ref={tableBtnRef}>
           <Btn title={inTable ? 'Table options' : 'Insert table'} active={inTable || showTableMenu} onClick={() => setShowTableMenu(v => !v)}>
             ⊞
           </Btn>
-          {showTableMenu && (
-            <div
-              style={{ position: 'absolute', top: '100%', left: 0, zIndex: 100, background: 'white', border: '1px solid #e0e0e0', borderRadius: 6, padding: 4, marginTop: 2, minWidth: 160, boxShadow: '0 4px 12px rgba(0,0,0,0.1)', display: 'flex', flexDirection: 'column', gap: 1 }}
-              onMouseDown={e => e.preventDefault()}
-            >
+          <DropdownPortal triggerRef={tableBtnRef} open={showTableMenu} align="left">
+            <div style={{ background: 'white', border: '1px solid #e0e0e0', borderRadius: 6, padding: 4, minWidth: 160, boxShadow: '0 4px 12px rgba(0,0,0,0.1)', display: 'flex', flexDirection: 'column', gap: 1 }}>
               {!inTable ? (
                 <TableMenuItem label="Insert 3×3 table" onClick={handleInsertTable} />
               ) : (<>
@@ -517,7 +543,7 @@ export function RichTextEditor({
                 <TableMenuItem label="Delete table"     onClick={() => { editor.chain().focus().deleteTable().run(); setShowTableMenu(false) }} danger />
               </>)}
             </div>
-          )}
+          </DropdownPortal>
         </div>
 
         <SEP />
