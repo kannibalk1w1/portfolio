@@ -55,7 +55,12 @@ export const Callout = Node.create({
   addCommands() {
     return {
       insertCallout: (calloutType: CalloutType = 'info') =>
-        ({ commands }) => commands.wrapIn(this.name, { calloutType }),
+        ({ commands }) =>
+          commands.insertContent({
+            type: this.name,
+            attrs: { calloutType },
+            content: [{ type: 'paragraph' }],
+          }),
 
       setCalloutType: (calloutType: CalloutType) =>
         ({ commands }) => commands.updateAttributes(this.name, { calloutType }),
