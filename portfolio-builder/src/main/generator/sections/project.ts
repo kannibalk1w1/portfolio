@@ -8,7 +8,8 @@ export function renderProject(section: ProjectSection): string {
         src="assets/${escHtml(section.coverImageFilename)}"
         class="project-cover lb-trigger"
         data-src="assets/${escHtml(section.coverImageFilename)}"
-        alt="Cover image">`
+        alt="Cover image"
+        loading="lazy">`
     : ''
 
   const images = section.items
