@@ -108,6 +108,13 @@ const COLOURS = [
   '#3b82f6', '#6366f1', '#8b5cf6', '#ec4899',
 ]
 
+const HIGHLIGHT_COLOURS = [
+  '#fef08a', '#fde68a', '#fed7aa',
+  '#bbf7d0', '#a7f3d0', '#99f6e4',
+  '#bfdbfe', '#c7d2fe', '#ddd6fe',
+  '#fecdd3', '#fda4af', '#f9a8d4',
+]
+
 // ---------------------------------------------------------------------------
 // Props
 // ---------------------------------------------------------------------------
@@ -168,6 +175,7 @@ export function RichTextEditor({
 
   const [linkUrl, setLinkUrl] = useState<string | null>(null)
   const [showColours, setShowColours] = useState(false)
+  const [showHighlights, setShowHighlights] = useState(false)
   const [showTableMenu, setShowTableMenu] = useState(false)
   const [showDividerMenu, setShowDividerMenu] = useState(false)
   const [showCalloutMenu, setShowCalloutMenu] = useState(false)
@@ -183,7 +191,7 @@ export function RichTextEditor({
       Underline,
       TextStyle,  // required peer for Color
       Color,
-      Highlight.configure({ multicolor: false }),
+      Highlight.configure({ multicolor: true }),
       Superscript,
       Subscript,
       TextAlign.configure({ types: ['heading', 'paragraph'] }),
@@ -209,7 +217,7 @@ export function RichTextEditor({
 
   // Close menus when clicking outside
   useEffect(() => {
-    function handleClick() { setShowColours(false); setShowTableMenu(false); setShowDividerMenu(false); setShowCalloutMenu(false) }
+    function handleClick() { setShowColours(false); setShowHighlights(false); setShowTableMenu(false); setShowDividerMenu(false); setShowCalloutMenu(false) }
     document.addEventListener('mousedown', handleClick)
     return () => document.removeEventListener('mousedown', handleClick)
   }, [])
@@ -348,10 +356,50 @@ export function RichTextEditor({
           )}
         </div>
 
-        {/* Highlight / background colour */}
-        <Btn title="Highlight" active={editor.isActive('highlight')} onClick={() => editor.chain().focus().toggleHighlight().run()}>
-          <span style={{ background: '#fef08a', padding: '0 3px', borderRadius: 2, fontSize: 11, lineHeight: 1.4 }}>H</span>
-        </Btn>
+        {/* Highlight colour */}
+        <div style={{ position: 'relative' }}>
+          <Btn
+            title="Highlight colour"
+            active={editor.isActive('highlight') || showHighlights}
+            onClick={() => setShowHighlights(v => !v)}
+          >
+            <span style={{
+              background: editor.getAttributes('highlight').color ?? '#fef08a',
+              padding: '0 3px', borderRadius: 2, fontSize: 11, lineHeight: 1.4,
+              border: '1px solid rgba(0,0,0,0.1)',
+            }}>H</span>
+          </Btn>
+          {showHighlights && (
+            <div
+              style={{ position: 'absolute', top: '100%', left: 0, zIndex: 100, background: 'white', border: '1px solid #e0e0e0', borderRadius: 6, padding: 6, marginTop: 2, boxShadow: '0 4px 12px rgba(0,0,0,0.1)', width: 116 }}
+              onMouseDown={e => e.preventDefault()}
+            >
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 20px)', gap: 4, marginBottom: 4 }}>
+                {HIGHLIGHT_COLOURS.map(c => (
+                  <div
+                    key={c}
+                    onMouseDown={e => {
+                      e.preventDefault()
+                      editor.chain().focus().setHighlight({ color: c }).run()
+                      setShowHighlights(false)
+                    }}
+                    style={{ width: 20, height: 20, borderRadius: 3, background: c, cursor: 'pointer', border: '1px solid rgba(0,0,0,0.12)' }}
+                    title={c}
+                  />
+                ))}
+                <div
+                  onMouseDown={e => {
+                    e.preventDefault()
+                    editor.chain().focus().unsetHighlight().run()
+                    setShowHighlights(false)
+                  }}
+                  style={{ width: 20, height: 20, borderRadius: 3, background: 'white', cursor: 'pointer', border: '1px solid #ddd', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, color: '#aaa' }}
+                  title="Remove highlight"
+                >✕</div>
+              </div>
+            </div>
+          )}
+        </div>
 
         <SEP />
 
