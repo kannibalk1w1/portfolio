@@ -8,12 +8,14 @@ function renderBlock(block: ContentBlock): string {
       if (!block.html) return ''
       return `<div class="cb cb-text">${sanitizeContent(block.html)}</div>`
 
-    case 'image':
+    case 'image': {
       if (!block.filename) return ''
+      const fit = block.objectFit ?? 'cover'
       return `<div class="cb cb-image">
-        <img src="assets/${escHtml(block.filename)}" alt="${escHtml(block.alt ?? block.caption ?? block.filename)}" loading="lazy" style="width:100%;border-radius:8px;">
+        <img src="assets/${escHtml(block.filename)}" alt="${escHtml(block.alt ?? block.caption ?? block.filename)}" loading="lazy" style="width:100%;border-radius:8px;object-fit:${fit};">
         ${block.caption ? `<p class="cb-caption">${escHtml(block.caption)}</p>` : ''}
       </div>`
+    }
 
     case 'video':
       if (block.embedUrl) {

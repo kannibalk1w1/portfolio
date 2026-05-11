@@ -75,16 +75,37 @@ function ImageBlockEditor({ block, onChange, portfolioDir }: { block: ContentIma
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
       {block.filename ? (
-        <div style={{ position: 'relative' }}>
-          <img
-            src={toFileUrl(`${portfolioDir}/assets/${block.filename}`)}
-            style={{ width: '100%', maxHeight: 300, objectFit: 'cover', borderRadius: 8, display: 'block' }}
-            alt={block.alt ?? block.caption ?? block.filename}
-          />
-          <button
-            onClick={() => onChange({ filename: '' })}
-            style={{ position: 'absolute', top: 8, right: 8, background: 'rgba(0,0,0,0.5)', color: 'white', border: 'none', borderRadius: '50%', width: 26, height: 26, cursor: 'pointer', fontSize: 14 }}
-          >×</button>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <div style={{ position: 'relative' }}>
+            <img
+              src={toFileUrl(`${portfolioDir}/assets/${block.filename}`)}
+              style={{ width: '100%', maxHeight: 300, objectFit: block.objectFit ?? 'cover', borderRadius: 8, display: 'block' }}
+              alt={block.alt ?? block.caption ?? block.filename}
+              loading="lazy"
+            />
+            <button
+              onClick={() => onChange({ filename: '' })}
+              style={{ position: 'absolute', top: 8, right: 8, background: 'rgba(0,0,0,0.5)', color: 'white', border: 'none', borderRadius: '50%', width: 26, height: 26, cursor: 'pointer', fontSize: 14 }}
+            >×</button>
+          </div>
+          <div style={{ display: 'flex', gap: 4 }}>
+            {(['cover', 'contain'] as const).map(fit => (
+              <button
+                key={fit}
+                onClick={() => onChange({ objectFit: fit })}
+                style={{
+                  flex: 1, padding: '4px 8px',
+                  border: `1px solid ${(block.objectFit ?? 'cover') === fit ? '#6366f1' : '#ddd'}`,
+                  borderRadius: 4,
+                  background: (block.objectFit ?? 'cover') === fit ? '#f0f0ff' : 'white',
+                  cursor: 'pointer', fontSize: 11,
+                  color: (block.objectFit ?? 'cover') === fit ? '#6366f1' : '#555',
+                }}
+              >
+                {fit === 'cover' ? 'Fill (crop)' : 'Fit (full image)'}
+              </button>
+            ))}
+          </div>
         </div>
       ) : (
         <MediaDropzone

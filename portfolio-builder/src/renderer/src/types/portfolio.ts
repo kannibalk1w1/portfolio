@@ -158,7 +158,7 @@ export interface EmbedSection extends BaseSection {
 // ---------------------------------------------------------------------------
 
 export interface ContentTextBlock      { id: string; type: 'text';       html: string }
-export interface ContentImageBlock     { id: string; type: 'image';      filename: string; caption?: string; alt?: string }
+export interface ContentImageBlock     { id: string; type: 'image';      filename: string; caption?: string; alt?: string; objectFit?: 'cover' | 'contain' }
 export interface ContentVideoBlock     { id: string; type: 'video';      filename?: string; embedUrl?: string; caption?: string }
 export interface ContentQuoteBlock     { id: string; type: 'quote';      quote: string; attribution?: string }
 export interface ContentDividerBlock   { id: string; type: 'divider';    style?: 'line' | 'dots' | 'stars' | 'thick' }
