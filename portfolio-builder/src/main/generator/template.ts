@@ -188,7 +188,7 @@ export function wrapTemplate(
     /* ── Layout ── */
     .sections-wrapper { max-width: 1040px; margin: 0 auto; padding: 40px 24px 56px; display: flex; flex-direction: column; gap: 20px; }
     .section { background: var(--card); border-radius: var(--radius); padding: 32px 36px; box-shadow: var(--shadow); }
-    .section-title { font-size: 19px; font-weight: 700; margin-bottom: 24px; padding-left: 14px; border-left: 4px solid var(--accent); color: var(--dark-2); }
+    .section-title { font-size: 19px; font-weight: 700; margin-bottom: 24px; padding-left: 14px; border-left: 4px solid var(--accent); color: var(--text); }
 
     /* ── About ── */
     .about-block { display: flex; gap: 28px; align-items: flex-start; }
@@ -205,7 +205,7 @@ export function wrapTemplate(
     /* ── Videos ── */
     .video-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
     .video-item video { width: 100%; border-radius: 8px; }
-    .video-caption { font-size: 14px; font-weight: 600; margin-bottom: 8px; color: var(--dark-2); }
+    .video-caption { font-size: 14px; font-weight: 600; margin-bottom: 8px; color: var(--text); }
 
     /* ── 3D Models ── */
     .models-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
@@ -214,7 +214,7 @@ export function wrapTemplate(
     /* ── Games ── */
     .game-item { margin-bottom: 32px; }
     .game-item:last-child { margin-bottom: 0; }
-    .game-item h3 { font-size: 16px; font-weight: 600; margin-bottom: 12px; color: var(--dark-2); }
+    .game-item h3 { font-size: 16px; font-weight: 600; margin-bottom: 12px; color: var(--text); }
 
     /* ── Code ── */
     .code-block { margin-bottom: 20px; }
@@ -281,12 +281,12 @@ export function wrapTemplate(
     .tl-dot { position: absolute; left: -7px; top: 4px; width: 12px; height: 12px; border-radius: 50%; background: var(--accent); border: 2px solid var(--card); flex-shrink: 0; }
     .tl-content { flex: 1; }
     .tl-date { font-size: 12px; font-weight: 600; color: var(--accent); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 4px; }
-    .tl-title { font-size: 16px; font-weight: 600; color: var(--dark-2); margin-bottom: 4px; }
+    .tl-title { font-size: 16px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
     .tl-desc { font-size: 14px; color: var(--muted); line-height: 1.6; }
 
     /* ── Progress bars (Content block) ── */
     .cb-progress { margin-bottom: 4px; }
-    .progress-label { display: flex; justify-content: space-between; font-size: 14px; font-weight: 600; color: var(--dark-2); margin-bottom: 6px; }
+    .progress-label { display: flex; justify-content: space-between; font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 6px; }
     .progress-bar-bg   { background: var(--border); border-radius: 999px; height: 10px; overflow: hidden; }
     .progress-bar-fill { height: 100%; border-radius: 999px; background: var(--accent); }
 
