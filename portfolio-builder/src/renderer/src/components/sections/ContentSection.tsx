@@ -139,7 +139,7 @@ function VideoBlockEditor({ block, onChange, portfolioDir }: { block: ContentVid
     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
       {block.embedUrl ? (
         <div style={{ position: 'relative', aspectRatio: '16/9', borderRadius: 8, overflow: 'hidden', background: '#000' }}>
-          <iframe src={block.embedUrl} style={{ width: '100%', height: '100%', border: 'none' }} allowFullScreen title="Video" />
+          <iframe src={block.embedUrl} style={{ width: '100%', height: '100%', border: 'none' }} allowFullScreen title="Video" loading="lazy" />
           <button onClick={() => onChange({ embedUrl: undefined })} style={{ position: 'absolute', top: 6, right: 6, background: 'rgba(0,0,0,0.6)', color: 'white', border: 'none', borderRadius: '50%', width: 24, height: 24, cursor: 'pointer', fontSize: 13 }}>×</button>
         </div>
       ) : block.filename ? (
