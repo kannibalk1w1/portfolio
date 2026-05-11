@@ -260,10 +260,10 @@ export function RichTextEditor({
   // ---------------------------------------------------------------------------
 
   return (
-    <div style={{ border: '1px solid #e0e0e0', borderRadius: 8, overflow: 'hidden' }}>
+    <div style={{ border: '1px solid #e0e0e0', borderRadius: 8, position: 'relative' }}>
 
       {/* ── Main toolbar ── */}
-      <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 3, padding: '6px 10px', background: '#f8f8f8', borderBottom: '1px solid #e0e0e0' }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 3, padding: '6px 10px', background: '#f8f8f8', borderBottom: '1px solid #e0e0e0', borderRadius: '7px 7px 0 0' }}>
 
         {/* Inline formatting */}
         <Btn title="Bold (Ctrl+B)" active={editor.isActive('bold')} onClick={() => editor.chain().focus().toggleBold().run()}>
