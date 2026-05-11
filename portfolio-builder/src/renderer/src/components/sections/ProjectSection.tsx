@@ -49,6 +49,7 @@ export function ProjectSection({ section }: { section: ProjectSectionType }) {
               src={toFileUrl(`${state.portfolioDir}/assets/${section.coverImageFilename}`)}
               style={{ width: '100%', maxHeight: 240, objectFit: 'cover', borderRadius: 8, display: 'block' }}
               alt="Cover"
+              loading="lazy"
             />
             <button
               onClick={() => updateSection({ coverImageFilename: undefined })}
@@ -88,6 +89,7 @@ export function ProjectSection({ section }: { section: ProjectSectionType }) {
                   src={toFileUrl(`${state.portfolioDir}/assets/${item.filename}`)}
                   style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
                   alt={item.caption ?? item.filename}
+                  loading="lazy"
                 />
                 <button
                   onClick={() => removeImage(item.id)}

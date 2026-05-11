@@ -55,6 +55,7 @@ function SortableItem({
           style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', pointerEvents: 'none' }}
           alt={item.caption ?? item.filename}
           draggable={false}
+          loading="lazy"
         />
         <button
           onPointerDown={e => e.stopPropagation()}  // don't let remove button start a drag
