@@ -27,9 +27,10 @@ export function ThemeCustomiser({ value, onChange }: Props) {
   const c = value
 
   const row: React.CSSProperties = {
-    display: 'flex', alignItems: 'center', gap: 12,
+    display: 'flex', alignItems: 'flex-start', gap: 12,
   }
-  const lbl: React.CSSProperties = { fontSize: 12, color: '#555', width: 110, flexShrink: 0 }
+  const lbl: React.CSSProperties = { fontSize: 12, color: '#555' }
+  const sub: React.CSSProperties = { fontSize: 10, color: '#94a3b8', marginTop: 1, lineHeight: 1.3 }
 
   return (
     <div>
@@ -38,7 +39,10 @@ export function ThemeCustomiser({ value, onChange }: Props) {
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
         {/* Accent colour */}
         <div style={row}>
-          <span style={lbl}>Accent colour</span>
+          <div style={{ width: 110, flexShrink: 0 }}>
+            <div style={lbl}>Accent colour</div>
+            <div style={sub}>Buttons, links &amp; highlights</div>
+          </div>
           <input
             type="color"
             value={c.accentColour ?? '#6366f1'}
@@ -55,7 +59,10 @@ export function ThemeCustomiser({ value, onChange }: Props) {
 
         {/* Background colour */}
         <div style={row}>
-          <span style={lbl}>Background</span>
+          <div style={{ width: 110, flexShrink: 0 }}>
+            <div style={lbl}>Background</div>
+            <div style={sub}>Page colour behind cards</div>
+          </div>
           <input
             type="color"
             value={c.bgColour ?? '#f1f5f9'}
@@ -72,7 +79,10 @@ export function ThemeCustomiser({ value, onChange }: Props) {
 
         {/* Font */}
         <div style={row}>
-          <span style={lbl}>Font</span>
+          <div style={{ width: 110, flexShrink: 0 }}>
+            <div style={lbl}>Font</div>
+            <div style={sub}>Text style throughout portfolio</div>
+          </div>
           <select
             value={c.fontFamily ?? ''}
             onChange={e => onChange({ ...c, fontFamily: e.target.value || undefined })}
