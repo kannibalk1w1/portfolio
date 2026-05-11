@@ -175,17 +175,22 @@ function DropdownPortal({
   align?: 'left' | 'right'
   children: React.ReactNode
 }) {
-  const [pos, setPos] = useState({ top: 0, left: 0, right: 0 })
+  const [pos, setPos] = useState<{ top: number; left: number; right: number } | null>(null)
 
   useEffect(() => {
     if (open && triggerRef.current) {
       const r = triggerRef.current.getBoundingClientRect()
-      setPos({ top: r.bottom + 2, left: r.left, right: window.innerWidth - r.right })
+      const p = { top: r.bottom + 2, left: r.left, right: window.innerWidth - r.right }
+      console.log('[DropdownPortal] open, pos=', p, 'ref=', triggerRef.current)
+      setPos(p)
+    } else {
+      setPos(null)
     }
   }, [open])
 
-  if (!open) return null
+  if (!open || !pos) return null
 
+  console.log('[DropdownPortal] rendering at', pos)
   return createPortal(
     <div
       style={{ position: 'fixed', top: pos.top, zIndex: 9999, ...(align === 'left' ? { left: pos.left } : { right: pos.right }) }}
@@ -292,7 +297,9 @@ export function RichTextEditor({
   }
 
   function handleInsertTable() {
-    editor?.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()
+    console.log('[handleInsertTable] called, editor=', !!editor, 'focused=', editor?.isFocused)
+    const ok = editor?.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()
+    console.log('[handleInsertTable] result=', ok)
     setShowTableMenu(false)
   }
 
