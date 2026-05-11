@@ -48,6 +48,7 @@ function SortableVideoItem({
             src={item.embedUrl}
             style={{ width: '100%', height: '100%', border: 'none', display: 'block' }}
             allowFullScreen
+            loading="lazy"
             title={item.caption ?? 'Video'}
           />
         ) : (
@@ -55,6 +56,7 @@ function SortableVideoItem({
             src={toFileUrl(`${portfolioDir}/assets/${item.filename}`)}
             style={{ width: '100%', height: '100%', objectFit: 'cover' }}
             controls
+            preload="none"
           />
         )}
         <button

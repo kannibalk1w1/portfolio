@@ -144,7 +144,7 @@ function VideoBlockEditor({ block, onChange, portfolioDir }: { block: ContentVid
         </div>
       ) : block.filename ? (
         <div style={{ position: 'relative', aspectRatio: '16/9', borderRadius: 8, overflow: 'hidden', background: '#000' }}>
-          <video src={toFileUrl(`${portfolioDir}/assets/${block.filename}`)} style={{ width: '100%', height: '100%', objectFit: 'cover' }} controls />
+          <video src={toFileUrl(`${portfolioDir}/assets/${block.filename}`)} style={{ width: '100%', height: '100%', objectFit: 'cover' }} controls preload="none" />
           <button onClick={() => onChange({ filename: undefined })} style={{ position: 'absolute', top: 6, right: 6, background: 'rgba(0,0,0,0.6)', color: 'white', border: 'none', borderRadius: '50%', width: 24, height: 24, cursor: 'pointer', fontSize: 13 }}>×</button>
         </div>
       ) : (
