@@ -2,7 +2,7 @@ import { cp, mkdir, readFile, writeFile } from 'fs/promises'
 import { existsSync } from 'fs'
 import { basename, dirname, extname, join } from 'path'
 import type { Portfolio, Section } from '../../renderer/src/types/portfolio'
-import { wrapTemplate } from './template'
+import { wrapTemplate, wrapSubPage, buildPageCards } from './template'
 import { renderAbout } from './sections/about'
 import { renderGallery } from './sections/gallery'
 import { renderVideos } from './sections/videos'
@@ -89,14 +89,22 @@ export async function buildSite(portfolioDir: string, portfolio: Portfolio): Pro
     console.warn('Warning: vendor scripts directory not found — model-viewer and highlight.js will not be available in the exported site')
   }
 
-  // Render sections
-  const body = portfolio.sections
-    .filter(s => s.visible)
-    .map(renderSectionWithClass)
-    .join('\n')
+  // Separate landing sections from promoted sub-pages
+  const landingSections = portfolio.sections.filter(s => s.visible && !s.isSubPage)
+  const subPageSections = portfolio.sections.filter(s => s.visible && s.isSubPage)
 
-  const html = wrapTemplate(portfolio, body)
-  await writeFile(join(outputDir, 'index.html'), html, 'utf-8')
+  // Landing page
+  const landingBody = landingSections.map(renderSectionWithClass).join('\n')
+  const pageCardsBlock = subPageSections.length > 0 ? buildPageCards(subPageSections) : ''
+  const landingHtml = wrapTemplate(portfolio, landingBody + pageCardsBlock)
+  await writeFile(join(outputDir, 'index.html'), landingHtml, 'utf-8')
+
+  // Sub-pages
+  for (const section of subPageSections) {
+    const sectionHtml = renderSectionWithClass(section)
+    const html = wrapSubPage(portfolio, sectionHtml, section)
+    await writeFile(join(outputDir, `${section.id}.html`), html, 'utf-8')
+  }
 }
 
 const LAUNCHER_PS1 = `\
@@ -236,10 +244,23 @@ export async function buildOfflineSite(
     }
   }
 
-  const body = portfolio.sections.filter(s => s.visible).map(renderSectionWithClass).join('\n')
-  let html = wrapTemplate(portfolio, body, { inlineModelViewer: modelViewerContent })
-  html = await embedModelsAsDataUri(html, destAssets)
-  await writeFile(join(destDir, 'index.html'), html, 'utf-8')
+  const landingSections = portfolio.sections.filter(s => s.visible && !s.isSubPage)
+  const subPageSections = portfolio.sections.filter(s => s.visible && s.isSubPage)
+
+  // Landing page
+  const landingBody = landingSections.map(renderSectionWithClass).join('\n')
+  const pageCardsBlock = subPageSections.length > 0 ? buildPageCards(subPageSections) : ''
+  let landingHtml = wrapTemplate(portfolio, landingBody + pageCardsBlock, { inlineModelViewer: modelViewerContent })
+  landingHtml = await embedModelsAsDataUri(landingHtml, destAssets)
+  await writeFile(join(destDir, 'index.html'), landingHtml, 'utf-8')
+
+  // Sub-pages
+  for (const section of subPageSections) {
+    const sectionHtml = renderSectionWithClass(section)
+    let html = wrapSubPage(portfolio, sectionHtml, section, { inlineModelViewer: modelViewerContent })
+    html = await embedModelsAsDataUri(html, destAssets)
+    await writeFile(join(destDir, `${section.id}.html`), html, 'utf-8')
+  }
   await writeFile(join(destDir, 'launch.ps1'), LAUNCHER_PS1, 'utf-8')
   await writeFile(join(destDir, 'Launch Portfolio.bat'), LAUNCHER_BAT, 'utf-8')
 }
