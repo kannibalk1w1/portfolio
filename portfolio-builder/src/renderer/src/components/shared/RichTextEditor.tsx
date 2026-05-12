@@ -137,7 +137,8 @@ const SEP = () => <div style={{ width: 1, height: 20, background: '#e0e0e0', mar
 
 /**
  * Toolbar button. onMouseDown + preventDefault keeps editor focus/selection
- * intact before the formatting command runs.
+ * intact before the formatting command runs. stopPropagation prevents the
+ * document-level mousedown handler from closing dropdowns that this click opens.
  */
 function Btn({
   title, active, onClick, children, style: extraStyle,
@@ -145,7 +146,7 @@ function Btn({
   return (
     <button
       title={title}
-      onMouseDown={e => { e.preventDefault(); onClick() }}
+      onMouseDown={e => { e.preventDefault(); e.stopPropagation(); onClick() }}
       style={{
         display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
         minWidth: 28, height: 28, padding: '0 5px',
@@ -341,7 +342,7 @@ export function RichTextEditor({
           <Btn
             title="Text colour"
             active={showColours}
-            onClick={() => setShowColours(v => !v)}
+            onClick={() => { setShowHighlights(false); setShowTableMenu(false); setShowDividerMenu(false); setShowCalloutMenu(false); setShowColours(v => !v) }}
           >
             <span style={{ fontWeight: 700, color: currentColour === '#000000' ? '#333' : currentColour }}>A</span>
             <span style={{ display: 'block', width: 14, height: 3, background: currentColour, borderRadius: 1, position: 'absolute', bottom: 4, left: '50%', transform: 'translateX(-50%)' }} />
@@ -406,7 +407,7 @@ export function RichTextEditor({
           <Btn
             title="Highlight colour"
             active={editor.isActive('highlight') || showHighlights}
-            onClick={() => setShowHighlights(v => !v)}
+            onClick={() => { setShowColours(false); setShowTableMenu(false); setShowDividerMenu(false); setShowCalloutMenu(false); setShowHighlights(v => !v) }}
           >
             <span style={{
               background: editor.getAttributes('highlight').color ?? '#fef08a',
@@ -482,7 +483,7 @@ export function RichTextEditor({
 
         {/* Styled divider dropdown */}
         <div ref={dividerBtnRef}>
-          <Btn title="Insert divider" active={showDividerMenu} onClick={() => setShowDividerMenu(v => !v)}>─▾</Btn>
+          <Btn title="Insert divider" active={showDividerMenu} onClick={() => { setShowColours(false); setShowHighlights(false); setShowTableMenu(false); setShowCalloutMenu(false); setShowDividerMenu(v => !v) }}>─▾</Btn>
           <DropdownPortal triggerRef={dividerBtnRef} open={showDividerMenu} align="left">
             <div style={{ background: 'white', border: '1px solid #e0e0e0', borderRadius: 6, padding: 4, minWidth: 150, boxShadow: '0 4px 12px rgba(0,0,0,0.1)', display: 'flex', flexDirection: 'column', gap: 1 }}>
               {([
@@ -505,7 +506,7 @@ export function RichTextEditor({
 
         {/* Callout / info box */}
         <div ref={calloutBtnRef}>
-          <Btn title="Insert callout box" active={editor.isActive('callout') || showCalloutMenu} onClick={() => setShowCalloutMenu(v => !v)}>💬▾</Btn>
+          <Btn title="Insert callout box" active={editor.isActive('callout') || showCalloutMenu} onClick={() => { setShowColours(false); setShowHighlights(false); setShowTableMenu(false); setShowDividerMenu(false); setShowCalloutMenu(v => !v) }}>💬▾</Btn>
           <DropdownPortal triggerRef={calloutBtnRef} open={showCalloutMenu} align="right">
             <div style={{ background: 'white', border: '1px solid #e0e0e0', borderRadius: 6, padding: 4, minWidth: 150, boxShadow: '0 4px 12px rgba(0,0,0,0.1)', display: 'flex', flexDirection: 'column', gap: 1 }}>
               {([
@@ -531,7 +532,7 @@ export function RichTextEditor({
 
         {/* Table */}
         <div ref={tableBtnRef}>
-          <Btn title={inTable ? 'Table options' : 'Insert table'} active={inTable || showTableMenu} onClick={() => setShowTableMenu(v => !v)}>
+          <Btn title={inTable ? 'Table options' : 'Insert table'} active={inTable || showTableMenu} onClick={() => { setShowColours(false); setShowHighlights(false); setShowDividerMenu(false); setShowCalloutMenu(false); setShowTableMenu(v => !v) }}>
             ⊞
           </Btn>
           <DropdownPortal triggerRef={tableBtnRef} open={showTableMenu} align="left">
