@@ -346,6 +346,10 @@ export function wrapTemplate(
     /* ── Footer ── */
     footer { text-align: center; padding: 28px 24px; color: var(--muted); font-size: 13px; background: var(--card); border-top: 1px solid var(--border); }
 
+    /* ── Hamburger nav ── */
+    .nav-hamburger { display: none; flex-direction: column; gap: 4px; background: none; border: none; cursor: pointer; padding: 6px; flex-shrink: 0; }
+    .nav-hamburger span { display: block; width: 20px; height: 2px; background: rgba(255,255,255,0.8); border-radius: 1px; }
+
     /* ── Responsive ── */
     @media (max-width: 640px) {
       .hero { padding: 48px 20px 44px; }
@@ -357,6 +361,11 @@ export function wrapTemplate(
       .about-block { flex-direction: column; }
       .cb-two-col { grid-template-columns: 1fr; }
       .stats-grid { grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); }
+      .nav-hamburger { display: flex; }
+      nav { position: relative; }
+      .nav-links { display: none; flex-direction: column; position: absolute; top: 56px; left: 0; right: 0; background: var(--nav-bg); padding: 8px 0; z-index: 99; border-top: 1px solid rgba(255,255,255,0.08); }
+      .nav-links.nav-open { display: flex; }
+      .nav-links a { padding: 10px 24px; font-size: 14px; }
     }
   </style>
 </head>
@@ -364,9 +373,12 @@ export function wrapTemplate(
 
   <nav>
     <span class="nav-brand">${escHtml(portfolio.name)}</span>
-    <div class="nav-links">
+    <div class="nav-links" id="rte-nav">
       ${buildNavLinks(portfolio.sections)}
     </div>
+    <button class="nav-hamburger" aria-label="Open menu" onclick="document.getElementById('rte-nav').classList.toggle('nav-open')">
+      <span></span><span></span><span></span>
+    </button>
   </nav>
 
   <header class="hero">${heroAvatar}
@@ -382,6 +394,7 @@ export function wrapTemplate(
 
   <footer>Made with <strong>Launchpad</strong></footer>
 
+  <script>document.addEventListener('click',function(e){if(!e.target.closest('nav')){var n=document.getElementById('rte-nav');if(n)n.classList.remove('nav-open')}})</script>
 </body>
 </html>`
 }
