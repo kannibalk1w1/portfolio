@@ -27,6 +27,11 @@ export function AboutSection({ section }: { section: AboutSectionType }) {
     if (filenames[0]) updateSection({ avatarFilename: filenames[0] })
   }
 
+  async function handleHeroImport(paths: string[]) {
+    const filenames = await window.api.importMedia(state.portfolioDir!, paths)
+    if (filenames[0]) updateSection({ heroImageFilename: filenames[0] })
+  }
+
   return (
     <div style={{ maxWidth: 640 }}>
       <SectionTitle title={section.title} onChange={title => updateSection({ title })} />
@@ -74,6 +79,42 @@ export function AboutSection({ section }: { section: AboutSectionType }) {
           value={state.portfolio!.customisation ?? {}}
           onChange={customisation => updatePortfolio({ ...state.portfolio!, customisation })}
         />
+      </div>
+
+      <div style={{ marginBottom: 16 }}>
+        <span style={{ fontSize: 13, color: '#666', display: 'block', marginBottom: 4 }}>Hero banner image</span>
+        <span style={{ fontSize: 11, color: '#94a3b8', display: 'block', marginBottom: 8 }}>Full-width image shown behind the header on your portfolio</span>
+        {section.heroImageFilename && (
+          <div style={{ position: 'relative', marginBottom: 8 }}>
+            <img
+              src={toFileUrl(`${state.portfolioDir}/assets/${section.heroImageFilename}`)}
+              style={{ width: '100%', maxHeight: 120, objectFit: 'cover', borderRadius: 8, display: 'block' }}
+              alt="Hero banner"
+              loading="lazy"
+            />
+            <button
+              onClick={() => updateSection({ heroImageFilename: undefined, showAvatarInHero: undefined })}
+              style={{ position: 'absolute', top: 8, right: 8, background: 'rgba(0,0,0,0.5)', color: 'white', border: 'none', borderRadius: '50%', width: 26, height: 26, cursor: 'pointer', fontSize: 14 }}
+              aria-label="Remove hero image"
+            >×</button>
+          </div>
+        )}
+        <MediaDropzone
+          label="Click to add a hero banner image"
+          filters={[{ name: 'Images', extensions: ['jpg', 'jpeg', 'png', 'webp', 'gif'] }]}
+          multiple={false}
+          onFiles={handleHeroImport}
+        />
+        {section.heroImageFilename && (
+          <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8, fontSize: 13, cursor: 'pointer' }}>
+            <input
+              type="checkbox"
+              checked={section.showAvatarInHero !== false}
+              onChange={e => updateSection({ showAvatarInHero: e.target.checked })}
+            />
+            Show avatar in hero
+          </label>
+        )}
       </div>
 
       <div style={{ marginBottom: 16 }}>
