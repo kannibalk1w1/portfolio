@@ -26,7 +26,9 @@ export function renderSkills(section: SkillsSection): string {
   const badges = section.items
     .map(item => {
       const { bg, text } = badgeColour(item.label)
-      return `<span class="skill-badge" style="background:${bg};color:${text};">${escHtml(item.label)}</span>`
+      const bgFinal = item.colour ?? bg
+      const textFinal = item.colour ? '#ffffff' : text
+      return `<span class="skill-badge" style="background:${bgFinal};color:${textFinal};">${escHtml(item.label)}</span>`
     })
     .join('')
 

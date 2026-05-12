@@ -61,6 +61,10 @@ export function SkillsSection({ section }: { section: SkillsSectionType }) {
     updateSection({ items: section.items.filter(i => i.id !== id) })
   }
 
+  function updateSkillColour(id: string, colour: string) {
+    updateSection({ items: section.items.map(i => i.id === id ? { ...i, colour } : i) })
+  }
+
   return (
     <div style={{ maxWidth: 680 }}>
       <SectionTitle title={section.title} onChange={title => updateSection({ title })} />
@@ -84,12 +88,19 @@ export function SkillsSection({ section }: { section: SkillsSectionType }) {
             return (
               <div
                 key={item.id}
-                style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '5px 12px', background: bg, color: text, borderRadius: 999, fontSize: 13, fontWeight: 600 }}
+                style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '5px 12px', background: item.colour ?? bg, color: item.colour ? '#ffffff' : text, borderRadius: 999, fontSize: 13, fontWeight: 600 }}
               >
+                <input
+                  type="color"
+                  value={item.colour ?? bg}
+                  onChange={e => updateSkillColour(item.id, e.target.value)}
+                  title="Pick badge colour"
+                  style={{ width: 14, height: 14, border: 'none', padding: 0, cursor: 'pointer', borderRadius: '50%', background: 'none', flexShrink: 0, opacity: 0.7 }}
+                />
                 {item.label}
                 <button
                   onClick={() => removeSkill(item.id)}
-                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: text, opacity: 0.6, fontSize: 14, lineHeight: 1, padding: 0 }}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: item.colour ? '#ffffff' : text, opacity: 0.6, fontSize: 14, lineHeight: 1, padding: 0 }}
                   aria-label={`Remove ${item.label}`}
                   onMouseEnter={e => (e.currentTarget.style.opacity = '1')}
                   onMouseLeave={e => (e.currentTarget.style.opacity = '0.6')}
