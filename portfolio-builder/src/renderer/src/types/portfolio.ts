@@ -39,12 +39,17 @@ export interface BaseSection {
   type: SectionType
   title: string
   visible: boolean
+  showInNav?: boolean       // undefined/true = shown in nav (default), false = hidden
+  isSubPage?: boolean       // true = generates its own HTML page
+  removeGapAbove?: boolean  // true = removes the margin-top gap above this section card
 }
 
 export interface AboutSection extends BaseSection {
   type: 'about'
   bio: string
   avatarFilename?: string
+  heroImageFilename?: string  // full-width banner behind the hero gradient
+  showAvatarInHero?: boolean  // default true when heroImageFilename is set
 }
 
 export interface GallerySection extends BaseSection {
@@ -98,6 +103,7 @@ export interface LinksSection extends BaseSection {
 export interface SkillItem {
   id: string
   label: string
+  colour?: string  // hex — overrides the deterministic badge colour
 }
 
 export interface SkillsSection extends BaseSection {
