@@ -118,12 +118,17 @@ export function wrapTemplate(
   <script>document.addEventListener('DOMContentLoaded', () => hljs.highlightAll())</script>`
     : ''
 
-  // Avatar lives in the hero — renderAbout only outputs the bio text so the
-  // image doesn't appear twice on the page.
+  // Avatar and optional hero banner live in the hero block.
   const aboutSection = portfolio.sections.find(s => s.type === 'about' && s.visible)
   const avatarFilename = aboutSection?.type === 'about' ? aboutSection.avatarFilename : undefined
-  const heroAvatar = avatarFilename
-    ? `\n    <img src="assets/${escSrc(avatarFilename)}" class="hero-avatar" alt="${escHtml(portfolio.name)}">`
+  const heroImageFilename = aboutSection?.type === 'about' ? aboutSection.heroImageFilename : undefined
+  const showAvatarInHero = aboutSection?.type === 'about' ? aboutSection.showAvatarInHero !== false : false
+  const heroAvatar = (showAvatarInHero && avatarFilename)
+    ? `<img src="assets/${escSrc(avatarFilename)}" class="hero-avatar" alt="${escHtml(portfolio.name)}">`
+    : ''
+  const heroBg = heroImageFilename
+    ? `<img src="assets/${escSrc(heroImageFilename)}" class="hero-bg" alt="" aria-hidden="true">
+    <div class="hero-overlay"></div>`
     : ''
 
   const lightbox = needsLightbox(portfolio.sections) ? `
@@ -180,7 +185,10 @@ export function wrapTemplate(
     nav a:hover { color: #fff; background: rgba(255,255,255,0.1); }
 
     /* ── Hero ── */
-    .hero { background: linear-gradient(135deg, var(--hero-from) 0%, var(--hero-to) 100%); padding: 64px 32px 60px; text-align: center; color: var(--hero-color); }
+    .hero { background: linear-gradient(135deg, var(--hero-from) 0%, var(--hero-to) 100%); padding: 64px 32px 60px; text-align: center; color: var(--hero-color); position: relative; overflow: hidden; }
+    .hero-bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center; opacity: 0.55; }
+    .hero-overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.82) 35%, rgba(0,0,0,0.18) 100%); }
+    .hero-content { position: relative; display: flex; flex-direction: column; align-items: center; padding: 0; }
     .hero-avatar { width: 120px; height: 120px; border-radius: 50%; object-fit: cover; border: 3px solid var(--hero-avatar-border); margin: 0 auto 20px; }
     .hero h1 { font-size: 42px; font-weight: 800; letter-spacing: -1px; line-height: 1.1; }
     .hero-tagline { margin-top: 10px; font-size: 16px; opacity: 0.72; font-weight: 400; }
@@ -381,9 +389,13 @@ export function wrapTemplate(
     </button>
   </nav>
 
-  <header class="hero">${heroAvatar}
+  <header class="hero">
+    ${heroBg}
+    ${heroImageFilename ? '<div class="hero-content">' : ''}
+    ${heroAvatar}
     <h1>${escHtml(portfolio.name)}</h1>
     ${portfolio.tagline ? `<p class="hero-tagline">${escHtml(portfolio.tagline)}</p>` : ''}
+    ${heroImageFilename ? '</div>' : ''}
   </header>
 
   <div class="sections-wrapper">
