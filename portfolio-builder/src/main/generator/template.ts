@@ -249,7 +249,7 @@ export function wrapTemplate(
     .sections-wrapper { max-width: 1040px; margin: 0 auto; padding: 40px 24px 56px; display: flex; flex-direction: column; }
     .section + .section { margin-top: 20px; }
     .section.no-gap { margin-top: 0 !important; }
-    .section { background: var(--card); border-radius: var(--radius); padding: 32px 36px; box-shadow: var(--shadow); }
+    .section { background: var(--card); border-radius: var(--radius); padding: 32px 36px; box-shadow: var(--shadow); transform: translateZ(0); }
     .section-title { font-size: 19px; font-weight: 700; margin-bottom: 24px; padding-left: 14px; border-left: 4px solid var(--accent); color: var(--text); }
 
     /* ── About ── */
@@ -549,7 +549,7 @@ export function wrapSubPage(
     .subpage-back:hover { color: #fff; }
     .subpage-title { color: rgba(255,255,255,0.4); font-size: 13px; }
     .sections-wrapper { max-width: 1040px; margin: 0 auto; padding: 40px 24px 56px; }
-    .section { background: var(--card); border-radius: var(--radius); padding: 32px 36px; box-shadow: var(--shadow); }
+    .section { background: var(--card); border-radius: var(--radius); padding: 32px 36px; box-shadow: var(--shadow); transform: translateZ(0); }
     .section-title { font-size: 19px; font-weight: 700; margin-bottom: 24px; padding-left: 14px; border-left: 4px solid var(--accent); color: var(--text); }
     .section-description { font-size: 15px; margin-bottom: 20px; line-height: 1.75; }
     .section-description > * + * { margin-top: .65em; }
