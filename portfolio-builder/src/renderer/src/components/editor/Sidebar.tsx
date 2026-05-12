@@ -93,6 +93,33 @@ export function Sidebar({ activeSectionId, onSelectSection, notify }: Props) {
     })
   }
 
+  function handleToggleNav(id: string) {
+    updatePortfolio({
+      ...portfolio,
+      sections: portfolio.sections.map(s =>
+        s.id === id ? { ...s, showInNav: s.showInNav === false ? undefined : false } : s
+      ),
+    })
+  }
+
+  function handleToggleSubPage(id: string) {
+    updatePortfolio({
+      ...portfolio,
+      sections: portfolio.sections.map(s =>
+        s.id === id ? { ...s, isSubPage: !s.isSubPage } : s
+      ),
+    })
+  }
+
+  function handleToggleGap(id: string) {
+    updatePortfolio({
+      ...portfolio,
+      sections: portfolio.sections.map(s =>
+        s.id === id ? { ...s, removeGapAbove: !s.removeGapAbove } : s
+      ),
+    })
+  }
+
   function handleDelete(id: string) {
     const remaining = portfolio.sections.filter(s => s.id !== id)
     updatePortfolio({ ...portfolio, sections: remaining })
@@ -122,6 +149,9 @@ export function Sidebar({ activeSectionId, onSelectSection, notify }: Props) {
                 active={section.id === activeSectionId}
                 onClick={() => onSelectSection(section.id)}
                 onToggleVisible={() => handleToggleVisible(section.id)}
+                onToggleNav={() => handleToggleNav(section.id)}
+                onToggleSubPage={() => handleToggleSubPage(section.id)}
+                onToggleGap={() => handleToggleGap(section.id)}
                 onDelete={() => handleDelete(section.id)}
               />
             ))}
