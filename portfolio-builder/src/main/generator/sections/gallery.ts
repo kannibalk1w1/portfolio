@@ -1,5 +1,5 @@
 import type { GallerySection } from '../../../renderer/src/types/portfolio'
-import { escHtml } from '../utils'
+import { escHtml, escSrc } from '../utils'
 import { renderDescription } from '../sanitize'
 
 export function renderGallery(section: GallerySection): string {
@@ -7,9 +7,9 @@ export function renderGallery(section: GallerySection): string {
     .map(item => `
     <div class="gallery-item">
       <img
-        src="assets/${escHtml(item.filename)}"
+        src="assets/${escSrc(item.filename)}"
         class="lb-trigger"
-        data-src="assets/${escHtml(item.filename)}"
+        data-src="assets/${escSrc(item.filename)}"
         alt="${escHtml(item.alt ?? item.caption ?? item.filename)}"
         loading="lazy">
       ${item.caption ? `<p class="gallery-caption">${escHtml(item.caption)}</p>` : ''}

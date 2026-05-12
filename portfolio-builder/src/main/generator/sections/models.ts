@@ -1,12 +1,12 @@
 import type { ModelsSection } from '../../../renderer/src/types/portfolio'
-import { escHtml } from '../utils'
+import { escHtml, escSrc } from '../utils'
 import { renderDescription } from '../sanitize'
 
 export function renderModels(section: ModelsSection): string {
   const items = section.items
     .map(item => `
     <div class="model-item">
-      <model-viewer src="assets/${escHtml(item.filename)}"
+      <model-viewer src="assets/${escSrc(item.filename)}"
         alt="${escHtml(item.label ?? item.filename)}"
         auto-rotate camera-controls
         style="width:100%;height:300px;">

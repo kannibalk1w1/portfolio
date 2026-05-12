@@ -14,7 +14,7 @@
  */
 
 import type { Portfolio, Section, ThemeName, PortfolioCustomisation } from '../../renderer/src/types/portfolio'
-import { escHtml } from './utils'
+import { escHtml, escSrc } from './utils'
 
 function buildCustomisationCss(c: PortfolioCustomisation | undefined): string {
   if (!c) return ''
@@ -123,7 +123,7 @@ export function wrapTemplate(
   const aboutSection = portfolio.sections.find(s => s.type === 'about' && s.visible)
   const avatarFilename = aboutSection?.type === 'about' ? aboutSection.avatarFilename : undefined
   const heroAvatar = avatarFilename
-    ? `\n    <img src="assets/${escHtml(avatarFilename)}" class="hero-avatar" alt="${escHtml(portfolio.name)}">`
+    ? `\n    <img src="assets/${escSrc(avatarFilename)}" class="hero-avatar" alt="${escHtml(portfolio.name)}">`
     : ''
 
   const lightbox = needsLightbox(portfolio.sections) ? `

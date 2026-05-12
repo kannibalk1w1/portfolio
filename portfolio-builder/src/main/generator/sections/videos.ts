@@ -1,5 +1,5 @@
 import type { VideosSection } from '../../../renderer/src/types/portfolio'
-import { escHtml } from '../utils'
+import { escHtml, escSrc } from '../utils'
 import { renderDescription } from '../sanitize'
 
 export function renderVideos(section: VideosSection): string {
@@ -27,7 +27,7 @@ export function renderVideos(section: VideosSection): string {
       return `
     <div class="video-item">
       ${caption}
-      <video src="assets/${escHtml(item.filename)}" controls preload="metadata"${item.thumbnailFilename ? ` poster="assets/${escHtml(item.thumbnailFilename)}"` : ''}></video>
+      <video src="assets/${escSrc(item.filename)}" controls preload="metadata"${item.thumbnailFilename ? ` poster="assets/${escSrc(item.thumbnailFilename)}"` : ''}></video>
     </div>`
     })
     .join('')

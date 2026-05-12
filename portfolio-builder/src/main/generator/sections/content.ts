@@ -1,5 +1,5 @@
 import type { ContentSection, ContentBlock } from '../../../renderer/src/types/portfolio'
-import { escHtml } from '../utils'
+import { escHtml, escSrc } from '../utils'
 import { sanitizeContent } from '../sanitize'
 
 function renderBlock(block: ContentBlock): string {
@@ -12,7 +12,7 @@ function renderBlock(block: ContentBlock): string {
       if (!block.filename) return ''
       const fit = block.objectFit ?? 'cover'
       return `<div class="cb cb-image">
-        <img src="assets/${escHtml(block.filename)}" alt="${escHtml(block.alt ?? block.caption ?? block.filename)}" loading="lazy" style="width:100%;border-radius:8px;object-fit:${fit};">
+        <img src="assets/${escSrc(block.filename)}" alt="${escHtml(block.alt ?? block.caption ?? block.filename)}" loading="lazy" style="width:100%;border-radius:8px;object-fit:${fit};">
         ${block.caption ? `<p class="cb-caption">${escHtml(block.caption)}</p>` : ''}
       </div>`
     }
@@ -28,7 +28,7 @@ function renderBlock(block: ContentBlock): string {
       if (block.filename) {
         return `<div class="cb cb-video">
           ${block.caption ? `<p class="video-caption">${escHtml(block.caption)}</p>` : ''}
-          <video src="assets/${escHtml(block.filename)}" controls preload="metadata"
+          <video src="assets/${escSrc(block.filename)}" controls preload="metadata"
             style="width:100%;border-radius:8px;display:block;"></video>
         </div>`
       }
