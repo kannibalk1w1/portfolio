@@ -225,7 +225,7 @@ export function wrapTemplate(
     /* ── Reset ── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     html { scroll-behavior: smooth; }
-    body { font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; }
+    body { font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; overscroll-behavior: none; }
     img { max-width: 100%; display: block; }
 
     /* ── Navigation ── */
@@ -541,7 +541,7 @@ export function wrapSubPage(
     ${buildCustomisationCss(portfolio.customisation)}
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     html { scroll-behavior: smooth; }
-    body { font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; }
+    body { font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; overscroll-behavior: none; }
     img { max-width: 100%; display: block; }
     .subpage-header { position: sticky; top: 0; z-index: 100; background: var(--nav-bg); height: 56px; padding: 0 32px; display: flex; align-items: center; justify-content: space-between; }
     .subpage-back { color: rgba(255,255,255,0.75); text-decoration: none; font-size: 13px; font-weight: 500; transition: color .15s; }
