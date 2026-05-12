@@ -260,7 +260,7 @@ export function wrapTemplate(
     /* ── Gallery ── */
     .gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 10px; }
     .gallery-item { display: flex; flex-direction: column; gap: 5px; }
-    .gallery-item img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 8px; cursor: zoom-in; transition: transform .2s, box-shadow .2s; }
+    .gallery-item img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 8px; cursor: zoom-in; transition: transform .2s, box-shadow .2s; will-change: transform; }
     .gallery-item img:hover { transform: scale(1.04); box-shadow: 0 8px 24px rgba(0,0,0,0.15); }
     .gallery-caption { font-size: 12px; color: var(--muted); text-align: center; }
 
@@ -568,7 +568,7 @@ export function wrapSubPage(
     .section-description th { background: var(--bg); font-weight: 600; }
     .gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 10px; }
     .gallery-item { display: flex; flex-direction: column; gap: 5px; }
-    .gallery-item img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 8px; cursor: zoom-in; transition: transform .2s, box-shadow .2s; }
+    .gallery-item img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 8px; cursor: zoom-in; transition: transform .2s, box-shadow .2s; will-change: transform; }
     .gallery-item img:hover { transform: scale(1.04); box-shadow: 0 8px 24px rgba(0,0,0,0.15); }
     .gallery-caption { font-size: 12px; color: var(--muted); text-align: center; }
     .video-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
