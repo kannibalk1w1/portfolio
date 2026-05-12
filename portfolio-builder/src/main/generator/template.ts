@@ -133,10 +133,12 @@ export function wrapTemplate(
   let modelViewerScript = ''
   if (needsModelViewer(portfolio.sections)) {
     if (opts?.inlineModelViewer) {
+      // Inline model-viewer after page load so gallery compositing settles first
       const safe = opts.inlineModelViewer.replace(/<\/script>/gi, '<\\/script>')
-      modelViewerScript = `<script type="module">${safe}</script>`
+      modelViewerScript = `<script>window.addEventListener('load',function(){var s=document.createElement('script');s.type='module';s.textContent=${JSON.stringify(safe)};document.head.appendChild(s)})</script>`
     } else {
-      modelViewerScript = `<script type="module" src="assets/vendor/model-viewer.min.js"></script>`
+      // Defer model-viewer load until after window load so gallery GPU layers are stable
+      modelViewerScript = `<script>window.addEventListener('load',function(){var s=document.createElement('script');s.type='module';s.src='assets/vendor/model-viewer.min.js';document.head.appendChild(s)})</script>`
     }
   }
 
