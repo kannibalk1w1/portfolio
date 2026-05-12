@@ -271,6 +271,7 @@ export function wrapTemplate(
 
     /* ── 3D Models ── */
     .models-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
+    model-viewer { display: block; contain: paint; touch-action: none; }
     .model-label { text-align: center; font-size: 13px; color: var(--muted); margin-top: 8px; }
 
     /* ── Games ── */
@@ -575,6 +576,7 @@ export function wrapSubPage(
     .video-item video { width: 100%; border-radius: 8px; }
     .video-caption { font-size: 14px; font-weight: 600; margin-bottom: 8px; color: var(--text); }
     .models-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
+    model-viewer { display: block; contain: paint; touch-action: none; }
     .model-label { text-align: center; font-size: 13px; color: var(--muted); margin-top: 8px; }
     .game-item { margin-bottom: 32px; } .game-item:last-child { margin-bottom: 0; }
     .game-item h3 { font-size: 16px; font-weight: 600; margin-bottom: 12px; color: var(--text); }
