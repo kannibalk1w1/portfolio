@@ -41,6 +41,14 @@ function renderSection(section: Section): string {
   }
 }
 
+function renderSectionWithClass(section: Section): string {
+  const html = renderSection(section)
+  if (section.removeGapAbove) {
+    return html.replace(/class="section"/, 'class="section no-gap"')
+  }
+  return html
+}
+
 // Vendor scripts ship with the Electron app in the renderer assets.
 // At build time, electron-vite copies src/renderer/assets/ into the output bundle.
 // We resolve relative to this file's location at runtime.
@@ -84,7 +92,7 @@ export async function buildSite(portfolioDir: string, portfolio: Portfolio): Pro
   // Render sections
   const body = portfolio.sections
     .filter(s => s.visible)
-    .map(renderSection)
+    .map(renderSectionWithClass)
     .join('\n')
 
   const html = wrapTemplate(portfolio, body)
@@ -228,7 +236,7 @@ export async function buildOfflineSite(
     }
   }
 
-  const body = portfolio.sections.filter(s => s.visible).map(renderSection).join('\n')
+  const body = portfolio.sections.filter(s => s.visible).map(renderSectionWithClass).join('\n')
   let html = wrapTemplate(portfolio, body, { inlineModelViewer: modelViewerContent })
   html = await embedModelsAsDataUri(html, destAssets)
   await writeFile(join(destDir, 'index.html'), html, 'utf-8')

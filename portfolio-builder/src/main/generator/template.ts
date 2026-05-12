@@ -76,7 +76,7 @@ function themeVars(theme: ThemeName = 'launchpad'): string {
 
 function buildNavLinks(sections: Section[]): string {
   return sections
-    .filter(s => s.visible)
+    .filter(s => s.visible && s.showInNav !== false)
     .map(s => `<a href="#${escHtml(s.id)}">${escHtml(s.title)}</a>`)
     .join('\n      ')
 }
@@ -194,7 +194,9 @@ export function wrapTemplate(
     .hero-tagline { margin-top: 10px; font-size: 16px; opacity: 0.72; font-weight: 400; }
 
     /* ── Layout ── */
-    .sections-wrapper { max-width: 1040px; margin: 0 auto; padding: 40px 24px 56px; display: flex; flex-direction: column; gap: 20px; }
+    .sections-wrapper { max-width: 1040px; margin: 0 auto; padding: 40px 24px 56px; display: flex; flex-direction: column; }
+    .section + .section { margin-top: 20px; }
+    .section.no-gap { margin-top: 0 !important; }
     .section { background: var(--card); border-radius: var(--radius); padding: 32px 36px; box-shadow: var(--shadow); }
     .section-title { font-size: 19px; font-weight: 700; margin-bottom: 24px; padding-left: 14px; border-left: 4px solid var(--accent); color: var(--text); }
 
