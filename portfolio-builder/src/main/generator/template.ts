@@ -474,6 +474,7 @@ export function wrapTemplate(
   <footer>Made with <strong>Launchpad</strong></footer>
 
   <script>document.addEventListener('click',function(e){if(!e.target.closest('nav')){var n=document.getElementById('rte-nav');if(n)n.classList.remove('nav-open')}})</script>
+  ${needsModelViewer(portfolio.sections) ? `<script>document.querySelectorAll('model-viewer').forEach(function(mv){mv.addEventListener('pointerdown',function(){if(window.scrollY===0)window.scrollTo(0,1)},{passive:true})})</script>` : ''}
 </body>
 </html>`
 }
