@@ -6,3 +6,8 @@ export function escHtml(s: string): string {
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;')
 }
+
+/** Encode a filename for use in a URL src/href attribute. */
+export function escSrc(filename: string): string {
+  return encodeURIComponent(filename)
+}

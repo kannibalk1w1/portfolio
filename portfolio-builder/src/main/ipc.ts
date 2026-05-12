@@ -1,4 +1,4 @@
-import { app, dialog, ipcMain, shell } from 'electron'
+import { app, dialog, ipcMain, shell, BrowserWindow } from 'electron'
 import { extname, join, join as pathJoin } from 'path'
 import { mkdir, readFile, writeFile } from 'fs/promises'
 import { createReadStream, existsSync } from 'fs'
@@ -14,7 +14,9 @@ import {
 } from './portfolio/store'
 import { createSnapshot, listSnapshots, restoreSnapshot } from './portfolio/snapshot'
 import { importMediaFiles, importGodotFolder } from './media/importer'
-import { buildSite } from './generator/index'
+import { buildSite, buildOfflineSite } from './generator/index'
+import archiver from 'archiver'
+import { createWriteStream } from 'fs'
 import { uploadFtp } from './publish/ftp'
 import { resolveSafePath } from './preview/safePath'
 import {
@@ -127,9 +129,70 @@ export function registerIpcHandlers(): void {
       setTimeout(() => server.close(), 60 * 60 * 1000)
     })
   })
+  ipcMain.handle('site:preview-mobile', async (_event, dir: string, p: Portfolio) => {
+    await buildSite(dir, p)
+    const outputDir = pathJoin(dir, 'output')
+
+    const server = createServer((req, res) => {
+      const safePath = (req.url ?? '/').split('?')[0]
+      const filePath = pathJoin(outputDir, safePath === '/' ? 'index.html' : safePath)
+      if (!existsSync(filePath)) { res.writeHead(404); res.end('Not found'); return }
+      const mime = MIME[extname(filePath).toLowerCase()] ?? 'application/octet-stream'
+      res.writeHead(200, { 'Content-Type': mime })
+      createReadStream(filePath).pipe(res)
+    })
+
+    server.listen(0, '127.0.0.1', () => {
+      const port = (server.address() as AddressInfo).port
+      const win = new BrowserWindow({
+        width: 390, height: 844,
+        resizable: true,
+        title: 'Mobile Preview — 390px',
+        autoHideMenuBar: true,
+      })
+      win.loadURL(`http://127.0.0.1:${port}`)
+      win.on('closed', () => server.close())
+    })
+  })
+
   ipcMain.handle('site:export', async (_event, dir: string, p: Portfolio) => {
     await buildSite(dir, p)
     await shell.openPath(join(dir, 'output'))
+  })
+
+  ipcMain.handle('site:zip', async (_event, dir: string, p: Portfolio) => {
+    await buildSite(dir, p)
+    const outputDir = join(dir, 'output')
+
+    const result = await dialog.showSaveDialog({
+      title: 'Save portfolio as ZIP',
+      defaultPath: `${p.name} Portfolio.zip`,
+      filters: [{ name: 'ZIP Archive', extensions: ['zip'] }],
+    })
+    if (!result.filePath) return
+
+    await new Promise<void>((resolve, reject) => {
+      const output  = createWriteStream(result.filePath!)
+      const archive = archiver('zip', { zlib: { level: 6 } })
+      output.on('close', resolve)
+      archive.on('error', reject)
+      archive.pipe(output)
+      archive.directory(outputDir, false)
+      archive.finalize()
+    })
+
+    shell.showItemInFolder(result.filePath)
+  })
+
+  ipcMain.handle('site:offline', async (_event, dir: string, p: Portfolio) => {
+    const result = await dialog.showOpenDialog({
+      title: 'Choose folder for offline export',
+      properties: ['openDirectory', 'createDirectory'],
+    })
+    if (result.canceled || !result.filePaths[0]) return
+    const dest = result.filePaths[0]
+    await buildOfflineSite(dir, p, dest)
+    await shell.openPath(dest)
   })
 
   ipcMain.handle('publish:ftp', async (_event, dir: string, config: FtpConfig) => {

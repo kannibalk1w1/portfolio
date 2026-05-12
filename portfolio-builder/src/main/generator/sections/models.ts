@@ -1,11 +1,12 @@
 import type { ModelsSection } from '../../../renderer/src/types/portfolio'
-import { escHtml } from '../utils'
+import { escHtml, escSrc } from '../utils'
+import { renderDescription } from '../sanitize'
 
 export function renderModels(section: ModelsSection): string {
   const items = section.items
     .map(item => `
     <div class="model-item">
-      <model-viewer src="assets/${escHtml(item.filename)}"
+      <model-viewer src="assets/${escSrc(item.filename)}"
         alt="${escHtml(item.label ?? item.filename)}"
         auto-rotate camera-controls
         style="width:100%;height:300px;">
@@ -16,6 +17,7 @@ export function renderModels(section: ModelsSection): string {
   return `
 <section id="${escHtml(section.id)}" class="section">
   <h2 class="section-title">${escHtml(section.title)}</h2>
+  ${renderDescription(section.description)}
   <div class="models-grid">${items || '<p class="empty">No models yet.</p>'}</div>
 </section>`
 }

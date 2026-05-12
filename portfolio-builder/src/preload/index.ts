@@ -37,8 +37,14 @@ contextBridge.exposeInMainWorld('api', {
     ipcRenderer.invoke('site:build', portfolioDir, portfolio),
   previewSite: (portfolioDir: string, portfolio: Portfolio): Promise<void> =>
     ipcRenderer.invoke('site:preview', portfolioDir, portfolio),
+  previewMobile: (portfolioDir: string, portfolio: Portfolio): Promise<void> =>
+    ipcRenderer.invoke('site:preview-mobile', portfolioDir, portfolio),
   exportSite: (portfolioDir: string, portfolio: Portfolio): Promise<void> =>
     ipcRenderer.invoke('site:export', portfolioDir, portfolio),
+  zipExport: (portfolioDir: string, portfolio: Portfolio): Promise<void> =>
+    ipcRenderer.invoke('site:zip', portfolioDir, portfolio),
+  offlineExport: (portfolioDir: string, portfolio: Portfolio): Promise<void> =>
+    ipcRenderer.invoke('site:offline', portfolioDir, portfolio),
 
   // Publish
   publishFtp: (portfolioDir: string, config: FtpConfig): Promise<void> =>

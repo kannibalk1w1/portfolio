@@ -1,9 +1,13 @@
 import { useState, useRef } from 'react'
 import { usePortfolio } from '../../store/PortfolioContext'
 import type { GamesSection as GamesSectionType, GameItem, Section } from '../../types/portfolio'
+import { RichTextEditor } from '../shared/RichTextEditor'
+import { SectionTitle } from '../shared/SectionTitle'
+import { useImageInserter } from '../../hooks/useImageInserter'
 
 export function GamesSection({ section }: { section: GamesSectionType }) {
   const { state, updatePortfolio } = usePortfolio()
+  const onInsertImage = useImageInserter()
   const [pendingTitle, setPendingTitle] = useState('')
   const [importing, setImporting] = useState(false)
   const pendingFolderRef = useRef<string | null>(null)
@@ -57,7 +61,20 @@ export function GamesSection({ section }: { section: GamesSectionType }) {
 
   return (
     <div>
-      <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 24 }}>{section.title}</h2>
+      <SectionTitle title={section.title} onChange={title => updateSection({ title })} />
+
+      <div style={{ marginBottom: 20 }}>
+        <span style={{ fontSize: 13, color: '#666', display: 'block', marginBottom: 8 }}>Description</span>
+        <RichTextEditor
+          key={section.id}
+          content={section.description ?? ''}
+          onChange={description => updateSection({ description })}
+          minHeight={80}
+          placeholder="Add a description for this section…"
+          onInsertImage={onInsertImage}
+        />
+      </div>
+
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 16 }}>
         {section.items.map(item => (
           <div key={item.id} style={{ padding: '12px 16px', background: '#f8f8f8', borderRadius: 8 }}>

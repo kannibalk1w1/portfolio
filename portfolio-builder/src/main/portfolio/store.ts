@@ -2,6 +2,22 @@ import { mkdir, readdir, readFile, rm, stat, writeFile } from 'fs/promises'
 import { join } from 'path'
 import type { CypMeta, Portfolio } from '../../renderer/src/types/portfolio'
 
+/** Extracts the first usable image filename from a portfolio for use as a thumbnail. */
+function extractThumbnail(p: Portfolio): string | undefined {
+  for (const s of p.sections) {
+    if (!s.visible) continue
+    if (s.type === 'about'   && (s as any).avatarFilename)           return (s as any).avatarFilename
+    if (s.type === 'gallery' && (s as any).items?.[0]?.filename)    return (s as any).items[0].filename
+    if (s.type === 'project' && (s as any).coverImageFilename)       return (s as any).coverImageFilename
+    if (s.type === 'project' && (s as any).items?.[0]?.filename)    return (s as any).items[0].filename
+    if (s.type === 'content') {
+      const imgBlock = (s as any).blocks?.find((b: any) => b.type === 'image' && b.filename)
+      if (imgBlock) return imgBlock.filename
+    }
+  }
+  return undefined
+}
+
 export async function listCyps(root: string): Promise<CypMeta[]> {
   let entries: string[]
   try {
@@ -16,7 +32,12 @@ export async function listCyps(root: string): Promise<CypMeta[]> {
       const raw = await readFile(jsonPath, 'utf-8')
       const p: Portfolio = JSON.parse(raw)
       const s = await stat(jsonPath)
-      results.push({ slug: entry, name: p.name, lastModified: s.mtime.toISOString() })
+      results.push({
+        slug: entry,
+        name: p.name,
+        lastModified: s.mtime.toISOString(),
+        thumbnailFilename: extractThumbnail(p),
+      })
     } catch {
       // not a valid portfolio folder — skip
     }
