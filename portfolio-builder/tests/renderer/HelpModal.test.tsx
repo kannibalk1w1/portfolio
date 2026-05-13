@@ -50,8 +50,8 @@ describe('HelpModal', () => {
 
   it('calls onClose when backdrop is clicked', () => {
     const onClose = vi.fn()
-    const { container } = render(<HelpModal onClose={onClose} />)
-    fireEvent.click(container.firstChild!)
+    render(<HelpModal onClose={onClose} />)
+    fireEvent.click(screen.getByTestId('help-modal-backdrop'))
     expect(onClose).toHaveBeenCalledOnce()
   })
 

@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 
 export interface SectionHelpEntry {
   type: string
@@ -144,6 +144,17 @@ interface Props {
 }
 
 export function HelpModal({ onClose }: Props) {
+  const panelRef = useRef<HTMLDivElement>(null)
+  const previousFocusRef = useRef<HTMLElement | null>(null)
+
+  useEffect(() => {
+    previousFocusRef.current = document.activeElement as HTMLElement
+    panelRef.current?.focus()
+    return () => {
+      previousFocusRef.current?.focus()
+    }
+  }, [])
+
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
       if (e.key === 'Escape') onClose()
@@ -154,6 +165,7 @@ export function HelpModal({ onClose }: Props) {
 
   return (
     <div
+      data-testid="help-modal-backdrop"
       onClick={onClose}
       style={{
         position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)',
@@ -161,18 +173,23 @@ export function HelpModal({ onClose }: Props) {
       }}
     >
       <div
+        ref={panelRef}
+        tabIndex={-1}
+        role="dialog"
+        aria-modal={true}
+        aria-labelledby="help-modal-title"
         onClick={e => e.stopPropagation()}
         style={{
           background: '#fff', borderRadius: 12, width: '100%', maxWidth: 640,
           maxHeight: '80vh', display: 'flex', flexDirection: 'column',
-          boxShadow: '0 8px 32px rgba(0,0,0,0.2)', margin: '0 16px',
+          boxShadow: '0 8px 32px rgba(0,0,0,0.2)', margin: '0 16px', outline: 'none',
         }}
       >
         <div style={{
           display: 'flex', justifyContent: 'space-between', alignItems: 'center',
           padding: '16px 20px', borderBottom: '1px solid #e0e0e0', flexShrink: 0,
         }}>
-          <span style={{ fontWeight: 700, fontSize: 15 }}>Section Guide</span>
+          <span id="help-modal-title" style={{ fontWeight: 700, fontSize: 15 }}>Section Guide</span>
           <button
             onClick={onClose}
             aria-label="Close"
