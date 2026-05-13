@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import React, { useEffect, useRef } from 'react'
 
 export interface SectionHelpEntry {
   type: string
@@ -155,13 +155,33 @@ export function HelpModal({ onClose }: Props) {
     }
   }, [])
 
+  const onCloseRef = useRef(onClose)
+  useEffect(() => { onCloseRef.current = onClose })
+
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
-      if (e.key === 'Escape') onClose()
+      if (e.key === 'Escape') onCloseRef.current()
     }
     document.addEventListener('keydown', handleKeyDown)
     return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [onClose])
+  }, [])
+
+  function handlePanelKeyDown(e: React.KeyboardEvent<HTMLDivElement>) {
+    if (e.key !== 'Tab') return
+    const closeBtn = panelRef.current?.querySelector<HTMLElement>('button[aria-label="Close"]')
+    if (!closeBtn) return
+    if (e.shiftKey) {
+      if (document.activeElement === panelRef.current) {
+        e.preventDefault()
+        closeBtn.focus()
+      }
+    } else {
+      if (document.activeElement === closeBtn) {
+        e.preventDefault()
+        panelRef.current?.focus()
+      }
+    }
+  }
 
   return (
     <div
@@ -169,7 +189,7 @@ export function HelpModal({ onClose }: Props) {
       onClick={onClose}
       style={{
         position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)',
-        zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center',
+        zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center',
       }}
     >
       <div
@@ -179,6 +199,7 @@ export function HelpModal({ onClose }: Props) {
         aria-modal={true}
         aria-labelledby="help-modal-title"
         onClick={e => e.stopPropagation()}
+        onKeyDown={handlePanelKeyDown}
         style={{
           background: '#fff', borderRadius: 12, width: '100%', maxWidth: 640,
           maxHeight: '80vh', display: 'flex', flexDirection: 'column',
