@@ -81,7 +81,7 @@ export function parseUECopyText(text: string): ParsedBlueprint | null {
     const id = guidMatch[1]
 
     const pins: ParsedPin[] = []
-    const pinLines = body.match(/CustomProperties Pin \([^)]+\)/g) ?? []
+    const pinLines = body.match(/CustomProperties Pin \((?:[^()]*|\([^)]*\))*\)/g) ?? []
     for (const line of pinLines) {
       const pin = parsePin(line)
       if (pin) pins.push(pin)
