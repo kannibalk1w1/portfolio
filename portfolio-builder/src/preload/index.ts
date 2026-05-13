@@ -1,5 +1,6 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import type { Portfolio, CypMeta, SnapshotMeta, FtpConfig } from '../renderer/src/types/portfolio'
+import type { OutputSummary } from '../renderer/src/types/output'
 
 contextBridge.exposeInMainWorld('api', {
   // Portfolio
@@ -35,17 +36,17 @@ contextBridge.exposeInMainWorld('api', {
     ipcRenderer.invoke('dialog:openFolder'),
 
   // Site generation
-  buildSite: (portfolioDir: string, portfolio: Portfolio): Promise<void> =>
+  buildSite: (portfolioDir: string, portfolio: Portfolio): Promise<OutputSummary> =>
     ipcRenderer.invoke('site:build', portfolioDir, portfolio),
-  previewSite: (portfolioDir: string, portfolio: Portfolio): Promise<void> =>
+  previewSite: (portfolioDir: string, portfolio: Portfolio): Promise<OutputSummary> =>
     ipcRenderer.invoke('site:preview', portfolioDir, portfolio),
-  previewMobile: (portfolioDir: string, portfolio: Portfolio): Promise<void> =>
+  previewMobile: (portfolioDir: string, portfolio: Portfolio): Promise<OutputSummary> =>
     ipcRenderer.invoke('site:preview-mobile', portfolioDir, portfolio),
-  exportSite: (portfolioDir: string, portfolio: Portfolio): Promise<void> =>
+  exportSite: (portfolioDir: string, portfolio: Portfolio): Promise<OutputSummary> =>
     ipcRenderer.invoke('site:export', portfolioDir, portfolio),
-  zipExport: (portfolioDir: string, portfolio: Portfolio): Promise<void> =>
+  zipExport: (portfolioDir: string, portfolio: Portfolio): Promise<OutputSummary | undefined> =>
     ipcRenderer.invoke('site:zip', portfolioDir, portfolio),
-  offlineExport: (portfolioDir: string, portfolio: Portfolio): Promise<void> =>
+  offlineExport: (portfolioDir: string, portfolio: Portfolio): Promise<OutputSummary | undefined> =>
     ipcRenderer.invoke('site:offline', portfolioDir, portfolio),
 
   // Publish

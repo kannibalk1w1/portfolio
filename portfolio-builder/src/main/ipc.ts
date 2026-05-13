@@ -134,7 +134,7 @@ export function registerIpcHandlers(): void {
 
   ipcMain.handle('site:build', (_event, dir: string, p: Portfolio) => buildSite(dir, p))
   ipcMain.handle('site:preview', async (_event, dir: string, p: Portfolio) => {
-    await buildSite(dir, p)
+    const summary = await buildSite(dir, p)
     const outputDir = pathJoin(dir, 'output')
 
     const server = createServer((req, res) => {
@@ -156,9 +156,10 @@ export function registerIpcHandlers(): void {
       // Auto-close server after 60 minutes
       setTimeout(() => server.close(), 60 * 60 * 1000)
     })
+    return summary
   })
   ipcMain.handle('site:preview-mobile', async (_event, dir: string, p: Portfolio) => {
-    await buildSite(dir, p)
+    const summary = await buildSite(dir, p)
     const outputDir = pathJoin(dir, 'output')
 
     const server = createServer((req, res) => {
@@ -181,15 +182,17 @@ export function registerIpcHandlers(): void {
       win.loadURL(`http://127.0.0.1:${port}`)
       win.on('closed', () => server.close())
     })
+    return summary
   })
 
   ipcMain.handle('site:export', async (_event, dir: string, p: Portfolio) => {
-    await buildSite(dir, p)
+    const summary = await buildSite(dir, p)
     await shell.openPath(join(dir, 'output'))
+    return summary
   })
 
   ipcMain.handle('site:zip', async (_event, dir: string, p: Portfolio) => {
-    await buildSite(dir, p)
+    const summary = await buildSite(dir, p)
     const outputDir = join(dir, 'output')
 
     const result = await dialog.showSaveDialog({
@@ -210,6 +213,7 @@ export function registerIpcHandlers(): void {
     })
 
     shell.showItemInFolder(result.filePath)
+    return summary
   })
 
   ipcMain.handle('site:offline', async (_event, dir: string, p: Portfolio) => {
@@ -219,8 +223,9 @@ export function registerIpcHandlers(): void {
     })
     if (result.canceled || !result.filePaths[0]) return
     const dest = result.filePaths[0]
-    await buildOfflineSite(dir, p, dest)
+    const summary = await buildOfflineSite(dir, p, dest)
     await shell.openPath(dest)
+    return summary
   })
 
   ipcMain.handle('publish:ftp', async (_event, dir: string, config: FtpConfig) => {

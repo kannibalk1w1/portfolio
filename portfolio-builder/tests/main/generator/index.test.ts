@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
-import { mkdirSync, rmSync, readFileSync } from 'fs'
+import { mkdirSync, rmSync, readFileSync, writeFileSync } from 'fs'
 import { join } from 'path'
 import { buildSite } from '../../../src/main/generator/index'
 import type { Portfolio } from '../../../src/renderer/src/types/portfolio'
@@ -25,10 +25,40 @@ afterEach(() => rmSync(TMP, { recursive: true, force: true }))
 
 describe('buildSite', () => {
   it('generates index.html containing the CYP name', async () => {
-    await buildSite(TMP, basicPortfolio)
+    const summary = await buildSite(TMP, basicPortfolio)
     const html = readFileSync(join(TMP, 'output', 'index.html'), 'utf-8')
     expect(html).toContain('Alice')
     expect(html).toContain('Hello world')
+    expect(summary).toMatchObject({
+      htmlFiles: 1,
+      visibleSections: 2,
+      hiddenSections: 0,
+      assetFiles: 0,
+    })
+  })
+
+  it('summarises generated pages and copied assets', async () => {
+    mkdirSync(join(TMP, 'assets', 'nested'), { recursive: true })
+    writeFileSync(join(TMP, 'assets', 'one.jpg'), 'fake')
+    writeFileSync(join(TMP, 'assets', 'nested', 'two.png'), 'fake')
+    const portfolio: Portfolio = {
+      ...basicPortfolio,
+      sections: [
+        { id: 'about', type: 'about', title: 'About Me', visible: true, bio: 'Visible' },
+        { id: 'gallery-1', type: 'gallery', title: 'Gallery', visible: true, isSubPage: true, items: [] },
+        { id: 'gallery-2', type: 'gallery', title: 'Hidden', visible: false, items: [] },
+      ],
+    }
+
+    const summary = await buildSite(TMP, portfolio)
+
+    expect(summary).toEqual({
+      htmlFiles: 2,
+      visibleSections: 2,
+      hiddenSections: 1,
+      assetFiles: 2,
+      outputDir: join(TMP, 'output'),
+    })
   })
 
   it('excludes hidden sections from output', async () => {

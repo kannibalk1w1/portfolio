@@ -1,4 +1,5 @@
 import type { Portfolio, CypMeta, SnapshotMeta, FtpConfig } from './portfolio'
+import type { OutputSummary } from './output'
 
 // Local mirror of Electron's OpenDialogOptions — the renderer tsconfig does not
 // include Electron types, so we cannot import from 'electron' directly here.
@@ -37,12 +38,12 @@ declare global {
       listAssets(portfolioDir: string): Promise<string[]>
       openFilePicker(opts: OpenDialogOptions): Promise<string[]>
       openFolderPicker(): Promise<string | null>
-      buildSite(portfolioDir: string, portfolio: Portfolio): Promise<void>
-      previewSite(portfolioDir: string, portfolio: Portfolio): Promise<void>
-      previewMobile(portfolioDir: string, portfolio: Portfolio): Promise<void>
-      exportSite(portfolioDir: string, portfolio: Portfolio): Promise<void>
-      zipExport(portfolioDir: string, portfolio: Portfolio): Promise<void>
-      offlineExport(portfolioDir: string, portfolio: Portfolio): Promise<void>
+      buildSite(portfolioDir: string, portfolio: Portfolio): Promise<OutputSummary>
+      previewSite(portfolioDir: string, portfolio: Portfolio): Promise<OutputSummary>
+      previewMobile(portfolioDir: string, portfolio: Portfolio): Promise<OutputSummary>
+      exportSite(portfolioDir: string, portfolio: Portfolio): Promise<OutputSummary>
+      zipExport(portfolioDir: string, portfolio: Portfolio): Promise<OutputSummary | undefined>
+      offlineExport(portfolioDir: string, portfolio: Portfolio): Promise<OutputSummary | undefined>
       publishFtp(portfolioDir: string, config: FtpConfig): Promise<void>
       setFtpPassword(slug: string, password: string): Promise<void>
       hasFtpPassword(slug: string): Promise<boolean>

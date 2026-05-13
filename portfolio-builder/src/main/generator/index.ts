@@ -1,7 +1,8 @@
-import { cp, mkdir, readFile, writeFile } from 'fs/promises'
+import { cp, mkdir, readFile, readdir, writeFile } from 'fs/promises'
 import { existsSync } from 'fs'
 import { basename, dirname, extname, join } from 'path'
 import type { Portfolio, Section } from '../../renderer/src/types/portfolio'
+import type { OutputSummary } from '../../renderer/src/types/output'
 import { wrapTemplate, wrapSubPage, buildPageCards } from './template'
 import { renderAbout } from './sections/about'
 import { renderGallery } from './sections/gallery'
@@ -71,7 +72,44 @@ function getVendorSourceDir(): string | null {
   return null
 }
 
-export async function buildSite(portfolioDir: string, portfolio: Portfolio): Promise<void> {
+async function countFiles(dir: string): Promise<number> {
+  let count = 0
+  async function walk(current: string): Promise<void> {
+    let entries
+    try {
+      entries = await readdir(current, { withFileTypes: true })
+    } catch {
+      return
+    }
+    for (const entry of entries) {
+      const full = join(current, entry.name)
+      if (entry.isDirectory()) {
+        await walk(full)
+      } else if (entry.isFile()) {
+        count += 1
+      }
+    }
+  }
+  await walk(dir)
+  return count
+}
+
+async function createOutputSummary(
+  portfolio: Portfolio,
+  outputDir: string,
+  htmlFiles: number,
+  assetsDir: string,
+): Promise<OutputSummary> {
+  return {
+    htmlFiles,
+    visibleSections: portfolio.sections.filter(s => s.visible).length,
+    hiddenSections: portfolio.sections.filter(s => !s.visible).length,
+    assetFiles: await countFiles(assetsDir),
+    outputDir,
+  }
+}
+
+export async function buildSite(portfolioDir: string, portfolio: Portfolio): Promise<OutputSummary> {
   const outputDir = join(portfolioDir, 'output')
   const outputAssets = join(outputDir, 'assets')
   await mkdir(outputAssets, { recursive: true })
@@ -107,6 +145,8 @@ export async function buildSite(portfolioDir: string, portfolio: Portfolio): Pro
     const html = wrapSubPage(portfolio, sectionHtml, section)
     await writeFile(join(outputDir, `${section.id}.html`), html, 'utf-8')
   }
+
+  return createOutputSummary(portfolio, outputDir, subPageSections.length + 1, join(portfolioDir, 'assets'))
 }
 
 const LAUNCHER_PS1 = `\
@@ -226,7 +266,7 @@ export async function buildOfflineSite(
   portfolioDir: string,
   portfolio: Portfolio,
   destDir: string,
-): Promise<void> {
+): Promise<OutputSummary> {
   const destAssets = join(destDir, 'assets')
   await mkdir(destAssets, { recursive: true })
 
@@ -265,4 +305,5 @@ export async function buildOfflineSite(
   }
   await writeFile(join(destDir, 'launch.ps1'), LAUNCHER_PS1, 'utf-8')
   await writeFile(join(destDir, 'Launch Portfolio.bat'), LAUNCHER_BAT, 'utf-8')
+  return createOutputSummary(portfolio, destDir, subPageSections.length + 1, join(portfolioDir, 'assets'))
 }

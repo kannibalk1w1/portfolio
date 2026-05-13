@@ -112,7 +112,25 @@ describe('Sidebar action buttons', () => {
     })
     fireEvent.click(screen.getByRole('button', { name: /preview anyway/i }))
 
-    await waitFor(() => expect(mockNotify).toHaveBeenCalledWith('Build failed: missing template', 'error'))
+    await waitFor(() => expect(mockNotify).toHaveBeenCalledWith('Preview failed: Build failed: missing template', 'error'))
+  })
+
+  it('notifies a summary when preview succeeds', async () => {
+    mockApi.previewSite.mockResolvedValue({
+      htmlFiles: 2,
+      visibleSections: 4,
+      hiddenSections: 1,
+      assetFiles: 7,
+      outputDir: '/r/alice/output',
+    })
+    render(<Sidebar activeSectionId={null} onSelectSection={() => {}} notify={mockNotify} />)
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Preview' }))
+    })
+    fireEvent.click(screen.getByRole('button', { name: /preview anyway/i }))
+
+    await waitFor(() => expect(mockNotify).toHaveBeenCalledWith('Preview ready: 2 pages, 4 visible sections, 7 assets.', 'success'))
   })
 
   it('warns before previewing when blocking readiness issues exist', async () => {
@@ -191,7 +209,7 @@ describe('Sidebar action buttons', () => {
     })
     fireEvent.click(screen.getByRole('button', { name: /export anyway/i }))
 
-    await waitFor(() => expect(mockNotify).toHaveBeenCalledWith('Permission denied', 'error'))
+    await waitFor(() => expect(mockNotify).toHaveBeenCalledWith('Export failed: Permission denied', 'error'))
   })
 
   it('disables quick action buttons while one quick action is in progress', async () => {

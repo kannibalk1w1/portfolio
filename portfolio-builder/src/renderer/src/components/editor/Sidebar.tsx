@@ -8,6 +8,7 @@ import { FtpModal } from '../shared/FtpModal'
 import type { NotifyFn } from '../shared/Toaster'
 import { checkPortfolioReadiness } from '../../lib/readiness/checkPortfolioReadiness'
 import type { Portfolio, Section, SectionType, AboutSection, GallerySection, VideosSection, ModelsSection, GamesSection, CodeSection, CustomSection, ProjectSection, LinksSection, SkillsSection, TimelineSection, QuoteSection, EmbedSection, ContentSection, StatsSection, ButtonsSection, BlueprintsSection } from '../../types/portfolio'
+import type { OutputSummary } from '../../types/output'
 
 const SECTION_DEFAULTS: {
   about: Omit<AboutSection, 'id'>
@@ -70,7 +71,7 @@ export function Sidebar({ activeSectionId, onSelectSection, notify }: Props) {
   const [assetFilenames, setAssetFilenames] = useState<Set<string> | undefined>(undefined)
   const [pendingReadinessAction, setPendingReadinessAction] = useState<{
     label: string
-    fn: (portfolio: Portfolio) => Promise<void>
+    fn: (portfolio: Portfolio) => Promise<OutputSummary | undefined | void>
     saveBeforeRun?: boolean
   } | null>(null)
 
@@ -88,7 +89,7 @@ export function Sidebar({ activeSectionId, onSelectSection, notify }: Props) {
     return () => { cancelled = true }
   }, [state.portfolioDir, state.portfolio])
 
-  async function run(label: string, fn: (portfolio: Portfolio) => Promise<void>, opts: { confirmReadiness?: boolean; saveBeforeRun?: boolean } = {}) {
+  async function run(label: string, fn: (portfolio: Portfolio) => Promise<OutputSummary | undefined | void>, opts: { confirmReadiness?: boolean; saveBeforeRun?: boolean } = {}) {
     if (busy) return
     const latestPortfolio = state.portfolio!
     if (opts.confirmReadiness) {
@@ -103,9 +104,13 @@ export function Sidebar({ activeSectionId, onSelectSection, notify }: Props) {
       if (opts.saveBeforeRun) {
         await savePortfolio(latestPortfolio, { snapshot: false })
       }
-      await fn(latestPortfolio)
+      const summary = await fn(latestPortfolio)
+      if (summary) {
+        notify(`${label} ready: ${formatOutputSummary(summary)}.`, 'success')
+      }
     } catch (err) {
-      notify(err instanceof Error ? err.message : `${label} failed`, 'error')
+      const message = err instanceof Error ? err.message : 'Unknown error'
+      notify(`${label} failed: ${message}`, 'error')
     } finally {
       setBusy(null)
     }
@@ -323,4 +328,12 @@ export function Sidebar({ activeSectionId, onSelectSection, notify }: Props) {
 
 function formatBlockingIssues(count: number): string {
   return `${count} blocking readiness ${count === 1 ? 'issue' : 'issues'}`
+}
+
+function formatOutputSummary(summary: OutputSummary): string {
+  return [
+    `${summary.htmlFiles} ${summary.htmlFiles === 1 ? 'page' : 'pages'}`,
+    `${summary.visibleSections} visible ${summary.visibleSections === 1 ? 'section' : 'sections'}`,
+    `${summary.assetFiles} ${summary.assetFiles === 1 ? 'asset' : 'assets'}`,
+  ].join(', ')
 }
