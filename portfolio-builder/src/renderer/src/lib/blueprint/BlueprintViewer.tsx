@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import {
   ReactFlow, Background, Controls, MiniMap,
   useNodesState, useEdgesState,
@@ -103,11 +103,12 @@ interface Props {
 export function BlueprintViewer({ ueText, height = 320 }: Props) {
   const [selectedId, setSelectedId] = useState<string | null>(null)
 
-  const parsed = parseUECopyText(ueText)
+  const parsed = useMemo(() => parseUECopyText(ueText), [ueText])
 
-  const { nodes: initNodes, edges: initEdges } = parsed
-    ? blueprintToFlow(parsed, setSelectedId)
-    : { nodes: [], edges: [] }
+  const { nodes: initNodes, edges: initEdges } = useMemo(
+    () => parsed ? blueprintToFlow(parsed, setSelectedId) : { nodes: [], edges: [] },
+    [parsed]
+  )
 
   const [nodes, , onNodesChange] = useNodesState(initNodes)
   const [edges, , onEdgesChange] = useEdgesState(initEdges)
