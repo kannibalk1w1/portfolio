@@ -1,6 +1,6 @@
 import { app, dialog, ipcMain, shell, BrowserWindow } from 'electron'
 import { extname, join, join as pathJoin } from 'path'
-import { mkdir, readFile, writeFile } from 'fs/promises'
+import { mkdir, readFile, readdir, writeFile } from 'fs/promises'
 import { createReadStream, existsSync } from 'fs'
 import { createServer } from 'http'
 import type { AddressInfo } from 'net'
@@ -18,6 +18,7 @@ import { buildSite, buildOfflineSite } from './generator/index'
 import archiver from 'archiver'
 import { createWriteStream } from 'fs'
 import { uploadFtp } from './publish/ftp'
+import { resolveSafePath } from './preview/safePath'
 import {
   setFtpPassword,
   getFtpPassword,
@@ -39,6 +40,32 @@ async function getRoot(): Promise<string> {
   const def = join(app.getPath('documents'), 'CYP Portfolios')
   await mkdir(def, { recursive: true })
   return def
+}
+
+async function listAssetFiles(portfolioDir: string): Promise<string[]> {
+  const assetsDir = join(portfolioDir, 'assets')
+  const files: string[] = []
+
+  async function walk(dir: string, prefix = ''): Promise<void> {
+    let entries
+    try {
+      entries = await readdir(dir, { withFileTypes: true, encoding: 'utf8' })
+    } catch {
+      return
+    }
+    for (const entry of entries) {
+      const relative = prefix ? `${prefix}/${entry.name}` : entry.name
+      const full = join(dir, entry.name)
+      if (entry.isDirectory()) {
+        await walk(full, relative)
+      } else if (entry.isFile()) {
+        files.push(relative)
+      }
+    }
+  }
+
+  await walk(assetsDir)
+  return files
 }
 
 export function registerIpcHandlers(): void {
@@ -85,6 +112,8 @@ export function registerIpcHandlers(): void {
     importMediaFiles(portfolioDir, filePaths))
   ipcMain.handle('media:importGodot', (_event, portfolioDir: string, folderPath: string, title: string) =>
     importGodotFolder(portfolioDir, folderPath, title))
+  ipcMain.handle('media:listAssets', (_event, portfolioDir: string) =>
+    listAssetFiles(portfolioDir))
 
   ipcMain.handle('dialog:openFile', (_event, opts: Electron.OpenDialogOptions) =>
     dialog.showOpenDialog(opts).then(r => r.filePaths))
@@ -96,7 +125,9 @@ export function registerIpcHandlers(): void {
     '.mjs': 'application/javascript', '.json': 'application/json',
     '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.png': 'image/png',
     '.gif': 'image/gif', '.webp': 'image/webp', '.svg': 'image/svg+xml',
+    '.avif': 'image/avif', '.tif': 'image/tiff', '.tiff': 'image/tiff',
     '.mp4': 'video/mp4', '.webm': 'video/webm',
+    '.mov': 'video/quicktime', '.m4v': 'video/mp4',
     '.glb': 'model/gltf-binary', '.gltf': 'model/gltf+json',
     '.wasm': 'application/wasm',
   }
@@ -107,8 +138,10 @@ export function registerIpcHandlers(): void {
     const outputDir = pathJoin(dir, 'output')
 
     const server = createServer((req, res) => {
-      const safePath = (req.url ?? '/').split('?')[0]
-      const filePath = pathJoin(outputDir, safePath === '/' ? 'index.html' : safePath)
+      const filePath = resolveSafePath(outputDir, req.url)
+      if (filePath === null) {
+        res.writeHead(403); res.end('Forbidden'); return
+      }
       if (!existsSync(filePath)) {
         res.writeHead(404); res.end('Not found'); return
       }

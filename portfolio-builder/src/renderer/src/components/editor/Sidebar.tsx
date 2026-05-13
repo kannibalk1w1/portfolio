@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { DndContext, closestCenter, DragEndEvent } from '@dnd-kit/core'
 import { SortableContext, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable'
 import { usePortfolio } from '../../store/PortfolioContext'
@@ -6,7 +6,8 @@ import { SidebarItem } from './SidebarItem'
 import { SnapshotPanel } from '../shared/SnapshotPanel'
 import { FtpModal } from '../shared/FtpModal'
 import type { NotifyFn } from '../shared/Toaster'
-import type { Section, SectionType, AboutSection, GallerySection, VideosSection, ModelsSection, GamesSection, CodeSection, CustomSection, ProjectSection, LinksSection, SkillsSection, TimelineSection, QuoteSection, EmbedSection, ContentSection, StatsSection, ButtonsSection } from '../../types/portfolio'
+import { checkPortfolioReadiness } from '../../lib/readiness/checkPortfolioReadiness'
+import type { Portfolio, Section, SectionType, AboutSection, GallerySection, VideosSection, ModelsSection, GamesSection, CodeSection, CustomSection, ProjectSection, LinksSection, SkillsSection, TimelineSection, QuoteSection, EmbedSection, ContentSection, StatsSection, ButtonsSection, BlueprintsSection } from '../../types/portfolio'
 
 const SECTION_DEFAULTS: {
   about: Omit<AboutSection, 'id'>
@@ -25,6 +26,7 @@ const SECTION_DEFAULTS: {
   content: Omit<ContentSection, 'id'>
   stats: Omit<StatsSection, 'id'>
   buttons: Omit<ButtonsSection, 'id'>
+  blueprints: Omit<BlueprintsSection, 'id'>
 } = {
   about:    { type: 'about',    title: 'About Me',   visible: true, bio: '' },
   gallery:  { type: 'gallery',  title: 'Gallery',    visible: true, items: [] },
@@ -41,7 +43,8 @@ const SECTION_DEFAULTS: {
   embed:    { type: 'embed',    title: 'Embed',      visible: true, url: '', height: 400 },
   content:  { type: 'content',  title: 'Content',    visible: true, blocks: [] },
   stats:    { type: 'stats',    title: 'Stats',      visible: true, items: [] },
-  buttons:  { type: 'buttons',  title: 'Buttons',    visible: true, items: [] },
+  buttons:    { type: 'buttons',    title: 'Buttons',     visible: true, items: [] },
+  blueprints: { type: 'blueprints', title: 'Blueprints', visible: true, items: [] },
 }
 
 const SECTION_LABELS: Record<SectionType, string> = {
@@ -49,7 +52,7 @@ const SECTION_LABELS: Record<SectionType, string> = {
   models: '📦 3D Models', games: '🎮 Games', code: '💻 Code', custom: '📝 Text',
   project: '📋 Project', links: '🔗 Links', skills: '⭐ Skills', timeline: '📅 Timeline',
   quote: '❝ Quote', embed: '📡 Embed', content: '🧩 Content',
-  stats: '📊 Stats', buttons: '🔘 Buttons',
+  stats: '📊 Stats', buttons: '🔘 Buttons', blueprints: '⬡ Blueprints',
 }
 
 interface Props {
@@ -59,24 +62,60 @@ interface Props {
 }
 
 export function Sidebar({ activeSectionId, onSelectSection, notify }: Props) {
-  const { state, updatePortfolio } = usePortfolio()
+  const { state, updatePortfolio, savePortfolio } = usePortfolio()
   const [adding, setAdding] = useState(false)
   const [showSnapshots, setShowSnapshots] = useState(false)
   const [showFtp, setShowFtp] = useState(false)
   const [busy, setBusy] = useState<string | null>(null)  // tracks which button is in-flight
+  const [assetFilenames, setAssetFilenames] = useState<Set<string> | undefined>(undefined)
+  const [pendingReadinessAction, setPendingReadinessAction] = useState<{
+    label: string
+    fn: (portfolio: Portfolio) => Promise<void>
+    saveBeforeRun?: boolean
+  } | null>(null)
 
-  async function run(label: string, fn: () => Promise<void>) {
+  const portfolio = state.portfolio!
+
+  useEffect(() => {
+    let cancelled = false
+    if (!state.portfolioDir || !window.api.listAssets) {
+      setAssetFilenames(undefined)
+      return
+    }
+    window.api.listAssets(state.portfolioDir)
+      .then(files => { if (!cancelled) setAssetFilenames(new Set(files)) })
+      .catch(() => { if (!cancelled) setAssetFilenames(undefined) })
+    return () => { cancelled = true }
+  }, [state.portfolioDir, state.portfolio])
+
+  async function run(label: string, fn: (portfolio: Portfolio) => Promise<void>, opts: { confirmReadiness?: boolean; saveBeforeRun?: boolean } = {}) {
     if (busy) return
+    const latestPortfolio = state.portfolio!
+    if (opts.confirmReadiness) {
+      const readiness = checkPortfolioReadiness(latestPortfolio, { assetFilenames })
+      if (readiness.errorCount > 0) {
+        setPendingReadinessAction({ label, fn, saveBeforeRun: opts.saveBeforeRun })
+        return
+      }
+    }
     setBusy(label)
     try {
-      await fn()
+      if (opts.saveBeforeRun) {
+        await savePortfolio(latestPortfolio, { snapshot: false })
+      }
+      await fn(latestPortfolio)
     } catch (err) {
       notify(err instanceof Error ? err.message : `${label} failed`, 'error')
     } finally {
       setBusy(null)
     }
   }
-  const portfolio = state.portfolio!
+  async function confirmPendingReadinessAction() {
+    const action = pendingReadinessAction
+    if (!action) return
+    setPendingReadinessAction(null)
+    await run(action.label, action.fn, { saveBeforeRun: action.saveBeforeRun })
+  }
 
   function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event
@@ -192,47 +231,55 @@ export function Sidebar({ activeSectionId, onSelectSection, notify }: Props) {
       <div style={{ padding: 12, borderTop: '1px solid #e0e0e0', display: 'flex', flexDirection: 'column', gap: 6 }}>
         <button
           onClick={() => setShowSnapshots(true)}
-          style={{ padding: '7px', border: '1px solid #e0e0e0', borderRadius: 6, cursor: 'pointer', fontSize: 12, background: 'white' }}
+          disabled={busy !== null}
+          style={{ padding: '7px', border: '1px solid #e0e0e0', borderRadius: 6, cursor: busy ? 'not-allowed' : 'pointer', fontSize: 12, background: 'white', opacity: busy !== null ? 0.6 : 1 }}
         >
           History
         </button>
         <button
-          onClick={() => run('Preview', () => window.api.previewSite(state.portfolioDir!, portfolio))}
+          onClick={() => run('Preview', latestPortfolio => window.api.previewSite(state.portfolioDir!, latestPortfolio), { confirmReadiness: true, saveBeforeRun: true })}
           disabled={!state.portfolioDir || busy !== null}
           style={{ padding: '7px', border: '1px solid #e0e0e0', borderRadius: 6, cursor: busy ? 'wait' : 'pointer', fontSize: 12, background: 'white', opacity: busy === 'Preview' ? 0.6 : 1 }}
         >
           {busy === 'Preview' ? 'Opening…' : 'Preview'}
         </button>
         <button
-          onClick={() => run('Mobile', () => window.api.previewMobile(state.portfolioDir!, portfolio))}
+          onClick={() => run('Mobile', latestPortfolio => window.api.previewMobile(state.portfolioDir!, latestPortfolio))}
           disabled={!state.portfolioDir || busy !== null}
           style={{ padding: '7px', border: '1px solid #e0e0e0', borderRadius: 6, cursor: busy ? 'wait' : 'pointer', fontSize: 12, background: 'white', opacity: busy === 'Mobile' ? 0.6 : 1 }}
         >
           {busy === 'Mobile' ? 'Opening…' : '📱 Mobile'}
         </button>
         <button
-          onClick={() => run('Export', () => window.api.exportSite(state.portfolioDir!, portfolio))}
+          onClick={() => run('Export', latestPortfolio => window.api.exportSite(state.portfolioDir!, latestPortfolio), { confirmReadiness: true, saveBeforeRun: true })}
           disabled={!state.portfolioDir || busy !== null}
           style={{ padding: '7px', border: '1px solid #e0e0e0', borderRadius: 6, cursor: busy ? 'wait' : 'pointer', fontSize: 12, background: 'white', opacity: busy === 'Export' ? 0.6 : 1 }}
         >
           {busy === 'Export' ? 'Exporting…' : 'Export'}
         </button>
         <button
-          onClick={() => run('ZIP', () => window.api.zipExport(state.portfolioDir!, portfolio))}
+          onClick={() => run('ZIP', latestPortfolio => window.api.zipExport(state.portfolioDir!, latestPortfolio), { saveBeforeRun: true })}
           disabled={!state.portfolioDir || busy !== null}
           style={{ padding: '7px', border: '1px solid #e0e0e0', borderRadius: 6, cursor: busy ? 'wait' : 'pointer', fontSize: 12, background: 'white', opacity: busy === 'ZIP' ? 0.6 : 1 }}
         >
           {busy === 'ZIP' ? 'Zipping…' : 'Export ZIP'}
         </button>
         <button
-          onClick={() => run('Offline', () => window.api.offlineExport(state.portfolioDir!, portfolio))}
+          onClick={() => run('Offline', latestPortfolio => window.api.offlineExport(state.portfolioDir!, latestPortfolio), { saveBeforeRun: true })}
           disabled={!state.portfolioDir || busy !== null}
           style={{ padding: '7px', border: '1px solid #e0e0e0', borderRadius: 6, cursor: busy ? 'wait' : 'pointer', fontSize: 12, background: 'white', opacity: busy === 'Offline' ? 0.6 : 1 }}
         >
           {busy === 'Offline' ? 'Exporting…' : 'Offline'}
         </button>
         <button
-          onClick={() => setShowFtp(true)}
+          onClick={() => {
+            const readiness = checkPortfolioReadiness(portfolio, { assetFilenames })
+            if (readiness.errorCount > 0) {
+              setPendingReadinessAction({ label: 'Publish', fn: async () => setShowFtp(true) })
+              return
+            }
+            setShowFtp(true)
+          }}
           style={{ padding: '7px', background: '#222', color: 'white', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 12 }}
         >
           Publish…
@@ -240,6 +287,40 @@ export function Sidebar({ activeSectionId, onSelectSection, notify }: Props) {
       </div>
       {showSnapshots && <SnapshotPanel onClose={() => setShowSnapshots(false)} />}
       {showFtp && <FtpModal onClose={() => setShowFtp(false)} />}
+      {pendingReadinessAction && (
+        <div
+          style={{
+            position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000,
+          }}
+          onClick={e => { if (e.target === e.currentTarget) setPendingReadinessAction(null) }}
+        >
+          <div style={{ background: 'white', borderRadius: 10, padding: 20, width: 360, boxShadow: '0 8px 32px rgba(0,0,0,0.2)' }}>
+            <h3 style={{ margin: '0 0 8px', fontSize: 15 }}>Readiness issues found</h3>
+            <p style={{ margin: '0 0 16px', fontSize: 13, color: '#555', lineHeight: 1.5 }}>
+              {formatBlockingIssues(checkPortfolioReadiness(portfolio, { assetFilenames }).errorCount)} found. You can continue, but it is worth checking Readiness first.
+            </p>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+              <button
+                onClick={() => setPendingReadinessAction(null)}
+                style={{ padding: '7px 12px', border: '1px solid #ddd', borderRadius: 6, background: 'white', cursor: 'pointer', fontSize: 13 }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmPendingReadinessAction}
+                style={{ padding: '7px 12px', border: 'none', borderRadius: 6, background: '#222', color: 'white', cursor: 'pointer', fontSize: 13 }}
+              >
+                {pendingReadinessAction.label} anyway
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
+}
+
+function formatBlockingIssues(count: number): string {
+  return `${count} blocking readiness ${count === 1 ? 'issue' : 'issues'}`
 }

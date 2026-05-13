@@ -106,6 +106,7 @@ function CypCard({ cyp, portfoliosRoot, onOpen, onDelete }: { cyp: CypMeta; port
         {hovered && (
           <button
             onClick={e => { e.stopPropagation(); onDelete() }}
+            aria-label={`Delete ${cyp.name}`}
             title="Delete portfolio"
             style={{
               background: 'none', border: 'none', cursor: 'pointer',

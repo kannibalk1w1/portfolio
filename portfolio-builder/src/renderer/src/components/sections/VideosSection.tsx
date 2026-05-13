@@ -185,8 +185,8 @@ export function VideosSection({ section }: { section: VideosSectionType }) {
       {/* Add local video */}
       {importError && <div style={{ color: '#e94560', fontSize: 12, marginBottom: 8 }}>{importError}</div>}
       <MediaDropzone
-        label="Click to add videos (MP4, WebM)"
-        filters={[{ name: 'Videos', extensions: ['mp4', 'webm'] }]}
+        label="Click to add videos (MP4, WebM, MOV)"
+        filters={[{ name: 'Videos', extensions: ['mp4', 'webm', 'mov', 'm4v'] }]}
         onFiles={handleImport}
       />
 

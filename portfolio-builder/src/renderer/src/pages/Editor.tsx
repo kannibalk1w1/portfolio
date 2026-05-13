@@ -21,7 +21,8 @@ const SECTION_COMPONENTS: Record<SectionType, React.LazyExoticComponent<React.Co
   embed:    lazy(() => import('../components/sections/EmbedSection').then(m => ({ default: m.EmbedSection }))),
   content:  lazy(() => import('../components/sections/ContentSection').then(m => ({ default: m.ContentSection }))),
   stats:    lazy(() => import('../components/sections/StatsSection').then(m => ({ default: m.StatsSection }))),
-  buttons:  lazy(() => import('../components/sections/ButtonsSection').then(m => ({ default: m.ButtonsSection }))),
+  buttons:    lazy(() => import('../components/sections/ButtonsSection').then(m => ({ default: m.ButtonsSection }))),
+  blueprints: lazy(() => import('../components/sections/BlueprintsSection').then(m => ({ default: m.BlueprintsSection }))),
 }
 
 const AUTO_SAVE_DELAY = 10_000  // 10 seconds after last change
@@ -67,7 +68,7 @@ export function Editor() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden' }}>
-      <TopBar notify={notify} autosaving={autosaving} />
+      <TopBar notify={notify} autosaving={autosaving} onSelectSection={setActiveSectionId} />
       <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
         <Sidebar activeSectionId={activeSectionId} onSelectSection={setActiveSectionId} notify={notify} />
         <div style={{ flex: 1, overflowY: 'auto', padding: 32 }}>

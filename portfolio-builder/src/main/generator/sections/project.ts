@@ -9,7 +9,8 @@ export function renderProject(section: ProjectSection): string {
         class="project-cover lb-trigger"
         data-src="assets/${escSrc(section.coverImageFilename)}"
         alt="Cover image"
-        loading="lazy">`
+        loading="lazy"
+        decoding="async">`
     : ''
 
   const images = section.items
@@ -20,7 +21,8 @@ export function renderProject(section: ProjectSection): string {
         class="lb-trigger"
         data-src="assets/${escSrc(item.filename)}"
         alt="${escHtml(item.caption ?? item.filename)}"
-        loading="lazy">
+        loading="lazy"
+        decoding="async">
       ${item.caption ? `<p class="gallery-caption">${escHtml(item.caption)}</p>` : ''}
     </div>`)
     .join('')

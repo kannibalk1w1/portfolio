@@ -74,6 +74,12 @@ function themeVars(theme: ThemeName = 'launchpad'): string {
   return themes[theme] ?? themes.launchpad
 }
 
+function truncate(text: string, max: number): string {
+  const t = text.trim()
+  if (t.length <= max) return t
+  return t.slice(0, max - 1).trimEnd() + '…'
+}
+
 function buildNavLinks(sections: Section[]): string {
   return sections
     .filter(s => s.visible && s.showInNav !== false)
@@ -88,6 +94,7 @@ const PAGE_ICONS: Record<string, string> = {
   about: '👤', gallery: '🖼', videos: '🎬', models: '📦', games: '🎮',
   code: '💻', custom: '📝', project: '📋', links: '🔗', skills: '⭐',
   timeline: '📅', quote: '❝', embed: '📡', content: '🧩', stats: '📊', buttons: '🔘',
+  blueprints: '⬡',
 }
 
 export function buildPageCards(sections: Section[]): string {
@@ -112,10 +119,18 @@ function needsHighlight(sections: Section[]): boolean {
 }
 
 function needsLightbox(sections: Section[]): boolean {
+  return sections.some(s => {
+    if (!s.visible) return false
+    if (s.type === 'gallery' || s.type === 'project') return (s as any).items?.length > 0 || (s as any).coverImageFilename
+    if (s.type === 'blueprints') return (s as any).items?.some((i: any) => i.kind === 'image')
+    return false
+  })
+}
+
+function needsBlueprints(sections: Section[]): boolean {
   return sections.some(s =>
-    s.visible &&
-    (s.type === 'gallery' || s.type === 'project') &&
-    ((s as any).items?.length > 0 || (s as any).coverImageFilename)
+    s.type === 'blueprints' && s.visible &&
+    (s as any).items?.some((i: any) => i.kind === 'paste')
   )
 }
 
@@ -127,10 +142,12 @@ export function wrapTemplate(
   let modelViewerScript = ''
   if (needsModelViewer(portfolio.sections)) {
     if (opts?.inlineModelViewer) {
+      // Inline model-viewer after page load so gallery compositing settles first
       const safe = opts.inlineModelViewer.replace(/<\/script>/gi, '<\\/script>')
-      modelViewerScript = `<script type="module">${safe}</script>`
+      modelViewerScript = `<script>window.addEventListener('load',function(){var s=document.createElement('script');s.type='module';s.textContent=${JSON.stringify(safe)};document.head.appendChild(s)})</script>`
     } else {
-      modelViewerScript = `<script type="module" src="assets/vendor/model-viewer.min.js"></script>`
+      // Defer model-viewer load until after window load so gallery GPU layers are stable
+      modelViewerScript = `<script>window.addEventListener('load',function(){var s=document.createElement('script');s.type='module';s.src='assets/vendor/model-viewer.min.js';document.head.appendChild(s)})</script>`
     }
   }
 
@@ -140,23 +157,44 @@ export function wrapTemplate(
   <script>document.addEventListener('DOMContentLoaded', () => hljs.highlightAll())</script>`
     : ''
 
+  const blueprintScript = needsBlueprints(portfolio.sections)
+    ? `  <script src="assets/vendor/blueprint-viewer.js"></script>`
+    : ''
+
   // Avatar and optional hero banner live in the hero block.
   const aboutSection = portfolio.sections.find(s => s.type === 'about' && s.visible)
+  const bio = aboutSection?.type === 'about' ? aboutSection.bio : ''
   const avatarFilename = aboutSection?.type === 'about' ? aboutSection.avatarFilename : undefined
   const heroImageFilename = aboutSection?.type === 'about' ? aboutSection.heroImageFilename : undefined
   const showAvatarInHero = aboutSection?.type === 'about' ? aboutSection.showAvatarInHero !== false : false
   const heroAvatar = (showAvatarInHero && avatarFilename)
-    ? `<img src="assets/${escSrc(avatarFilename)}" class="hero-avatar" alt="${escHtml(portfolio.name)}">`
+    ? `<img src="assets/${escSrc(avatarFilename)}" class="hero-avatar" alt="${escHtml(portfolio.name)}" loading="lazy" decoding="async">`
     : ''
   const heroBg = heroImageFilename
-    ? `<img src="assets/${escSrc(heroImageFilename)}" class="hero-bg" alt="" aria-hidden="true">
+    ? `<img src="assets/${escSrc(heroImageFilename)}" class="hero-bg" alt="" aria-hidden="true" loading="lazy" decoding="async">
     <div class="hero-overlay"></div>`
     : ''
+
+  const ogImage = avatarFilename
+    ? `<meta property="og:image" content="assets/${escHtml(avatarFilename)}">
+  <meta name="twitter:image" content="assets/${escHtml(avatarFilename)}">`
+    : ''
+  const trimmedBio = bio.trim()
+  const ogDescription = trimmedBio
+    ? (() => {
+        const desc = escHtml(truncate(trimmedBio, 200))
+        return `<meta property="og:description" content="${desc}">
+  <meta name="twitter:description" content="${desc}">`
+      })()
+    : ''
+
+  const siteTitle = `${portfolio.name}'s Portfolio`
+  const escSiteTitle = escHtml(siteTitle)
 
   const lightbox = needsLightbox(portfolio.sections) ? `
   <div id="lb" role="dialog" aria-modal="true" aria-label="Image viewer">
     <button id="lb-close" aria-label="Close">&times;</button>
-    <img id="lb-img" src="" alt="">
+    <img id="lb-img" src="" alt="" loading="lazy" decoding="async">
   </div>
   <script>
     (function () {
@@ -178,9 +216,17 @@ export function wrapTemplate(
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>${escHtml(portfolio.name)}'s Portfolio</title>
+  <title>${escSiteTitle}</title>
+  <meta property="og:title" content="${escSiteTitle}">
+  <meta property="og:type" content="profile">
+  <meta property="og:site_name" content="${escSiteTitle}">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="${escSiteTitle}">
+  ${ogImage}
+  ${ogDescription}
   ${modelViewerScript}
   ${highlightLinks}
+  ${blueprintScript}
   <style>
     /* ── Variables (theme-specific values injected here) ── */
     :root {
@@ -195,7 +241,7 @@ export function wrapTemplate(
     /* ── Reset ── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     html { scroll-behavior: smooth; }
-    body { font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; }
+    body { font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; overscroll-behavior: none; }
     img { max-width: 100%; display: block; }
 
     /* ── Navigation ── */
@@ -219,7 +265,7 @@ export function wrapTemplate(
     .sections-wrapper { max-width: 1040px; margin: 0 auto; padding: 40px 24px 56px; display: flex; flex-direction: column; }
     .section + .section { margin-top: 20px; }
     .section.no-gap { margin-top: 0 !important; }
-    .section { background: var(--card); border-radius: var(--radius); padding: 32px 36px; box-shadow: var(--shadow); }
+    .section { background: var(--card); border-radius: var(--radius); padding: 32px 36px; box-shadow: var(--shadow); transform: translateZ(0); }
     .section-title { font-size: 19px; font-weight: 700; margin-bottom: 24px; padding-left: 14px; border-left: 4px solid var(--accent); color: var(--text); }
 
     /* ── About ── */
@@ -230,7 +276,7 @@ export function wrapTemplate(
     /* ── Gallery ── */
     .gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 10px; }
     .gallery-item { display: flex; flex-direction: column; gap: 5px; }
-    .gallery-item img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 8px; cursor: zoom-in; transition: transform .2s, box-shadow .2s; }
+    .gallery-item img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 8px; cursor: zoom-in; transition: transform .2s, box-shadow .2s; will-change: transform; }
     .gallery-item img:hover { transform: scale(1.04); box-shadow: 0 8px 24px rgba(0,0,0,0.15); }
     .gallery-caption { font-size: 12px; color: var(--muted); text-align: center; }
 
@@ -241,6 +287,7 @@ export function wrapTemplate(
 
     /* ── 3D Models ── */
     .models-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
+    model-viewer { display: block; contain: paint; touch-action: none; }
     .model-label { text-align: center; font-size: 13px; color: var(--muted); margin-top: 8px; }
 
     /* ── Games ── */
@@ -368,6 +415,23 @@ export function wrapTemplate(
     /* ── Empty state ── */
     .empty { color: var(--muted); font-size: 14px; font-style: italic; }
 
+    /* ── Blueprints ── */
+    .bp-item-nav { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 16px; }
+    .bp-item-nav a { color: var(--accent-d); text-decoration: none; font-size: 13px; font-weight: 600; padding: 5px 9px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); }
+    .bp-item-nav a:hover { border-color: var(--accent); }
+    .bp-item-nav { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 16px; }
+    .bp-item-nav a { color: var(--accent-d); text-decoration: none; font-size: 13px; font-weight: 600; padding: 5px 9px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); }
+    .bp-item-nav a:hover { border-color: var(--accent); }
+    .blueprints-list { display: flex; flex-direction: column; gap: 20px; }
+    .bp-item { display: flex; flex-direction: column; gap: 6px; }
+    .bp-item-title { margin: 0 0 2px; font-size: 16px; color: var(--text); scroll-margin-top: 80px; }
+    .bp-item-title { margin: 0 0 2px; font-size: 16px; color: var(--text); scroll-margin-top: 80px; }
+    .bp-canvas { border-radius: 8px; overflow: hidden; background: #1a1a2e; }
+    .bp-img { width: 100%; border-radius: 8px; cursor: zoom-in; transition: opacity .2s; }
+    .bp-img:hover { opacity: .9; }
+    .bp-label { font-size: 13px; color: var(--muted); text-align: center; }
+    .bp-parse-error { padding: 16px; background: #1a1a2e; color: #e74c3c; font-size: 13px; border-radius: 8px; text-align: center; }
+
     /* ── Lightbox ── */
     #lb { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.92); z-index: 200; align-items: center; justify-content: center; }
     #lb.open { display: flex; }
@@ -443,6 +507,7 @@ export function wrapTemplate(
   <footer>Made with <strong>Launchpad</strong></footer>
 
   <script>document.addEventListener('click',function(e){if(!e.target.closest('nav')){var n=document.getElementById('rte-nav');if(n)n.classList.remove('nav-open')}})</script>
+  ${needsModelViewer(portfolio.sections) ? `<script>document.querySelectorAll('model-viewer').forEach(function(mv){mv.addEventListener('pointerdown',function(){if(window.scrollY===0)window.scrollTo(0,1)},{passive:true})})</script>` : ''}
 </body>
 </html>`
 }
@@ -471,8 +536,17 @@ export function wrapSubPage(
   <script>document.addEventListener('DOMContentLoaded', () => hljs.highlightAll())</script>`
     : ''
 
-  const needsLightbox = (section.type === 'gallery' || section.type === 'project') &&
+  const blueprintSubScript = section.type === 'blueprints' && (section as any).items?.some((i: any) => i.kind === 'paste')
+    ? `  <script src="assets/vendor/blueprint-viewer.js"></script>`
+    : ''
+
+  const needsLightbox = (
+    (section.type === 'gallery' || section.type === 'project') &&
     ((section as any).items?.length > 0 || (section as any).coverImageFilename)
+  ) || (
+    section.type === 'blueprints' &&
+    (section as any).items?.some((i: any) => i.kind === 'image')
+  )
 
   const lightbox = needsLightbox ? `
   <div id="lb" role="dialog" aria-modal="true" aria-label="Image viewer">
@@ -502,6 +576,7 @@ export function wrapSubPage(
   <title>${escHtml(section.title)} — ${escHtml(portfolio.name)}</title>
   ${modelViewerScript}
   ${highlightLinks}
+  ${blueprintSubScript}
   <style>
     :root {
       ${themeVars(portfolio.theme)}
@@ -511,14 +586,14 @@ export function wrapSubPage(
     ${buildCustomisationCss(portfolio.customisation)}
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     html { scroll-behavior: smooth; }
-    body { font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; }
+    body { font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; overscroll-behavior: none; }
     img { max-width: 100%; display: block; }
     .subpage-header { position: sticky; top: 0; z-index: 100; background: var(--nav-bg); height: 56px; padding: 0 32px; display: flex; align-items: center; justify-content: space-between; }
     .subpage-back { color: rgba(255,255,255,0.75); text-decoration: none; font-size: 13px; font-weight: 500; transition: color .15s; }
     .subpage-back:hover { color: #fff; }
     .subpage-title { color: rgba(255,255,255,0.4); font-size: 13px; }
     .sections-wrapper { max-width: 1040px; margin: 0 auto; padding: 40px 24px 56px; }
-    .section { background: var(--card); border-radius: var(--radius); padding: 32px 36px; box-shadow: var(--shadow); }
+    .section { background: var(--card); border-radius: var(--radius); padding: 32px 36px; box-shadow: var(--shadow); transform: translateZ(0); }
     .section-title { font-size: 19px; font-weight: 700; margin-bottom: 24px; padding-left: 14px; border-left: 4px solid var(--accent); color: var(--text); }
     .section-description { font-size: 15px; margin-bottom: 20px; line-height: 1.75; }
     .section-description > * + * { margin-top: .65em; }
@@ -538,13 +613,14 @@ export function wrapSubPage(
     .section-description th { background: var(--bg); font-weight: 600; }
     .gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 10px; }
     .gallery-item { display: flex; flex-direction: column; gap: 5px; }
-    .gallery-item img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 8px; cursor: zoom-in; transition: transform .2s, box-shadow .2s; }
+    .gallery-item img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 8px; cursor: zoom-in; transition: transform .2s, box-shadow .2s; will-change: transform; }
     .gallery-item img:hover { transform: scale(1.04); box-shadow: 0 8px 24px rgba(0,0,0,0.15); }
     .gallery-caption { font-size: 12px; color: var(--muted); text-align: center; }
     .video-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
     .video-item video { width: 100%; border-radius: 8px; }
     .video-caption { font-size: 14px; font-weight: 600; margin-bottom: 8px; color: var(--text); }
     .models-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
+    model-viewer { display: block; contain: paint; touch-action: none; }
     .model-label { text-align: center; font-size: 13px; color: var(--muted); margin-top: 8px; }
     .game-item { margin-bottom: 32px; } .game-item:last-child { margin-bottom: 0; }
     .game-item h3 { font-size: 16px; font-weight: 600; margin-bottom: 12px; color: var(--text); }
@@ -601,6 +677,13 @@ export function wrapSubPage(
     .callout-note { background: #faf5ff; border-color: #8b5cf6; } .callout-note::before { content: '📝'; }
     .colour-palette { display: inline-flex; align-items: center; gap: 6px; vertical-align: middle; padding: 2px 0; }
     .palette-swatch { width: 28px; height: 28px; border-radius: 50%; display: inline-block; border: 1px solid rgba(0,0,0,0.12); }
+    .blueprints-list { display: flex; flex-direction: column; gap: 20px; }
+    .bp-item { display: flex; flex-direction: column; gap: 6px; }
+    .bp-canvas { border-radius: 8px; overflow: hidden; background: #1a1a2e; }
+    .bp-img { width: 100%; border-radius: 8px; cursor: zoom-in; transition: opacity .2s; }
+    .bp-img:hover { opacity: .9; }
+    .bp-label { font-size: 13px; color: var(--muted); text-align: center; }
+    .bp-parse-error { padding: 16px; background: #1a1a2e; color: #e74c3c; font-size: 13px; border-radius: 8px; text-align: center; }
     #lb { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 1000; align-items: center; justify-content: center; }
     #lb.open { display: flex; }
     #lb-img { max-width: 90vw; max-height: 90vh; border-radius: 8px; }
