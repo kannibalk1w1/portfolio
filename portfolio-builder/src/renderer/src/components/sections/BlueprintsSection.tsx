@@ -173,8 +173,8 @@ export function BlueprintsSection({ section }: { section: BlueprintsSectionType 
       {/* Add panel */}
       <div style={{ border: '1px solid #e0e0e0', borderRadius: 8, overflow: 'hidden' }}>
         <div style={{ display: 'flex', borderBottom: '1px solid #e0e0e0' }}>
-          <button style={tabStyle(tab === 'paste')} onClick={() => setTab('paste')}>Paste text</button>
-          <button style={tabStyle(tab === 'image')} onClick={() => setTab('image')}>Screenshot</button>
+          <button style={tabStyle(tab === 'paste')} onClick={() => { setTab('paste'); setImportError(null) }}>Paste text</button>
+          <button style={tabStyle(tab === 'image')} onClick={() => { setTab('image'); setPasteError(null) }}>Screenshot</button>
         </div>
 
         {tab === 'paste' ? (
