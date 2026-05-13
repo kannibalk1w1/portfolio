@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { DndContext, closestCenter, DragEndEvent } from '@dnd-kit/core'
 import { SortableContext, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable'
 import { usePortfolio } from '../../store/PortfolioContext'
@@ -67,6 +67,7 @@ export function Sidebar({ activeSectionId, onSelectSection, notify }: Props) {
   const [showSnapshots, setShowSnapshots] = useState(false)
   const [showFtp, setShowFtp] = useState(false)
   const [busy, setBusy] = useState<string | null>(null)  // tracks which button is in-flight
+  const [assetFilenames, setAssetFilenames] = useState<Set<string> | undefined>(undefined)
   const [pendingReadinessAction, setPendingReadinessAction] = useState<{
     label: string
     fn: (portfolio: Portfolio) => Promise<void>
@@ -75,11 +76,23 @@ export function Sidebar({ activeSectionId, onSelectSection, notify }: Props) {
 
   const portfolio = state.portfolio!
 
+  useEffect(() => {
+    let cancelled = false
+    if (!state.portfolioDir || !window.api.listAssets) {
+      setAssetFilenames(undefined)
+      return
+    }
+    window.api.listAssets(state.portfolioDir)
+      .then(files => { if (!cancelled) setAssetFilenames(new Set(files)) })
+      .catch(() => { if (!cancelled) setAssetFilenames(undefined) })
+    return () => { cancelled = true }
+  }, [state.portfolioDir, state.portfolio])
+
   async function run(label: string, fn: (portfolio: Portfolio) => Promise<void>, opts: { confirmReadiness?: boolean; saveBeforeRun?: boolean } = {}) {
     if (busy) return
     const latestPortfolio = state.portfolio!
     if (opts.confirmReadiness) {
-      const readiness = checkPortfolioReadiness(latestPortfolio)
+      const readiness = checkPortfolioReadiness(latestPortfolio, { assetFilenames })
       if (readiness.errorCount > 0) {
         setPendingReadinessAction({ label, fn, saveBeforeRun: opts.saveBeforeRun })
         return
@@ -260,7 +273,7 @@ export function Sidebar({ activeSectionId, onSelectSection, notify }: Props) {
         </button>
         <button
           onClick={() => {
-            const readiness = checkPortfolioReadiness(portfolio)
+            const readiness = checkPortfolioReadiness(portfolio, { assetFilenames })
             if (readiness.errorCount > 0) {
               setPendingReadinessAction({ label: 'Publish', fn: async () => setShowFtp(true) })
               return
@@ -285,7 +298,7 @@ export function Sidebar({ activeSectionId, onSelectSection, notify }: Props) {
           <div style={{ background: 'white', borderRadius: 10, padding: 20, width: 360, boxShadow: '0 8px 32px rgba(0,0,0,0.2)' }}>
             <h3 style={{ margin: '0 0 8px', fontSize: 15 }}>Readiness issues found</h3>
             <p style={{ margin: '0 0 16px', fontSize: 13, color: '#555', lineHeight: 1.5 }}>
-              {formatBlockingIssues(checkPortfolioReadiness(portfolio).errorCount)} found. You can continue, but it is worth checking Readiness first.
+              {formatBlockingIssues(checkPortfolioReadiness(portfolio, { assetFilenames }).errorCount)} found. You can continue, but it is worth checking Readiness first.
             </p>
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
               <button

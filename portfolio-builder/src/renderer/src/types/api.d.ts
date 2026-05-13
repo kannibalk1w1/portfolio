@@ -34,6 +34,7 @@ declare global {
       restoreSnapshot(dir: string, id: string): Promise<void>
       importMedia(portfolioDir: string, filePaths: string[]): Promise<string[]>
       importGodotFolder(portfolioDir: string, folderPath: string, title: string): Promise<string>
+      listAssets(portfolioDir: string): Promise<string[]>
       openFilePicker(opts: OpenDialogOptions): Promise<string[]>
       openFolderPicker(): Promise<string | null>
       buildSite(portfolioDir: string, portfolio: Portfolio): Promise<void>

@@ -23,6 +23,10 @@ export interface ReadinessResult {
   items: ReadinessItem[]
 }
 
+export interface ReadinessOptions {
+  assetFilenames?: Set<string>
+}
+
 function hasText(value: string | undefined): boolean {
   return Boolean(value?.trim())
 }
@@ -48,6 +52,18 @@ function hasValidUrl(value: string): boolean {
   }
 }
 
+function normaliseAssetPath(value: string): string {
+  return value.replace(/\\/g, '/').replace(/^assets\//, '')
+}
+
+function isSafeAssetPath(value: string): boolean {
+  const normalised = normaliseAssetPath(value)
+  return Boolean(normalised)
+    && !normalised.startsWith('/')
+    && !/^[a-zA-Z]:\//.test(normalised)
+    && !normalised.split('/').includes('..')
+}
+
 function pushItem(
   items: ReadinessItem[],
   severity: ReadinessSeverity,
@@ -62,21 +78,51 @@ function pushItem(
   })
 }
 
-function checkMediaItems(items: ReadinessItem[], section: Section, mediaItems: MediaItem[]) {
+function checkAssetRef(
+  items: ReadinessItem[],
+  section: Section,
+  filename: string | undefined,
+  label: string,
+  options: ReadinessOptions,
+) {
+  if (!hasText(filename)) {
+    pushItem(items, 'error', `${section.title} has an empty asset filename.`, section.id)
+    return false
+  }
+  const normalised = normaliseAssetPath(filename!)
+  if (!isSafeAssetPath(filename!)) {
+    pushItem(items, 'error', `${section.title} ${label} file "${filename}" uses an unsafe asset path.`, section.id)
+    return false
+  }
+  if (options.assetFilenames && !options.assetFilenames.has(normalised)) {
+    const labelText = label ? ` ${label}` : ''
+    pushItem(items, 'error', `${section.title}${labelText} file "${normalised}" is missing from assets.`, section.id)
+  }
+  return true
+}
+
+function checkMediaItems(items: ReadinessItem[], section: Section, mediaItems: MediaItem[], options: ReadinessOptions) {
   for (const item of mediaItems) {
-    if (!hasMediaDescription(item)) {
+    const hasUsableAssetRef = checkAssetRef(items, section, item.filename, '', options)
+    if (hasUsableAssetRef && !hasMediaDescription(item)) {
       pushItem(items, 'warning', `${section.title} image "${item.filename}" is missing alt text.`, section.id)
     }
   }
 }
 
-function checkContentBlocks(items: ReadinessItem[], section: Section, blocks: ContentBlock[]) {
+function checkContentBlocks(items: ReadinessItem[], section: Section, blocks: ContentBlock[], options: ReadinessOptions) {
   for (const block of blocks) {
-    if (block.type === 'image' && !hasText(block.alt) && !hasText(block.caption)) {
-      pushItem(items, 'warning', `${section.title} image "${block.filename}" is missing alt text.`, section.id)
+    if (block.type === 'image') {
+      checkAssetRef(items, section, block.filename, '', options)
+      if (!hasText(block.alt) && !hasText(block.caption)) {
+        pushItem(items, 'warning', `${section.title} image "${block.filename}" is missing alt text.`, section.id)
+      }
     }
     if (block.type === 'video' && block.embedUrl && !hasValidUrl(block.embedUrl)) {
       pushItem(items, 'error', `${section.title} has an invalid video URL: ${block.embedUrl}`, section.id)
+    }
+    if (block.type === 'video' && block.filename) {
+      checkAssetRef(items, section, block.filename, 'video', options)
     }
   }
 }
@@ -109,7 +155,7 @@ function visibleSectionHasContent(section: Section): boolean {
   }
 }
 
-function checkSection(items: ReadinessItem[], section: Section) {
+function checkSection(items: ReadinessItem[], section: Section, options: ReadinessOptions) {
   if (!section.visible) return
 
   if (!visibleSectionHasContent(section)) {
@@ -123,10 +169,12 @@ function checkSection(items: ReadinessItem[], section: Section) {
   switch (section.type) {
     case 'gallery':
     case 'models':
-      checkMediaItems(items, section, section.items)
+      checkMediaItems(items, section, section.items, options)
       break
     case 'videos':
       for (const item of section.items) {
+        if (item.filename) checkAssetRef(items, section, item.filename, 'video', options)
+        if (item.thumbnailFilename) checkAssetRef(items, section, item.thumbnailFilename, 'thumbnail', options)
         if (item.embedUrl && !hasValidUrl(item.embedUrl)) {
           pushItem(items, 'error', `${section.title} has an invalid video URL: ${item.embedUrl}`, section.id)
         }
@@ -135,11 +183,21 @@ function checkSection(items: ReadinessItem[], section: Section) {
         }
       }
       break
+    case 'about':
+      if (section.avatarFilename) checkAssetRef(items, section, section.avatarFilename, 'avatar', options)
+      if (section.heroImageFilename) checkAssetRef(items, section, section.heroImageFilename, 'hero image', options)
+      break
     case 'project':
       if (section.coverImageFilename && !hasRichText(section.description)) {
         pushItem(items, 'warning', `${section.title} cover image should have supporting text in the description.`, section.id)
       }
-      checkMediaItems(items, section, section.items)
+      if (section.coverImageFilename) checkAssetRef(items, section, section.coverImageFilename, 'cover image', options)
+      checkMediaItems(items, section, section.items, options)
+      break
+    case 'games':
+      for (const item of section.items) {
+        checkAssetRef(items, section, `${item.folderName}/${item.entryFile}`, 'game entry', options)
+      }
       break
     case 'links':
     case 'buttons':
@@ -158,10 +216,13 @@ function checkSection(items: ReadinessItem[], section: Section) {
       }
       break
     case 'content':
-      checkContentBlocks(items, section, section.blocks)
+      checkContentBlocks(items, section, section.blocks, options)
       break
     case 'blueprints':
       for (const item of section.items as BlueprintItem[]) {
+        if (item.kind === 'image') {
+          checkAssetRef(items, section, item.content, 'blueprint image', options)
+        }
         if (item.kind === 'image' && !hasText(item.label)) {
           pushItem(items, 'warning', `${section.title} blueprint image "${item.content}" should have a label.`, section.id)
         }
@@ -170,7 +231,7 @@ function checkSection(items: ReadinessItem[], section: Section) {
   }
 }
 
-export function checkPortfolioReadiness(portfolio: Portfolio): ReadinessResult {
+export function checkPortfolioReadiness(portfolio: Portfolio, options: ReadinessOptions = {}): ReadinessResult {
   const items: ReadinessItem[] = []
 
   if (!hasText(portfolio.name)) {
@@ -178,7 +239,7 @@ export function checkPortfolioReadiness(portfolio: Portfolio): ReadinessResult {
   }
 
   for (const section of portfolio.sections) {
-    checkSection(items, section)
+    checkSection(items, section, options)
     if (section.type === 'about' && !hasText(portfolio.tagline)) {
       pushItem(items, 'warning', 'Add a tagline so the hero area explains what this portfolio is about.', section.id)
     }

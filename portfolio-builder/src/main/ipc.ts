@@ -1,6 +1,6 @@
 import { app, dialog, ipcMain, shell, BrowserWindow } from 'electron'
 import { extname, join, join as pathJoin } from 'path'
-import { mkdir, readFile, writeFile } from 'fs/promises'
+import { mkdir, readFile, readdir, writeFile } from 'fs/promises'
 import { createReadStream, existsSync } from 'fs'
 import { createServer } from 'http'
 import type { AddressInfo } from 'net'
@@ -40,6 +40,32 @@ async function getRoot(): Promise<string> {
   const def = join(app.getPath('documents'), 'CYP Portfolios')
   await mkdir(def, { recursive: true })
   return def
+}
+
+async function listAssetFiles(portfolioDir: string): Promise<string[]> {
+  const assetsDir = join(portfolioDir, 'assets')
+  const files: string[] = []
+
+  async function walk(dir: string, prefix = ''): Promise<void> {
+    let entries
+    try {
+      entries = await readdir(dir, { withFileTypes: true, encoding: 'utf8' })
+    } catch {
+      return
+    }
+    for (const entry of entries) {
+      const relative = prefix ? `${prefix}/${entry.name}` : entry.name
+      const full = join(dir, entry.name)
+      if (entry.isDirectory()) {
+        await walk(full, relative)
+      } else if (entry.isFile()) {
+        files.push(relative)
+      }
+    }
+  }
+
+  await walk(assetsDir)
+  return files
 }
 
 export function registerIpcHandlers(): void {
@@ -86,6 +112,8 @@ export function registerIpcHandlers(): void {
     importMediaFiles(portfolioDir, filePaths))
   ipcMain.handle('media:importGodot', (_event, portfolioDir: string, folderPath: string, title: string) =>
     importGodotFolder(portfolioDir, folderPath, title))
+  ipcMain.handle('media:listAssets', (_event, portfolioDir: string) =>
+    listAssetFiles(portfolioDir))
 
   ipcMain.handle('dialog:openFile', (_event, opts: Electron.OpenDialogOptions) =>
     dialog.showOpenDialog(opts).then(r => r.filePaths))

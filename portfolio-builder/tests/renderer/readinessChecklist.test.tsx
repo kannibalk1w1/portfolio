@@ -114,6 +114,52 @@ describe('checkPortfolioReadiness', () => {
       'Links has an invalid URL: not a url',
     ])
   })
+
+  it('blocks output when referenced asset files are missing or unsafe', () => {
+    const portfolio: Portfolio = {
+      ...basePortfolio,
+      sections: [
+        {
+          id: 'about',
+          type: 'about',
+          title: 'About Me',
+          visible: true,
+          bio: 'Hello',
+          avatarFilename: 'missing-avatar.jpg',
+          heroImageFilename: '../outside.jpg',
+        },
+        {
+          id: 'gallery-1',
+          type: 'gallery',
+          title: 'Gallery',
+          visible: true,
+          items: [
+            { id: 'image-1', filename: 'drawing.jpg', alt: 'Drawing' },
+            { id: 'image-2', filename: 'missing.jpg', alt: 'Missing' },
+          ],
+        },
+        {
+          id: 'models-1',
+          type: 'models',
+          title: 'Models',
+          visible: true,
+          items: [{ id: 'model-1', filename: '', label: 'Empty' }],
+        },
+      ],
+    }
+
+    const result = checkPortfolioReadiness(portfolio, {
+      assetFilenames: new Set(['drawing.jpg']),
+    })
+
+    expect(result.ready).toBe(false)
+    expect(result.items.map(item => item.message)).toEqual([
+      'About Me avatar file "missing-avatar.jpg" is missing from assets.',
+      'About Me hero image file "../outside.jpg" uses an unsafe asset path.',
+      'Gallery file "missing.jpg" is missing from assets.',
+      'Models has an empty asset filename.',
+    ])
+  })
 })
 
 describe('ReadinessModal', () => {

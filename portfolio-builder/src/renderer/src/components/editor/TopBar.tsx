@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { usePortfolio } from '../../store/PortfolioContext'
 import type { NotifyFn } from '../shared/Toaster'
 import { HelpModal } from '../shared/HelpModal'
@@ -29,7 +29,19 @@ export function TopBar({ notify, autosaving, onSelectSection }: Props) {
   const [saving, setSaving] = useState(false)
   const [showHelp, setShowHelp] = useState(false)
   const [showReadiness, setShowReadiness] = useState(false)
-  const readiness = state.portfolio ? checkPortfolioReadiness(state.portfolio) : null
+  const [assetFilenames, setAssetFilenames] = useState<Set<string> | undefined>(undefined)
+  useEffect(() => {
+    let cancelled = false
+    if (!state.portfolioDir || !window.api.listAssets) {
+      setAssetFilenames(undefined)
+      return
+    }
+    window.api.listAssets(state.portfolioDir)
+      .then(files => { if (!cancelled) setAssetFilenames(new Set(files)) })
+      .catch(() => { if (!cancelled) setAssetFilenames(undefined) })
+    return () => { cancelled = true }
+  }, [state.portfolioDir, state.portfolio])
+  const readiness = state.portfolio ? checkPortfolioReadiness(state.portfolio, { assetFilenames }) : null
   const readinessCount = readiness ? readiness.errorCount + readiness.warningCount : 0
   const readinessButtonStyle = getReadinessButtonStyle(readiness)
   const readinessTitle = getReadinessTitle(readiness)

@@ -25,6 +25,8 @@ contextBridge.exposeInMainWorld('api', {
     ipcRenderer.invoke('media:import', portfolioDir, filePaths),
   importGodotFolder: (portfolioDir: string, folderPath: string, title: string): Promise<string> =>
     ipcRenderer.invoke('media:importGodot', portfolioDir, folderPath, title),
+  listAssets: (portfolioDir: string): Promise<string[]> =>
+    ipcRenderer.invoke('media:listAssets', portfolioDir),
 
   // Dialogs
   openFilePicker: (opts: Electron.OpenDialogOptions): Promise<string[]> =>
