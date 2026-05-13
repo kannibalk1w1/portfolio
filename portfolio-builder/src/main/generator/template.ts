@@ -168,10 +168,10 @@ export function wrapTemplate(
   const heroImageFilename = aboutSection?.type === 'about' ? aboutSection.heroImageFilename : undefined
   const showAvatarInHero = aboutSection?.type === 'about' ? aboutSection.showAvatarInHero !== false : false
   const heroAvatar = (showAvatarInHero && avatarFilename)
-    ? `<img src="assets/${escSrc(avatarFilename)}" class="hero-avatar" alt="${escHtml(portfolio.name)}">`
+    ? `<img src="assets/${escSrc(avatarFilename)}" class="hero-avatar" alt="${escHtml(portfolio.name)}" loading="lazy" decoding="async">`
     : ''
   const heroBg = heroImageFilename
-    ? `<img src="assets/${escSrc(heroImageFilename)}" class="hero-bg" alt="" aria-hidden="true">
+    ? `<img src="assets/${escSrc(heroImageFilename)}" class="hero-bg" alt="" aria-hidden="true" loading="lazy" decoding="async">
     <div class="hero-overlay"></div>`
     : ''
 
@@ -194,7 +194,7 @@ export function wrapTemplate(
   const lightbox = needsLightbox(portfolio.sections) ? `
   <div id="lb" role="dialog" aria-modal="true" aria-label="Image viewer">
     <button id="lb-close" aria-label="Close">&times;</button>
-    <img id="lb-img" src="" alt="">
+    <img id="lb-img" src="" alt="" loading="lazy" decoding="async">
   </div>
   <script>
     (function () {

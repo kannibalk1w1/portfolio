@@ -163,11 +163,84 @@ describe('buildSite', () => {
     const html = readFileSync(join(TMP, 'output', 'index.html'), 'utf-8')
 
     const imgs = html.match(/<img\b[^>]*>/g) ?? []
-    // Fixture renders exactly 4 imgs: avatar + gallery item + project cover + project gallery item.
-    expect(imgs.length).toBe(4)
+    // Fixture renders exactly 5 imgs: avatar + gallery item + project cover + project gallery item + lightbox #lb-img.
+    expect(imgs.length).toBe(5)
     for (const tag of imgs) {
       expect(tag).toMatch(/\bloading="lazy"/)
       expect(tag).toMatch(/\bdecoding="async"/)
     }
+  })
+})
+
+describe('buildSite — blueprints section', () => {
+  const SAMPLE_UE = `Begin Object Class=/Script/BlueprintGraph.K2Node_Event Name="K2Node_Event_0"
+   NodePosX=0
+   NodePosY=0
+   NodeGuid=AABBCCDD00000000000000000000001A
+   CustomProperties Pin (PinId=AABBCCDD00000000000000000000002A,PinName="then",Direction="EGPD_Output",PinType.PinCategory="exec",LinkedTo=())
+End Object`
+
+  it('renders a paste item as a bp-canvas div with embedded JSON', async () => {
+    const portfolio: Portfolio = {
+      ...basicPortfolio,
+      sections: [
+        {
+          id: 'bp-1', type: 'blueprints', title: 'My Blueprints', visible: true,
+          items: [{ id: 'item-1', kind: 'paste', content: SAMPLE_UE, label: 'Begin Play' }],
+        } as any,
+      ],
+    }
+    await buildSite(TMP, portfolio)
+    const html = readFileSync(join(TMP, 'output', 'index.html'), 'utf-8')
+    expect(html).toContain('class="bp-canvas"')
+    expect(html).toContain('id="bp-data-item-1"')
+    expect(html).toContain('K2Node_Event')
+    expect(html).toContain('Begin Play')
+    expect(html).toContain('blueprint-viewer.js')
+  })
+
+  it('renders an image item as an img tag', async () => {
+    const portfolio: Portfolio = {
+      ...basicPortfolio,
+      sections: [
+        {
+          id: 'bp-2', type: 'blueprints', title: 'My Blueprints', visible: true,
+          items: [{ id: 'item-2', kind: 'image', content: 'screenshot.png', label: 'Overview' }],
+        } as any,
+      ],
+    }
+    await buildSite(TMP, portfolio)
+    const html = readFileSync(join(TMP, 'output', 'index.html'), 'utf-8')
+    expect(html).toContain('src="assets/screenshot.png"')
+    expect(html).toContain('class="lb-trigger bp-img"')
+    expect(html).toContain('Overview')
+    expect(html).not.toContain('blueprint-viewer.js')
+  })
+
+  it('includes lightbox script when a blueprints section has image items', async () => {
+    const portfolio: Portfolio = {
+      ...basicPortfolio,
+      sections: [
+        {
+          id: 'bp-4', type: 'blueprints', title: 'My Blueprints', visible: true,
+          items: [{ id: 'item-4', kind: 'image', content: 'shot.png' }],
+        } as any,
+      ],
+    }
+    await buildSite(TMP, portfolio)
+    const html = readFileSync(join(TMP, 'output', 'index.html'), 'utf-8')
+    expect(html).toContain('id="lb"')
+  })
+
+  it('renders an empty blueprints section with placeholder text', async () => {
+    const portfolio: Portfolio = {
+      ...basicPortfolio,
+      sections: [
+        { id: 'bp-3', type: 'blueprints', title: 'My Blueprints', visible: true, items: [] } as any,
+      ],
+    }
+    await buildSite(TMP, portfolio)
+    const html = readFileSync(join(TMP, 'output', 'index.html'), 'utf-8')
+    expect(html).toContain('No blueprints yet.')
   })
 })

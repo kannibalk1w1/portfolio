@@ -11,6 +11,7 @@ export function renderGallery(section: GallerySection): string {
         class="lb-trigger"
         data-src="assets/${escSrc(item.filename)}"
         alt="${escHtml(item.alt ?? item.caption ?? item.filename)}"
+        loading="lazy"
         decoding="async">
       ${item.caption ? `<p class="gallery-caption">${escHtml(item.caption)}</p>` : ''}
     </div>`)
