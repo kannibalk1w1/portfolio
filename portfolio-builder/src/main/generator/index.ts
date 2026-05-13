@@ -19,6 +19,7 @@ import { renderEmbed } from './sections/embed'
 import { renderContent } from './sections/content'
 import { renderStats } from './sections/stats'
 import { renderButtons } from './sections/buttons'
+import { renderBlueprints } from './sections/blueprints'
 
 function renderSection(section: Section): string {
   switch (section.type) {
@@ -37,7 +38,8 @@ function renderSection(section: Section): string {
     case 'embed':    return renderEmbed(section)
     case 'content':  return renderContent(section)
     case 'stats':    return renderStats(section)
-    case 'buttons':  return renderButtons(section)
+    case 'buttons':    return renderButtons(section)
+    case 'blueprints': return renderBlueprints(section)
   }
 }
 

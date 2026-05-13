@@ -6,7 +6,7 @@ import { SidebarItem } from './SidebarItem'
 import { SnapshotPanel } from '../shared/SnapshotPanel'
 import { FtpModal } from '../shared/FtpModal'
 import type { NotifyFn } from '../shared/Toaster'
-import type { Section, SectionType, AboutSection, GallerySection, VideosSection, ModelsSection, GamesSection, CodeSection, CustomSection, ProjectSection, LinksSection, SkillsSection, TimelineSection, QuoteSection, EmbedSection, ContentSection, StatsSection, ButtonsSection } from '../../types/portfolio'
+import type { Section, SectionType, AboutSection, GallerySection, VideosSection, ModelsSection, GamesSection, CodeSection, CustomSection, ProjectSection, LinksSection, SkillsSection, TimelineSection, QuoteSection, EmbedSection, ContentSection, StatsSection, ButtonsSection, BlueprintsSection } from '../../types/portfolio'
 
 const SECTION_DEFAULTS: {
   about: Omit<AboutSection, 'id'>
@@ -25,6 +25,7 @@ const SECTION_DEFAULTS: {
   content: Omit<ContentSection, 'id'>
   stats: Omit<StatsSection, 'id'>
   buttons: Omit<ButtonsSection, 'id'>
+  blueprints: Omit<BlueprintsSection, 'id'>
 } = {
   about:    { type: 'about',    title: 'About Me',   visible: true, bio: '' },
   gallery:  { type: 'gallery',  title: 'Gallery',    visible: true, items: [] },
@@ -41,7 +42,8 @@ const SECTION_DEFAULTS: {
   embed:    { type: 'embed',    title: 'Embed',      visible: true, url: '', height: 400 },
   content:  { type: 'content',  title: 'Content',    visible: true, blocks: [] },
   stats:    { type: 'stats',    title: 'Stats',      visible: true, items: [] },
-  buttons:  { type: 'buttons',  title: 'Buttons',    visible: true, items: [] },
+  buttons:    { type: 'buttons',    title: 'Buttons',     visible: true, items: [] },
+  blueprints: { type: 'blueprints', title: 'Blueprints', visible: true, items: [] },
 }
 
 const SECTION_LABELS: Record<SectionType, string> = {
@@ -49,7 +51,7 @@ const SECTION_LABELS: Record<SectionType, string> = {
   models: '📦 3D Models', games: '🎮 Games', code: '💻 Code', custom: '📝 Text',
   project: '📋 Project', links: '🔗 Links', skills: '⭐ Skills', timeline: '📅 Timeline',
   quote: '❝ Quote', embed: '📡 Embed', content: '🧩 Content',
-  stats: '📊 Stats', buttons: '🔘 Buttons',
+  stats: '📊 Stats', buttons: '🔘 Buttons', blueprints: '⬡ Blueprints',
 }
 
 interface Props {
