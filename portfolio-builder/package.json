@@ -46,6 +46,7 @@
     "@tiptap/extension-underline": "^2.27.2",
     "@tiptap/react": "^2.11.7",
     "@tiptap/starter-kit": "^2.11.7",
+    "@xyflow/react": "^12.10.2",
     "archiver": "^8.0.0",
     "assimpjs": "^0.0.10",
     "basic-ftp": "^5.0.5",

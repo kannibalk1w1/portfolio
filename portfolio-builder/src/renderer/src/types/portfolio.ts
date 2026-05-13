@@ -1,4 +1,4 @@
-export type SectionType = 'about' | 'gallery' | 'videos' | 'models' | 'games' | 'code' | 'custom' | 'project' | 'links' | 'skills' | 'timeline' | 'quote' | 'embed' | 'content' | 'stats' | 'buttons'
+export type SectionType = 'about' | 'gallery' | 'videos' | 'models' | 'games' | 'code' | 'custom' | 'project' | 'links' | 'skills' | 'timeline' | 'quote' | 'embed' | 'content' | 'stats' | 'buttons' | 'blueprints'
 
 export type ThemeName = 'launchpad' | 'midnight' | 'warm' | 'minimal'
 
@@ -216,6 +216,23 @@ export interface ButtonsSection extends BaseSection {
 }
 
 // ---------------------------------------------------------------------------
+// Blueprints section
+// ---------------------------------------------------------------------------
+
+export interface BlueprintItem {
+  id: string
+  kind: 'paste' | 'image'
+  content: string  // raw UE copy-text for 'paste'; filename in assets/ for 'image'
+  label?: string
+}
+
+export interface BlueprintsSection extends BaseSection {
+  type: 'blueprints'
+  description?: string
+  items: BlueprintItem[]
+}
+
+// ---------------------------------------------------------------------------
 // Section union
 // ---------------------------------------------------------------------------
 
@@ -236,6 +253,7 @@ export type Section =
   | ContentSection
   | StatsSection
   | ButtonsSection
+  | BlueprintsSection
 
 export interface FtpConfig {
   host: string
