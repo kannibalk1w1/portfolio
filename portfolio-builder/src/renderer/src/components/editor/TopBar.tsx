@@ -2,10 +2,12 @@ import { useState } from 'react'
 import { usePortfolio } from '../../store/PortfolioContext'
 import type { NotifyFn } from '../shared/Toaster'
 import { HelpModal } from '../shared/HelpModal'
+import { ReadinessModal } from '../shared/ReadinessModal'
 
 interface Props {
   notify: NotifyFn
   autosaving: boolean
+  onSelectSection?: (sectionId: string) => void
 }
 
 function SaveStatus({ dirty, autosaving, lastSaved }: { dirty: boolean; autosaving: boolean; lastSaved: Date | null }) {
@@ -21,10 +23,11 @@ function SaveStatus({ dirty, autosaving, lastSaved }: { dirty: boolean; autosavi
   return null
 }
 
-export function TopBar({ notify, autosaving }: Props) {
+export function TopBar({ notify, autosaving, onSelectSection }: Props) {
   const { state, closePortfolio, savePortfolio } = usePortfolio()
   const [saving, setSaving] = useState(false)
   const [showHelp, setShowHelp] = useState(false)
+  const [showReadiness, setShowReadiness] = useState(false)
 
   async function handleSave() {
     if (saving) return
@@ -60,6 +63,20 @@ export function TopBar({ notify, autosaving }: Props) {
           <SaveStatus dirty={state.dirty} autosaving={autosaving} lastSaved={state.lastSaved} />
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {state.portfolio && (
+            <button
+              onClick={() => setShowReadiness(true)}
+              aria-label="Portfolio readiness"
+              title="Portfolio readiness"
+              style={{
+                padding: '6px 10px', borderRadius: 6,
+                border: '1px solid #d0d0d0', background: 'white',
+                cursor: 'pointer', color: '#444', fontSize: 12, fontWeight: 600,
+              }}
+            >
+              Readiness
+            </button>
+          )}
           <button
             onClick={() => setShowHelp(true)}
             aria-label="Section guide"
@@ -82,6 +99,13 @@ export function TopBar({ notify, autosaving }: Props) {
         </div>
       </div>
       {showHelp && <HelpModal onClose={() => setShowHelp(false)} />}
+      {showReadiness && state.portfolio && (
+        <ReadinessModal
+          portfolio={state.portfolio}
+          onClose={() => setShowReadiness(false)}
+          onSelectSection={onSelectSection}
+        />
+      )}
     </>
   )
 }

@@ -68,7 +68,7 @@ export function Editor() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden' }}>
-      <TopBar notify={notify} autosaving={autosaving} />
+      <TopBar notify={notify} autosaving={autosaving} onSelectSection={setActiveSectionId} />
       <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
         <Sidebar activeSectionId={activeSectionId} onSelectSection={setActiveSectionId} notify={notify} />
         <div style={{ flex: 1, overflowY: 'auto', padding: 32 }}>
