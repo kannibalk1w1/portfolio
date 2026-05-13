@@ -416,8 +416,16 @@ export function wrapTemplate(
     .empty { color: var(--muted); font-size: 14px; font-style: italic; }
 
     /* ── Blueprints ── */
+    .bp-item-nav { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 16px; }
+    .bp-item-nav a { color: var(--accent-d); text-decoration: none; font-size: 13px; font-weight: 600; padding: 5px 9px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); }
+    .bp-item-nav a:hover { border-color: var(--accent); }
+    .bp-item-nav { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 16px; }
+    .bp-item-nav a { color: var(--accent-d); text-decoration: none; font-size: 13px; font-weight: 600; padding: 5px 9px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); }
+    .bp-item-nav a:hover { border-color: var(--accent); }
     .blueprints-list { display: flex; flex-direction: column; gap: 20px; }
     .bp-item { display: flex; flex-direction: column; gap: 6px; }
+    .bp-item-title { margin: 0 0 2px; font-size: 16px; color: var(--text); scroll-margin-top: 80px; }
+    .bp-item-title { margin: 0 0 2px; font-size: 16px; color: var(--text); scroll-margin-top: 80px; }
     .bp-canvas { border-radius: 8px; overflow: hidden; background: #1a1a2e; }
     .bp-img { width: 100%; border-radius: 8px; cursor: zoom-in; transition: opacity .2s; }
     .bp-img:hover { opacity: .9; }

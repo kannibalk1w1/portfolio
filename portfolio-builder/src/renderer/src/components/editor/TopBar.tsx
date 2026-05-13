@@ -3,6 +3,7 @@ import { usePortfolio } from '../../store/PortfolioContext'
 import type { NotifyFn } from '../shared/Toaster'
 import { HelpModal } from '../shared/HelpModal'
 import { ReadinessModal } from '../shared/ReadinessModal'
+import { checkPortfolioReadiness } from '../../lib/readiness/checkPortfolioReadiness'
 
 interface Props {
   notify: NotifyFn
@@ -28,6 +29,10 @@ export function TopBar({ notify, autosaving, onSelectSection }: Props) {
   const [saving, setSaving] = useState(false)
   const [showHelp, setShowHelp] = useState(false)
   const [showReadiness, setShowReadiness] = useState(false)
+  const readiness = state.portfolio ? checkPortfolioReadiness(state.portfolio) : null
+  const readinessCount = readiness ? readiness.errorCount + readiness.warningCount : 0
+  const readinessButtonStyle = getReadinessButtonStyle(readiness)
+  const readinessTitle = getReadinessTitle(readiness)
 
   async function handleSave() {
     if (saving) return
@@ -67,14 +72,15 @@ export function TopBar({ notify, autosaving, onSelectSection }: Props) {
             <button
               onClick={() => setShowReadiness(true)}
               aria-label="Portfolio readiness"
-              title="Portfolio readiness"
+              title={readinessTitle}
               style={{
                 padding: '6px 10px', borderRadius: 6,
-                border: '1px solid #d0d0d0', background: 'white',
-                cursor: 'pointer', color: '#444', fontSize: 12, fontWeight: 600,
+                border: `1px solid ${readinessButtonStyle.borderColor}`,
+                background: readinessButtonStyle.background,
+                cursor: 'pointer', color: readinessButtonStyle.color, fontSize: 12, fontWeight: 600,
               }}
             >
-              Readiness
+              Readiness{readinessCount > 0 ? ` ${readinessCount}` : ''}
             </button>
           )}
           <button
@@ -108,4 +114,29 @@ export function TopBar({ notify, autosaving, onSelectSection }: Props) {
       )}
     </>
   )
+}
+
+function getReadinessButtonStyle(readiness: ReturnType<typeof checkPortfolioReadiness> | null) {
+  if (!readiness) {
+    return { background: 'white', borderColor: '#d0d0d0', color: '#444' }
+  }
+  if (readiness.errorCount > 0) {
+    return { background: '#fee2e2', borderColor: '#fca5a5', color: '#991b1b' }
+  }
+  if (readiness.warningCount > 0) {
+    return { background: '#fef3c7', borderColor: '#f59e0b', color: '#92400e' }
+  }
+  return { background: '#dcfce7', borderColor: '#86efac', color: '#166534' }
+}
+
+function getReadinessTitle(readiness: ReturnType<typeof checkPortfolioReadiness> | null): string {
+  if (!readiness) return 'Portfolio readiness'
+  if (readiness.errorCount === 0 && readiness.warningCount === 0) {
+    return 'Portfolio readiness: ready'
+  }
+  return `Portfolio readiness: ${formatCount(readiness.errorCount, 'blocking', 'blocking')}, ${formatCount(readiness.warningCount, 'warning')}`
+}
+
+function formatCount(count: number, singular: string, plural = `${singular}s`): string {
+  return `${count} ${count === 1 ? singular : plural}`
 }

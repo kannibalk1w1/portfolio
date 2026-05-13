@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { parseUECopyText } from '../../../src/renderer/src/lib/blueprint/parseUECopyText'
+import { mergeBlueprintLayout, parseUECopyText } from '../../../src/renderer/src/lib/blueprint/parseUECopyText'
 
 const SAMPLE = `Begin Object Class=/Script/BlueprintGraph.K2Node_Event Name="K2Node_Event_0"
    EventReference=(MemberParent=Class'"/Script/Engine.Actor"',MemberName="ReceiveBeginPlay")
@@ -110,5 +110,21 @@ End Object`
     const result = parseUECopyText(text)
     expect(result).not.toBeNull()
     expect(result!.edges).toHaveLength(2)
+  })
+
+  it('merges dragged node positions without dropping existing layout overrides', () => {
+    const layout = mergeBlueprintLayout(
+      {
+        AABBCCDD00000000000000000000001A: { x: 100, y: 100 },
+      },
+      [
+        { id: 'AABBCCDD00000000000000000000004A', position: { x: 400.4, y: 25.6 } },
+      ],
+    )
+
+    expect(layout).toEqual({
+      AABBCCDD00000000000000000000001A: { x: 100, y: 100 },
+      AABBCCDD00000000000000000000004A: { x: 400, y: 26 },
+    })
   })
 })

@@ -28,6 +28,31 @@ export interface ParsedBlueprint {
   edges: ParsedEdge[]
 }
 
+export type BlueprintLayout = Record<string, { x: number; y: number }>
+
+export function applyBlueprintLayout(bp: ParsedBlueprint, layout: BlueprintLayout | undefined): ParsedBlueprint {
+  if (!layout) return bp
+  return {
+    ...bp,
+    nodes: bp.nodes.map(node => {
+      const override = layout[node.id]
+      return override ? { ...node, posX: override.x, posY: override.y } : node
+    }),
+  }
+}
+
+export function mergeBlueprintLayout(
+  existing: BlueprintLayout | undefined,
+  movedNodes: Array<{ id: string; position: { x: number; y: number } }>,
+): BlueprintLayout {
+  return {
+    ...(existing ?? {}),
+    ...Object.fromEntries(
+      movedNodes.map(node => [node.id, { x: Math.round(node.position.x), y: Math.round(node.position.y) }]),
+    ),
+  }
+}
+
 function toDisplayName(className: string): string {
   const short = className.split('.').pop() ?? className
   const stripped = short.replace(/^K2Node_/, '')

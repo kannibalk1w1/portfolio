@@ -243,4 +243,82 @@ End Object`
     const html = readFileSync(join(TMP, 'output', 'index.html'), 'utf-8')
     expect(html).toContain('No blueprints yet.')
   })
+
+  it('preserves blueprint item order in the generated preview HTML', async () => {
+    const portfolio: Portfolio = {
+      ...basicPortfolio,
+      sections: [
+        {
+          id: 'bp-5', type: 'blueprints', title: 'My Blueprints', visible: true,
+          items: [
+            { id: 'item-2', kind: 'image', content: 'second.png', label: 'Second' },
+            { id: 'item-1', kind: 'image', content: 'first.png', label: 'First' },
+          ],
+        } as any,
+      ],
+    }
+
+    await buildSite(TMP, portfolio)
+    const html = readFileSync(join(TMP, 'output', 'index.html'), 'utf-8')
+
+    expect(html.indexOf('Second')).toBeLessThan(html.indexOf('First'))
+  })
+
+  it('uses saved blueprint node layout overrides in generated preview HTML', async () => {
+    const portfolio: Portfolio = {
+      ...basicPortfolio,
+      sections: [
+        {
+          id: 'bp-6', type: 'blueprints', title: 'My Blueprints', visible: true,
+          items: [{
+            id: 'item-6',
+            kind: 'paste',
+            content: SAMPLE_UE,
+            layout: {
+              AABBCCDD00000000000000000000001A: { x: 320, y: 180 },
+            },
+          }],
+        } as any,
+      ],
+    }
+
+    await buildSite(TMP, portfolio)
+    const html = readFileSync(join(TMP, 'output', 'index.html'), 'utf-8')
+
+    expect(html).toContain('"posX":320')
+    expect(html).toContain('"posY":180')
+    expect(html).not.toContain('"posX":0,"posY":0')
+  })
+
+  it('renders blueprint item labels as anchors for jumping between items', async () => {
+    const portfolio: Portfolio = {
+      ...basicPortfolio,
+      sections: [
+        {
+          id: 'bp-7', type: 'blueprints', title: 'My Blueprints', visible: true,
+          items: [
+            { id: 'first-item', kind: 'image', content: 'first.png', label: 'First Graph' },
+            { id: 'second-item', kind: 'image', content: 'second.png', label: 'Second Graph' },
+          ],
+        } as any,
+      ],
+    }
+
+    await buildSite(TMP, portfolio)
+    const html = readFileSync(join(TMP, 'output', 'index.html'), 'utf-8')
+
+    expect(html).toContain('href="#bp-7-first-item"')
+    expect(html).toContain('id="bp-7-first-item"')
+    expect(html).toContain('First Graph')
+    expect(html.indexOf('First Graph')).toBeLessThan(html.indexOf('Second Graph'))
+  })
+})
+
+describe('published blueprint viewer', () => {
+  it('includes a fit-to-view control for exported blueprint graphs', () => {
+    const script = readFileSync(join(__dirname, '../../../src/renderer/assets/vendor/blueprint-viewer.js'), 'utf-8')
+
+    expect(script).toContain("fitBtn.textContent = 'Fit'")
+    expect(script).toContain('fitToView()')
+  })
 })

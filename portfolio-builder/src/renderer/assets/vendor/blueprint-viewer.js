@@ -252,10 +252,29 @@
     var padding = 40
     var scaleX = (cw - padding * 2) / (maxX - minX || 1)
     var scaleY = (ch - padding * 2) / (maxY - minY || 1)
-    scale = Math.min(scaleX, scaleY, 1)
-    tx = (cw - (maxX - minX) * scale) / 2 - minX * scale
-    ty = (ch - (maxY - minY) * scale) / 2 - minY * scale
-    applyTransform()
+    function fitToView() {
+      cw = container.clientWidth || 600
+      ch = container.clientHeight || 400
+      scaleX = (cw - padding * 2) / (maxX - minX || 1)
+      scaleY = (ch - padding * 2) / (maxY - minY || 1)
+      scale = Math.min(scaleX, scaleY, 1)
+      tx = (cw - (maxX - minX) * scale) / 2 - minX * scale
+      ty = (ch - (maxY - minY) * scale) / 2 - minY * scale
+      applyTransform()
+    }
+    fitToView()
+
+    var fitBtn = document.createElement('button')
+    fitBtn.type = 'button'
+    fitBtn.className = 'bp-fit'
+    fitBtn.textContent = 'Fit'
+    fitBtn.title = 'Fit blueprint to view'
+    fitBtn.style.cssText = 'position:absolute;left:10px;bottom:10px;z-index:6;padding:5px 8px;border:1px solid rgba(255,255,255,.25);border-radius:4px;background:rgba(17,24,39,.85);color:#fff;font-size:11px;font-weight:700;cursor:pointer;'
+    fitBtn.addEventListener('click', function (e) {
+      e.stopPropagation()
+      fitToView()
+    })
+    container.appendChild(fitBtn)
 
     // Edges (under nodes)
     var nodesMap = {}

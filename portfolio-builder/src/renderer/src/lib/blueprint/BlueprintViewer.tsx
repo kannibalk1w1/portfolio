@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   ReactFlow, Background, Controls, MiniMap,
   useNodesState, useEdgesState,
@@ -6,7 +6,7 @@ import {
   type NodeProps, type Node as RFNode, type Edge as RFEdge,
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
-import { parseUECopyText, type ParsedBlueprint, type ParsedPin } from './parseUECopyText'
+import { applyBlueprintLayout, mergeBlueprintLayout, parseUECopyText, type BlueprintLayout, type ParsedBlueprint, type ParsedPin } from './parseUECopyText'
 
 function nodeColor(className: string): string {
   if (className.includes('K2Node_Event')) return '#c0392b'
@@ -98,24 +98,37 @@ function blueprintToFlow(bp: ParsedBlueprint, onSelect: (id: string) => void): {
 interface Props {
   ueText: string
   height?: number
+  layout?: BlueprintLayout
+  onLayoutChange?: (layout: BlueprintLayout) => void
 }
 
-export function BlueprintViewer({ ueText, height = 320 }: Props) {
+export function BlueprintViewer({ ueText, height = 320, layout, onLayoutChange }: Props) {
   const [selectedId, setSelectedId] = useState<string | null>(null)
 
-  const parsed = useMemo(() => parseUECopyText(ueText), [ueText])
+  const parsed = useMemo(() => {
+    const bp = parseUECopyText(ueText)
+    return bp ? applyBlueprintLayout(bp, layout) : null
+  }, [ueText, layout])
 
   const { nodes: initNodes, edges: initEdges } = useMemo(
     () => parsed ? blueprintToFlow(parsed, setSelectedId) : { nodes: [], edges: [] },
     [parsed]
   )
 
-  const [nodes, , onNodesChange] = useNodesState(initNodes)
-  const [edges, , onEdgesChange] = useEdgesState(initEdges)
+  const [nodes, setNodes, onNodesChange] = useNodesState(initNodes)
+  const [edges, setEdges, onEdgesChange] = useEdgesState(initEdges)
+
+  useEffect(() => {
+    setNodes(initNodes)
+    setEdges(initEdges)
+  }, [initNodes, initEdges, setNodes, setEdges])
 
   const selectedNode = parsed?.nodes.find(n => n.id === selectedId) ?? null
 
   const onPaneClick = useCallback(() => setSelectedId(null), [])
+  const handleNodeDragStop = useCallback((_event: unknown, _node: RFNode, currentNodes: RFNode[]) => {
+    onLayoutChange?.(mergeBlueprintLayout(layout, currentNodes))
+  }, [layout, onLayoutChange])
 
   if (!parsed) {
     return (
@@ -133,6 +146,7 @@ export function BlueprintViewer({ ueText, height = 320 }: Props) {
           edges={edges}
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
+          onNodeDragStop={handleNodeDragStop}
           onPaneClick={onPaneClick}
           nodeTypes={NODE_TYPES}
           fitView

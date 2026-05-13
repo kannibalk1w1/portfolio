@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { Sidebar } from '../../src/renderer/src/components/editor/Sidebar'
 import type { Portfolio } from '../../src/renderer/src/types/portfolio'
 
-const fakePortfolio: Portfolio = {
+const initialPortfolio: Portfolio = {
   schemaVersion: 1,
   name: 'Alice',
   slug: 'alice',
@@ -13,6 +13,7 @@ const fakePortfolio: Portfolio = {
   },
 }
 
+let fakePortfolio: Portfolio = initialPortfolio
 const mockNotify = vi.fn()
 const mockSavePortfolio = vi.fn()
 const mockUpdatePortfolio = vi.fn()
@@ -53,6 +54,7 @@ const mockApi = {
 beforeEach(() => {
   vi.clearAllMocks()
   vi.useRealTimers()
+  fakePortfolio = initialPortfolio
   mockApi.hasFtpPassword.mockResolvedValue(true)
   window.api = mockApi as any
 })
@@ -65,6 +67,8 @@ describe('Sidebar action buttons', () => {
       fireEvent.click(screen.getByRole('button', { name: /Publish/ }))
     })
 
+    fireEvent.click(screen.getByRole('button', { name: /publish anyway/i }))
+
     expect(screen.getByText('FTP Publish Settings')).toBeTruthy()
     expect(await screen.findByText(/saved/i)).toBeTruthy()
   })
@@ -74,6 +78,7 @@ describe('Sidebar action buttons', () => {
     render(<Sidebar activeSectionId={null} onSelectSection={() => {}} notify={mockNotify} />)
 
     fireEvent.click(screen.getByRole('button', { name: /Publish/ }))
+    fireEvent.click(screen.getByRole('button', { name: /publish anyway/i }))
     await screen.findByText(/saved/i)
 
     await act(async () => {
@@ -88,6 +93,7 @@ describe('Sidebar action buttons', () => {
     render(<Sidebar activeSectionId={null} onSelectSection={() => {}} notify={mockNotify} />)
 
     fireEvent.click(screen.getByRole('button', { name: /Publish/ }))
+    fireEvent.click(screen.getByRole('button', { name: /publish anyway/i }))
     await screen.findByText(/saved/i)
 
     await act(async () => {
@@ -104,8 +110,76 @@ describe('Sidebar action buttons', () => {
     await act(async () => {
       fireEvent.click(screen.getByRole('button', { name: 'Preview' }))
     })
+    fireEvent.click(screen.getByRole('button', { name: /preview anyway/i }))
 
-    expect(mockNotify).toHaveBeenCalledWith('Build failed: missing template', 'error')
+    await waitFor(() => expect(mockNotify).toHaveBeenCalledWith('Build failed: missing template', 'error'))
+  })
+
+  it('warns before previewing when blocking readiness issues exist', async () => {
+    mockApi.previewSite.mockResolvedValue(undefined)
+    mockSavePortfolio.mockResolvedValue(undefined)
+    render(<Sidebar activeSectionId={null} onSelectSection={() => {}} notify={mockNotify} />)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Preview' }))
+
+    expect(await screen.findByText(/1 blocking readiness issue/i)).toBeTruthy()
+    expect(mockApi.previewSite).not.toHaveBeenCalled()
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: /preview anyway/i }))
+    })
+
+    expect(mockApi.previewSite).toHaveBeenCalledWith('/r/alice', fakePortfolio)
+  })
+
+  it('saves the current portfolio before previewing so reordered items reach the generated site', async () => {
+    mockApi.previewSite.mockResolvedValue(undefined)
+    mockSavePortfolio.mockResolvedValue(undefined)
+    render(<Sidebar activeSectionId={null} onSelectSection={() => {}} notify={mockNotify} />)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Preview' }))
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: /preview anyway/i }))
+    })
+
+    expect(mockSavePortfolio).toHaveBeenCalledWith(fakePortfolio, { snapshot: false })
+    expect(mockSavePortfolio.mock.invocationCallOrder[0]).toBeLessThan(mockApi.previewSite.mock.invocationCallOrder[0])
+  })
+
+  it('uses the latest portfolio state when continuing preview from the readiness warning', async () => {
+    const reorderedPortfolio: Portfolio = {
+      ...initialPortfolio,
+      sections: [
+        {
+          id: 'blueprints-1',
+          type: 'blueprints',
+          title: 'Blueprints',
+          visible: true,
+          items: [
+            { id: 'bp-2', kind: 'image', content: 'second.png' },
+            { id: 'bp-1', kind: 'image', content: 'first.png' },
+          ],
+        },
+      ],
+    }
+
+    mockApi.previewSite.mockResolvedValue(undefined)
+    mockSavePortfolio.mockResolvedValue(undefined)
+    const { rerender } = render(<Sidebar activeSectionId={null} onSelectSection={() => {}} notify={mockNotify} />)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Preview' }))
+    expect(await screen.findByText(/1 blocking readiness issue/i)).toBeTruthy()
+
+    fakePortfolio = reorderedPortfolio
+    rerender(<Sidebar activeSectionId={null} onSelectSection={() => {}} notify={mockNotify} />)
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: /preview anyway/i }))
+    })
+
+    expect(mockSavePortfolio).toHaveBeenCalledWith(reorderedPortfolio, { snapshot: false })
+    expect(mockApi.previewSite).toHaveBeenCalledWith('/r/alice', reorderedPortfolio)
   })
 
   it('notifies the thrown error message when export rejects', async () => {
@@ -115,18 +189,19 @@ describe('Sidebar action buttons', () => {
     await act(async () => {
       fireEvent.click(screen.getByRole('button', { name: 'Export' }))
     })
+    fireEvent.click(screen.getByRole('button', { name: /export anyway/i }))
 
-    expect(mockNotify).toHaveBeenCalledWith('Permission denied', 'error')
+    await waitFor(() => expect(mockNotify).toHaveBeenCalledWith('Permission denied', 'error'))
   })
 
   it('disables quick action buttons while one quick action is in progress', async () => {
-    let resolvePreview: () => void = () => {}
-    mockApi.previewSite.mockImplementation(
-      () => new Promise<void>(resolve => { resolvePreview = resolve }),
+    let resolveMobile: () => void = () => {}
+    mockApi.previewMobile.mockImplementation(
+      () => new Promise<void>(resolve => { resolveMobile = resolve }),
     )
 
     render(<Sidebar activeSectionId={null} onSelectSection={() => {}} notify={mockNotify} />)
-    fireEvent.click(screen.getByRole('button', { name: 'Preview' }))
+    fireEvent.click(screen.getByRole('button', { name: /Mobile/ }))
 
     const previewBtn = await screen.findByRole('button', { name: /opening/i })
     expect(previewBtn).toBeDisabled()
@@ -134,9 +209,9 @@ describe('Sidebar action buttons', () => {
     expect(screen.getByRole('button', { name: 'Export ZIP' })).toBeDisabled()
 
     await act(async () => {
-      resolvePreview()
+      resolveMobile()
     })
 
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Preview' })).not.toBeDisabled())
+    await waitFor(() => expect(screen.getByRole('button', { name: /Mobile/ })).not.toBeDisabled())
   })
 })

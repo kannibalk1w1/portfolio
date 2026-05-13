@@ -224,6 +224,7 @@ export interface BlueprintItem {
   kind: 'paste' | 'image'
   content: string  // raw UE copy-text for 'paste'; filename in assets/ for 'image'
   label?: string
+  layout?: Record<string, { x: number; y: number }>
 }
 
 export interface BlueprintsSection extends BaseSection {

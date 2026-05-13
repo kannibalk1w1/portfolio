@@ -22,11 +22,15 @@ function SortableBlueprintItem({
   portfolioDir,
   onRemove,
   onLabelChange,
+  onLayoutChange,
+  onResetLayout,
 }: {
   item: BlueprintItem
   portfolioDir: string
   onRemove: () => void
   onLabelChange: (label: string) => void
+  onLayoutChange: (layout: NonNullable<BlueprintItem['layout']>) => void
+  onResetLayout: () => void
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.id })
   return (
@@ -35,7 +39,7 @@ function SortableBlueprintItem({
       style={{ transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.45 : 1, background: '#f5f5f5', borderRadius: 8, overflow: 'hidden' }}
     >
       {item.kind === 'paste' ? (
-        <BlueprintViewer ueText={item.content} height={280} />
+        <BlueprintViewer ueText={item.content} height={280} layout={item.layout} onLayoutChange={onLayoutChange} />
       ) : (
         <img
           src={toFileUrl(`${portfolioDir}/assets/${item.content}`)}
@@ -69,6 +73,17 @@ function SortableBlueprintItem({
           aria-label="Remove"
         >×</button>
       </div>
+      {item.kind === 'paste' && item.layout && Object.keys(item.layout).length > 0 && (
+        <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '0 12px 10px' }}>
+          <button
+            onPointerDown={e => e.stopPropagation()}
+            onClick={onResetLayout}
+            style={{ padding: '5px 9px', border: '1px solid #ddd', borderRadius: 5, background: 'white', cursor: 'pointer', color: '#666', fontSize: 12 }}
+          >
+            Reset layout
+          </button>
+        </div>
+      )}
     </div>
   )
 }
@@ -164,6 +179,8 @@ export function BlueprintsSection({ section }: { section: BlueprintsSectionType 
                 portfolioDir={state.portfolioDir!}
                 onRemove={() => updateSection({ items: section.items.filter(i => i.id !== item.id) })}
                 onLabelChange={label => updateSection({ items: section.items.map(i => i.id === item.id ? { ...i, label } : i) })}
+                onLayoutChange={layout => updateSection({ items: section.items.map(i => i.id === item.id ? { ...i, layout } : i) })}
+                onResetLayout={() => updateSection({ items: section.items.map(i => i.id === item.id ? { ...i, layout: undefined } : i) })}
               />
             ))}
           </div>
