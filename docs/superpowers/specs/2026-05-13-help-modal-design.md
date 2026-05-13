@@ -42,7 +42,7 @@ e.g. screenshots of your Godot...    ← italic example, muted colour
 Accepts: JPG, PNG, GIF, WEBP...      ← small label, only shown when relevant
 ```
 
-Each entry separated by a thin divider line. Sections without file uploads omit the "Accepts" line entirely.
+Each entry separated by a thin divider line. Sections where input is type-only (Links, Skills, Timeline, Quote, Embed, Stats, Buttons, Code) omit the "Accepts" line entirely — it is not shown as "URLs only" or "Type directly", it simply isn't there.
 
 ---
 
