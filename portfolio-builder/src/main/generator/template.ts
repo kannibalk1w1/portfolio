@@ -94,6 +94,7 @@ const PAGE_ICONS: Record<string, string> = {
   about: '👤', gallery: '🖼', videos: '🎬', models: '📦', games: '🎮',
   code: '💻', custom: '📝', project: '📋', links: '🔗', skills: '⭐',
   timeline: '📅', quote: '❝', embed: '📡', content: '🧩', stats: '📊', buttons: '🔘',
+  blueprints: '⬡',
 }
 
 export function buildPageCards(sections: Section[]): string {
@@ -118,10 +119,18 @@ function needsHighlight(sections: Section[]): boolean {
 }
 
 function needsLightbox(sections: Section[]): boolean {
+  return sections.some(s => {
+    if (!s.visible) return false
+    if (s.type === 'gallery' || s.type === 'project') return (s as any).items?.length > 0 || (s as any).coverImageFilename
+    if (s.type === 'blueprints') return (s as any).items?.some((i: any) => i.kind === 'image')
+    return false
+  })
+}
+
+function needsBlueprints(sections: Section[]): boolean {
   return sections.some(s =>
-    s.visible &&
-    (s.type === 'gallery' || s.type === 'project') &&
-    ((s as any).items?.length > 0 || (s as any).coverImageFilename)
+    s.type === 'blueprints' && s.visible &&
+    (s as any).items?.some((i: any) => i.kind === 'paste')
   )
 }
 
@@ -146,6 +155,10 @@ export function wrapTemplate(
     ? `  <link rel="stylesheet" href="assets/vendor/highlight.min.css">
   <script src="assets/vendor/highlight.min.js"></script>
   <script>document.addEventListener('DOMContentLoaded', () => hljs.highlightAll())</script>`
+    : ''
+
+  const blueprintScript = needsBlueprints(portfolio.sections)
+    ? `  <script src="assets/vendor/blueprint-viewer.js"></script>`
     : ''
 
   // Avatar and optional hero banner live in the hero block.
@@ -213,6 +226,7 @@ export function wrapTemplate(
   ${ogDescription}
   ${modelViewerScript}
   ${highlightLinks}
+  ${blueprintScript}
   <style>
     /* ── Variables (theme-specific values injected here) ── */
     :root {
@@ -401,6 +415,15 @@ export function wrapTemplate(
     /* ── Empty state ── */
     .empty { color: var(--muted); font-size: 14px; font-style: italic; }
 
+    /* ── Blueprints ── */
+    .blueprints-list { display: flex; flex-direction: column; gap: 20px; }
+    .bp-item { display: flex; flex-direction: column; gap: 6px; }
+    .bp-canvas { border-radius: 8px; overflow: hidden; background: #1a1a2e; }
+    .bp-img { width: 100%; border-radius: 8px; cursor: zoom-in; transition: opacity .2s; }
+    .bp-img:hover { opacity: .9; }
+    .bp-label { font-size: 13px; color: var(--muted); text-align: center; }
+    .bp-parse-error { padding: 16px; background: #1a1a2e; color: #e74c3c; font-size: 13px; border-radius: 8px; text-align: center; }
+
     /* ── Lightbox ── */
     #lb { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.92); z-index: 200; align-items: center; justify-content: center; }
     #lb.open { display: flex; }
@@ -505,8 +528,17 @@ export function wrapSubPage(
   <script>document.addEventListener('DOMContentLoaded', () => hljs.highlightAll())</script>`
     : ''
 
-  const needsLightbox = (section.type === 'gallery' || section.type === 'project') &&
+  const blueprintSubScript = section.type === 'blueprints' && (section as any).items?.some((i: any) => i.kind === 'paste')
+    ? `  <script src="assets/vendor/blueprint-viewer.js"></script>`
+    : ''
+
+  const needsLightbox = (
+    (section.type === 'gallery' || section.type === 'project') &&
     ((section as any).items?.length > 0 || (section as any).coverImageFilename)
+  ) || (
+    section.type === 'blueprints' &&
+    (section as any).items?.some((i: any) => i.kind === 'image')
+  )
 
   const lightbox = needsLightbox ? `
   <div id="lb" role="dialog" aria-modal="true" aria-label="Image viewer">
@@ -536,6 +568,7 @@ export function wrapSubPage(
   <title>${escHtml(section.title)} — ${escHtml(portfolio.name)}</title>
   ${modelViewerScript}
   ${highlightLinks}
+  ${blueprintSubScript}
   <style>
     :root {
       ${themeVars(portfolio.theme)}
@@ -636,6 +669,13 @@ export function wrapSubPage(
     .callout-note { background: #faf5ff; border-color: #8b5cf6; } .callout-note::before { content: '📝'; }
     .colour-palette { display: inline-flex; align-items: center; gap: 6px; vertical-align: middle; padding: 2px 0; }
     .palette-swatch { width: 28px; height: 28px; border-radius: 50%; display: inline-block; border: 1px solid rgba(0,0,0,0.12); }
+    .blueprints-list { display: flex; flex-direction: column; gap: 20px; }
+    .bp-item { display: flex; flex-direction: column; gap: 6px; }
+    .bp-canvas { border-radius: 8px; overflow: hidden; background: #1a1a2e; }
+    .bp-img { width: 100%; border-radius: 8px; cursor: zoom-in; transition: opacity .2s; }
+    .bp-img:hover { opacity: .9; }
+    .bp-label { font-size: 13px; color: var(--muted); text-align: center; }
+    .bp-parse-error { padding: 16px; background: #1a1a2e; color: #e74c3c; font-size: 13px; border-radius: 8px; text-align: center; }
     #lb { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 1000; align-items: center; justify-content: center; }
     #lb.open { display: flex; }
     #lb-img { max-width: 90vw; max-height: 90vh; border-radius: 8px; }
